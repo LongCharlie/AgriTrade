@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 
 const app = express();
 app.use(bodyParser.json());
+app.use(express.static('public'));
 
 // 用户注册接口
 app.post('/api/register', async (req, res) => {
@@ -219,8 +220,23 @@ app.post('/api/questions', authenticateToken, checkRole([ROLES.FARMER]), async (
   }
 });
 
+//获取所有问题
+app.get('/api/questions/all', authenticateToken,checkRole([ROLES.EXPERT,ROLES.FARMER]), async (req, res) => {
+  try {
+    const questions = await db.getQuestions({}); // 空对象作为filter获取所有问题
+    
+    res.json({
+      count: questions.length,
+      questions
+    });
+  } catch (error) {
+    console.error('获取问题列表错误:', error);
+    res.status(500).json({ error: '获取问题列表失败' });
+  }
+});
+
 // 获取问题列表接口
-app.get('/api/questions', authenticateToken, async (req, res) => {
+app.get('/api/questions', authenticateToken,checkRole([ROLES.EXPERT,ROLES.FARMER]), async (req, res) => {
   try {
     const filter = {};
     

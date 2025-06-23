@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>专家信息</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        input, textarea {
+            padding: 8px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+    </style>
+    <script src="/js/auth.js"></script>
+</head>
+<body>
+    <h1>专家信息</h1>
+    <a href="/index.html">返回首页</a>
+    
+    <div id="error" class="error"></div>
+    <div id="success" class="success"></div>
+    
+    <form id="profileForm">
+        <div>
+            <label for="real_name">真实姓名:</label>
+            <input type="text" id="real_name">
+        </div>
+        <div>
+            <label for="title">职称:</label>
+            <input type="text" id="title">
+        </div>
+        <div>
+            <label for="institution">机构:</label>
+            <input type="text" id="institution">
+        </div>
+        <div>
+            <label for="expertise">专长领域:</label>
+            <input type="text" id="expertise">
+        </div>
+        <div>
+            <label for="bio">个人简介:</label>
+            <textarea id="bio" rows="4"></textarea>
+        </div>
+        <button type="submit">更新信息</button>
+    </form>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (!checkAuth() || !checkRole(['expert'])) {
+                window.location.href = '/index.html';
+                return;
+            }
+            
+            try {
+                // 获取当前专家信息
+                const response = await apiRequest('/api/expert/profile');
+                
+                // 填充表单
+                if (response.expert) {
+                    document.getElementById('real_name').value = response.expert.real_name || '';
+                    document.getElementById('title').value = response.expert.title || '';
+                    document.getElementById('institution').value = response.expert.institution || '';
+                    document.getElementById('expertise').value = response.expert.expertise || '';
+                    document.getElementById('bio').value = response.expert.bio || '';
+                }
+            } catch (error) {
+                console.error('获取专家信息失败:', error);
+            }
+        });
+        
+        document.getElementById('profileForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const profileData = {
+                real_name: document.getElementById('real_name').value,
+                title: document.getElementById('title').value,
+                institution: document.getElementById('institution').value,
+                expertise: document.getElementById('expertise').value,
+                bio: document.getElementById('bio').value
+            };
+            
+            try {
+                const response = await apiRequest('/api/expert/profile', 'PATCH', profileData);
+                document.getElementById('success').textContent = '专家信息更新成功';
+                setTimeout(() => {
+                    document.getElementById('success').textContent = '';
+                }, 3000);
+            } catch (error) {
+                document.getElementById('error').textContent = error.message;
+            }
+        });
+    </script>
+</body>
+</html>

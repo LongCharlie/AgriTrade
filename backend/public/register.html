@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        input, select {
+            padding: 8px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>注册</h1>
+    <form id="registerForm">
+        <div>
+            <label for="username">用户名:</label>
+            <input type="text" id="username" required>
+        </div>
+        <div>
+            <label for="password">密码:</label>
+            <input type="password" id="password" required>
+        </div>
+        <div>
+            <label for="role">角色:</label>
+            <select id="role" required>
+                <option value="">选择角色</option>
+                <option value="farmer">农户</option>
+                <option value="expert">专家</option>
+                <option value="buyer">买家</option>
+            </select>
+        </div>
+        <div>
+            <label for="phone">电话:</label>
+            <input type="tel" id="phone" required>
+        </div>
+        <div>
+            <label for="province">省份:</label>
+            <input type="text" id="province" required>
+        </div>
+        <div>
+            <label for="city">城市:</label>
+            <input type="text" id="city" required>
+        </div>
+        <div>
+            <label for="district">区县:</label>
+            <input type="text" id="district" required>
+        </div>
+        <div>
+            <label for="address_detail">详细地址:</label>
+            <input type="text" id="address_detail" required>
+        </div>
+        <button type="submit">注册</button>
+        <div id="error" class="error"></div>
+    </form>
+    <p>已有账号? <a href="/login.html">登录</a></p>
+    
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const userData = {
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value,
+                role: document.getElementById('role').value,
+                phone: document.getElementById('phone').value,
+                province: document.getElementById('province').value,
+                city: document.getElementById('city').value,
+                district: document.getElementById('district').value,
+                address_detail: document.getElementById('address_detail').value
+            };
+            
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userData)
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.text();
+                    throw new Error(errorData || '注册失败');
+                }
+                
+                alert('注册成功，请登录');
+                window.location.href = '/login.html';
+            } catch (error) {
+                document.getElementById('error').textContent = error.message;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>所有问题</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .question-list {
+            margin-top: 20px;
+        }
+        .question-card {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .question-title {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+        .question-meta {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+        .status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            color: white;
+        }
+        .status-pending {
+            background-color: #f39c12;
+        }
+        .status-answered {
+            background-color: #2ecc71;
+        }
+        .status-closed {
+            background-color: #95a5a6;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+    <script src="/js/auth.js"></script>
+</head>
+<body>
+    <h1>所有问题</h1>
+    <a href="/index.html">返回首页</a>
+    
+    <div id="questionList" class="question-list"></div>
+    <div id="error" class="error"></div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (!checkAuth()) {
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            try {
+                const data = await apiRequest('/api/questions/all');
+                
+                const questionList = document.getElementById('questionList');
+                questionList.innerHTML = '';
+                
+                if (data.questions.length === 0) {
+                    questionList.innerHTML = '<p>没有找到问题</p>';
+                    return;
+                }
+                
+                data.questions.forEach(question => {
+                    const questionCard = document.createElement('div');
+                    questionCard.className = 'question-card';
+                    questionCard.innerHTML = `
+                        <div class="question-title">
+                            <a href="/questions/detail.html?id=${question.question_id}">${question.title}</a>
+                        </div>
+                        <div>${question.content}</div>
+                        <div class="question-meta">
+                            <span class="status status-${question.status}">${getStatusText(question.status)}</span>
+                            · ${formatDate(question.created_at)}
+                            · 农户ID: ${question.farmer_id}
+                        </div>
+                    `;
+                    questionList.appendChild(questionCard);
+                });
+            } catch (error) {
+                document.getElementById('error').textContent = error.message;
+            }
+        });
+        
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': '待回答',
+                'answered': '已解答',
+                'closed': '已关闭'
+            };
+            return statusMap[status] || status;
+        }
+        
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        }
+    </script>
+</body>
+</html>

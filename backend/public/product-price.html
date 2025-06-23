@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>农产品价格查询</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        input, select {
+            padding: 8px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .error {
+            color: red;
+        }
+        .price-result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+    </style>
+    <script src="/js/auth.js"></script>
+</head>
+<body>
+    <h1>农产品价格查询</h1>
+    <a href="/index.html">返回首页</a>
+    
+    <form id="priceForm">
+        <div>
+            <label for="productName">产品:</label>
+            <input type="text" id="productName" required>
+        </div>
+        <div>
+            <label for="province">省份:</label>
+            <input type="text" id="province" required>
+        </div>
+        <button type="submit">查询</button>
+        <div id="error" class="error"></div>
+    </form>
+    
+    <div id="priceResult" class="price-result hidden">
+        <h3>查询结果</h3>
+        <div id="resultContent"></div>
+    </div>
+    
+    <script>
+        document.getElementById('priceForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const productName = document.getElementById('productName').value;
+            const province = document.getElementById('province').value;
+            
+            try {
+                const data = await apiRequest(`/api/product-price?productName=${encodeURIComponent(productName)}&province=${encodeURIComponent(province)}`);
+                
+                document.getElementById('priceResult').classList.remove('hidden');
+                
+                if (data.data && data.data.length > 0) {
+                    const result = data.data[0];
+                    document.getElementById('resultContent').innerHTML = `
+                        <p>产品: ${data.product}</p>
+                        <p>省份: ${data.province}</p>
+                        <p>平均价格: ${result.average_price || '无数据'}</p>
+                    `;
+                } else {
+                    document.getElementById('resultContent').textContent = '未找到匹配的价格数据';
+                }
+            } catch (error) {
+                document.getElementById('error').textContent = error.message;
+                document.getElementById('priceResult').classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

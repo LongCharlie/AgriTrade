@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>农业咨询平台</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .nav {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .nav a {
+            padding: 8px 15px;
+            background: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .nav a:hover {
+            background: #45a049;
+        }
+        .user-info {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+    <script src="/js/auth.js"></script>
+</head>
+<body>
+    <h1>农业咨询平台</h1>
+    
+    <div class="user-info" data-auth>
+        欢迎, <span data-user="username"></span> (角色: <span data-user="role"></span>)
+        <button onclick="logout()">退出登录</button>
+    </div>
+    
+    <div class="nav">
+        <a href="/login.html" data-unauth>登录</a>
+        <a href="/register.html" data-unauth>注册</a>
+        
+        
+        <a href="/questions/list.html" data-auth>我的问题</a>
+        <a href="/questions/all.html" data-auth>所有问题</a>
+        <a href="/questions/create.html" data-auth>提问</a>
+        <a href="/expert-profile.html" data-auth data-role="expert">专家信息</a>
+        <a href="/product-price.html" data-auth data-role="farmer,buyer">价格查询</a>
+    </div>
+    
+    <script>
+        // 根据角色显示/隐藏导航项
+        document.addEventListener('DOMContentLoaded', function() {
+            if (checkAuth()) {
+                document.querySelectorAll('[data-role]').forEach(el => {
+                    const allowedRoles = el.getAttribute('data-role').split(',');
+                    if (!checkRole(allowedRoles)) {
+                        el.style.display = 'none';
+                    }
+                });
+            }
+        });
+        
+        function logout() {
+            clearUser();
+            window.location.href = '/login.html';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>提问</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        input, textarea {
+            padding: 8px;
+            font-size: 16px;
+        }
+        textarea {
+            height: 150px;
+        }
+        button {
+            padding: 10px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+    </style>
+    <script src="/js/auth.js"></script>
+</head>
+<body>
+    <h1>提问</h1>
+    <a href="/questions/list.html">返回问题列表</a>
+    
+    <form id="questionForm">
+        <div>
+            <label for="title">标题:</label>
+            <input type="text" id="title" required>
+        </div>
+        <div>
+            <label for="content">内容:</label>
+            <textarea id="content" required></textarea>
+        </div>
+        <button type="submit">提交</button>
+        <div id="error" class="error"></div>
+        <div id="success" class="success"></div>
+    </form>
+    
+    <script>
+        document.getElementById('questionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+            
+            try {
+                const response = await apiRequest('/api/questions', 'POST', {
+                    title,
+                    content
+                });
+                
+                document.getElementById('success').textContent = '问题提交成功';
+                document.getElementById('error').textContent = '';
+                
+                // 清空表单
+                document.getElementById('title').value = '';
+                document.getElementById('content').value = '';
+                
+                // 3秒后跳转到问题列表
+                setTimeout(() => {
+                    window.location.href = '/questions/list.html';
+                }, 2000);
+            } catch (error) {
+                document.getElementById('error').textContent = error.message;
+                document.getElementById('success').textContent = '';
+            }
+        });
+    </script>
+</body>
+</html>

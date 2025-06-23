@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问题详情</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .question-detail {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .question-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .question-content {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        .question-meta {
+            color: #666;
+            font-size: 0.9em;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+        .status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            color: white;
+        }
+        .status-pending {
+            background-color: #f39c12;
+        }
+        .status-answered {
+            background-color: #2ecc71;
+        }
+        .status-closed {
+            background-color: #95a5a6;
+        }
+        .actions {
+            margin-top: 20px;
+        }
+        button {
+            padding: 8px 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button.close {
+            background: #e74c3c;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+    <script src="/js/auth.js"></script>
+</head>
+<body>
+    <h1>问题详情</h1>
+    <a href="/questions/list.html">返回问题列表</a>
+    
+    <div id="questionDetail" class="question-detail">
+        <p>加载中...</p>
+    </div>
+    
+    <div class="actions" id="actions" style="display: none;">
+        <button id="closeBtn" class="close">关闭问题</button>
+    </div>
+    
+    <div id="error" class="error"></div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const questionId = urlParams.get('id');
+            
+            if (!questionId) {
+                document.getElementById('error').textContent = '未指定问题ID';
+                return;
+            }
+            
+            try {
+                const question = await apiRequest(`/api/questions/${questionId}`);
+                
+                document.getElementById('questionDetail').innerHTML = `
+                    <div class="question-title">${question.title}</div>
+                    <div class="question-content">${question.content}</div>
+                    <div class="question-meta">
+                        <span class="status status-${question.status}">${getStatusText(question.status)}</span>
+                        · 创建于 ${formatDate(question.created_at)}
+                    </div>
+                `;
+                
+                // 如果是农户且问题是开放状态，显示关闭按钮
+                if (currentUser.role === 'farmer' && question.status === 'pending') {
+                    document.getElementById('actions').style.display = 'block';
+                }
+            } catch (error) {
+                document.getElementById('error').textContent = error.message;
+            }
+        });
+        
+        document.getElementById('closeBtn')?.addEventListener('click', async function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const questionId = urlParams.get('id');
+            
+            try {
+                const response = await apiRequest(`/api/questions/${questionId}/status`, 'PATCH', {
+                    status: 'closed'
+                });
+                
+                alert('问题已关闭');
+                window.location.reload();
+            } catch (error) {
+                document.getElementById('error').textContent = error.message;
+            }
+        });
+        
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': '待回答',
+                'answered': '已解答',
+                'closed': '已关闭'
+            };
+            return statusMap[status] || status;
+        }
+        
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        }
+    </script>
+</body>
+</html>
