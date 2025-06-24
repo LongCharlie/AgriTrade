@@ -320,10 +320,10 @@ app.patch('/api/questions/:id/status', authenticateToken, checkRole([ROLES.FARME
 // 专家上传证书
 app.post('/api/certificates', authenticateToken, checkRole([ROLES.EXPERT]), async (req, res) => {
   try {
-    const { expert_id, obtain_time, level } = req.body;
+    const { expert_id, obtain_time, level, valid_period } = req.body;
     const result = await db.query(
-      'INSERT INTO certificates (expert_id, obtain_time, level) VALUES ($1, $2, $3) RETURNING *',
-      [expert_id, obtain_time, level]
+      'INSERT INTO certificates (expert_id, obtain_time, level, valid_period) VALUES ($1, $2, $3, $4) RETURNING certificate_id',
+      [expert_id, obtain_time, level, valid_period]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
