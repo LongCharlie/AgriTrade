@@ -1,0 +1,9 @@
+// VSCode路径提示 [js]
+  {
+    "compilerOptions": {
+      "baseUrl": ".",
+      "paths": {
+        "@/*": ["src/*"] // 配置 @ 符号指向 src 目录及其子目录
+      }
+    }
+  }
