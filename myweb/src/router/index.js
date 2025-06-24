@@ -18,6 +18,7 @@ const routes = [
     },
     {
         path: "/farmer",
+        alias:"/farmer/home",
         component: () => import("../views/farmer/farmerMain.vue"),
         children: [ // 子路由
             {

@@ -3,7 +3,7 @@
     <el-row class="tac full-height">
       <el-col :span="24" class="full-height">
         <header class="header" ref="header">
-          <img src="../assets/platform_logo2.png" alt="Logo" class="logo" />
+          <img src="../assets/platform_logo2.png" alt="Logo" class="logo"/>
         </header>
         <!-- 将动态计算的高度传递给el-menu的style -->
         <el-menu
@@ -14,11 +14,15 @@
             @close="handleClose"
             background-color="#D9EEDD"
             text-color="#3A5D3D"
-            active-text-color="#FFDA44">
-          <el-menu-item v-for="item in menuData" :key="item.name" :index="item.name">
-            <component :is="item.icon" style="width: 20px; height: 20px; margin-right: 8px" />
-            <span slot="title">{{ item.name }}</span>
-          </el-menu-item>
+            active-text-color="#FFA500">
+            <template v-for="item in menuData">
+              <router-link :to="'/farmer' + item.path" style="text-decoration: none;">
+                <el-menu-item :key="item.name" :index="item.name">
+                  <component :is="item.icon" style="width: 20px; height: 20px; margin-right: 8px" />
+                  <span slot="title">{{ item.name }}</span>
+                </el-menu-item>
+              </router-link>
+            </template>
         </el-menu>
       </el-col>
     </el-row>
@@ -30,41 +34,13 @@ export default {
   data() {
     return {
       menuData: [
-        {
-          path: "/home",
-          name: "首页",
-          icon: "House",
-        },
-        {
-          path: "/purchases",
-          name: "采购",
-          icon: "ShoppingCart",
-        },
-        {
-          path: "/orders",
-          name: "订单",
-          icon: "Tickets",
-        },
-        {
-          path: "/messages",
-          name: "消息",
-          icon: "ChatDotRound",
-        },
-        {
-          path: "/planting",
-          name: "种植",
-          icon: "Guide",
-        },
-        {
-          path: "/share",
-          name: "分享",
-          icon: "Notification",
-        },
-        {
-          path: "/questions",
-          name: "提问",
-          icon: "School",
-        }
+        { path: "/main", name: "首页", icon: "House" },
+        { path: "/purchases", name: "采购", icon: "ShoppingCart" },
+        { path: "/orders", name: "订单", icon: "Tickets" },
+        { path: "/messages", name: "消息", icon: "ChatDotRound" },
+        { path: "/planting", name: "种植", icon: "Guide" },
+        { path: "/share", name: "分享", icon: "Notification" },
+        { path: "/questions", name: "提问", icon: "School" }
       ],
       menuHeight: 0 // 初始化菜单高度
     }
