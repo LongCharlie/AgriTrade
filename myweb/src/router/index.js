@@ -23,14 +23,18 @@ const routes = [
     },
     {
         path: "/farmer",
-        component: () => import("../views/farmer/farmerMain.vue"),
+        component: () => import("../views/farmer.vue"),
         children: [ // 子路由
-            {
-                path: '/farmer/more',
-                component: () => import("../views/farmer/farmerMain.vue")
-            }
+            { path: '', name: 'FarmerHome', component: () => import("../views/farmer/farmerMain.vue") },  // 默认子路由
+            { path: 'purchases', component: () => import("../views/farmer/farmerPurchases.vue") },  // 相对路径
+            { path: 'orders', component: () => import("../views/farmer/farmerOrders.vue") },
+            { path: 'messages', component: () => import("../views/farmer/farmerMessages.vue") },
+            { path: 'planting', component: () => import("../views/farmer/farmerPlanting.vue") },
+            { path: 'share', component: () => import("../views/farmer/farmerShare.vue") },
+            { path: 'questions', component: () => import("../views/farmer/farmerQuestions.vue") },
+            { path: 'profile', component: () => import("../views/farmer/farmerProfile.vue") }
         ]
-    }
+}
 ]
 
 const router = createRouter({

@@ -1,5 +1,5 @@
 <template>
-  <h1>农户首页</h1>
+  <h1>经验广场</h1>
 </template>
 
 <script setup>
