@@ -1,19 +1,24 @@
 //Create an instance of the router
 import {createWebHistory, createRouter } from 'vue-router'
 
-import Home from '../views/Home.vue'
-import User from '../views/User.vue'
-import Main from '../views/Main.vue'
+import expertHome from '@/views/expert/expertHome.vue'
+import expertRank from '@/views/expert/expertRank.vue'
+import expertMain from '@/views/expert/expertMain.vue'
+import expertCert from "@/views/expert/expertCert.vue";
+import expertQues from "@/views/expert/expertQues.vue";
 
 const routes = [
     //main router
     {
         path: '/expert',
-        component: Main,
+        redirect: '/expert/home', //removal
+        component: expertMain,
         //subrouter
         children: [
-            { path: '/home', component: Home },
-            { path: '/user', component: User },
+            { path: '/expert/home', component: expertHome },
+            { path: '/expert/rank', component: expertRank },
+            { path: '/expert/cert', component: expertCert },
+            { path: '/expert/ques', component: expertQues },
         ]
     },
     {

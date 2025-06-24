@@ -13,7 +13,7 @@
             background-color="#C3E6AB"
             text-color="#47543F"
             active-text-color="#EFCA00">
-          <el-menu-item v-for="item in menuData" :key="item.name" :index="item.name">
+          <el-menu-item @click="clickMenu(item)" v-for="item in menuData" :key="item.name" :index="item.name">
             <component :is="item.icon" style="width: 20px; height: 20px; margin-right: 8px" />
             <span slot="title">{{ item.name }}</span>
           </el-menu-item>
@@ -30,27 +30,27 @@ export default {
     return {
       menuData: [
         {
-          path: "/",
+          path: "/expert/home",
           name: "首页",
-          icon: "House", // 对应 <house />
+          icon: "House",
           url: "Home/Home",
         },
         {
-          path: "/rank",
+          path: "/expert/rank",
           name: "排行榜",
-          icon: "DataLine", // 对应 <data-line />
+          icon: "DataLine",
           url: "Rank/Rank",
         },
         {
-          path: "/cert",
+          path: "/expert/cert",
           name: "知识认证",
-          icon: "EditPen", // 对应 <edit-pen />
+          icon: "EditPen",
           url: "Cert/Cert",
         },
         {
-          path: "/ques",
+          path: "/expert/ques",
           name: "解答问题",
-          icon: "QuestionFilled", // 对应 <question-filled />
+          icon: "QuestionFilled",
           url: "Ques/Ques",
         }
       ]
@@ -62,12 +62,18 @@ export default {
     },
     handleClose(key, keyPath) {
       console.log(key, keyPath);
+    },
+    clickMenu(item) {
+      //current route inconsistent with jump route
+      if (this.$route.path !== item.path && !(this.$route.path == '/home' && item.path == '/')) {
+        this.$router.push(item.path);
+      }
     }
   }
 }
 </script>
 
-<style scoped>
+<style lang="less" scoped>
 .full-height-container {
   height: 100vh;
   margin: 0;

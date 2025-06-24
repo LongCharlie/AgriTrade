@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import CommonAside from "../components/CommonAside.vue";
+import CommonAside from "../../components/expertCommonAside.vue";
 export default {
   data(){
     return {}
