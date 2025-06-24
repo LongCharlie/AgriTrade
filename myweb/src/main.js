@@ -1,31 +1,25 @@
-// import { createApp } from 'vue'
-// import App from './App.vue'
-//
-// createApp(App).mount('#app')
-
 import { createApp } from 'vue'
-import App from './App.vue'
+
+import { createPinia } from 'pinia'
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
+
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
-import router from './router' //induct router
-<<<<<<< HEAD
 import * as ElementPlusIconsVue from '@element-plus/icons-vue' //induct icon
-=======
-import { createPinia  } from "pinia";
->>>>>>> ba10ed2876cd1d5004d11a7637be55e25387fc6b
+import App from './App.vue'
+import router from './router'
+
+
+const pinia = createPinia()
+pinia.use(piniaPluginPersistedstate)
 
 const app = createApp(App)
-const pinia = createPinia()
+app.use(pinia)
 app.use(ElementPlus)
-app.use(router) //register as a plugin
-<<<<<<< HEAD
-app.mount('#app')
-
+app.use(router)
 //register icon
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
     app.component(key, component)
 }
-=======
-app.use(pinia)
 app.mount('#app')
->>>>>>> ba10ed2876cd1d5004d11a7637be55e25387fc6b
+
