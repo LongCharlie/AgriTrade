@@ -317,6 +317,171 @@ app.patch('/api/questions/:id/status', authenticateToken, checkRole([ROLES.FARME
   }
 });
 
+// 专家上传证书
+app.post('/api/certificates', authenticateToken, checkRole([ROLES.EXPERT]), async (req, res) => {
+  try {
+    const { expert_id, obtain_time, level } = req.body;
+    const result = await db.query(
+      'INSERT INTO certificates (expert_id, obtain_time, level) VALUES ($1, $2, $3) RETURNING *',
+      [expert_id, obtain_time, level]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('证书上传失败:', error);
+    res.status(500).json({ error: '证书上传失败' });
+  }
+});
+
+// 证书审核（管理员）
+app.patch('/api/certificates/:id/approve', authenticateToken, checkRole([ROLES.ADMIN]), async (req, res) => {
+  try {
+    await db.query(
+      'UPDATE certificates SET status = $1 WHERE certificate_id = $2',
+      ['valid', req.params.id]
+    );
+    res.json({ message: '证书审核通过' });
+  } catch (error) {
+    console.error('证书审核失败:', error);
+    res.status(500).json({ error: '证书审核失败' });
+  }
+});
+
+// 发布经验分享（需审核）
+app.post('/api/experiences', authenticateToken, async (req, res) => {
+  try {
+    const { title, content } = req.body;
+    const userId = req.user.userId;
+
+    // 输入验证
+    if (!title || !content) {
+      return res.status(400).json({ error: '标题和内容不能为空' });
+    }
+
+    const result = await db.query(
+      'INSERT INTO experiences (user_id, title, content) VALUES ($1, $2, $3) RETURNING *',
+      [userId, title, content]
+    );
+    
+    res.status(201).json({
+      message: '经验提交成功，等待审核',
+      experience: result.rows[0]
+    });
+  } catch (error) {
+    console.error('发布经验失败:', error);
+    res.status(500).json({ error: '发布失败，请稍后再试' });
+  }
+});
+
+// 审核经验（管理员）
+app.patch('/api/experiences/:id/approve', authenticateToken, checkRole([ROLES.ADMIN]), async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // 检查经验是否存在
+    const experience = await db.query(
+      'SELECT * FROM experiences WHERE experience_id = $1',
+      [id]
+    );
+    if (experience.rows.length === 0) {
+      return res.status(404).json({ error: '经验不存在' });
+    }
+
+    await db.query(
+      'UPDATE experiences SET audit_status = $1 WHERE experience_id = $2',
+      ['approved', id]
+    );
+    
+    res.json({ 
+      message: '审核通过',
+      experience_id: id
+    });
+  } catch (error) {
+    console.error('审核经验失败:', error);
+    res.status(500).json({ error: '审核失败' });
+  }
+});
+
+// 采购商发布需求
+app.post('/api/demands', authenticateToken, checkRole(['buyer']), async (req, res) => {
+  const { product_name, quantity, delivery_city } = req.body;
+  const buyerId = req.user.userId;
+  
+  const result = await db.query(
+    'INSERT INTO purchase_demands (buyer_id, product_name, quantity, delivery_city) VALUES ($1, $2, $3, $4) RETURNING *',
+    [buyerId, product_name, quantity, delivery_city]
+  );
+  res.status(201).json(result.rows[0]);
+});
+
+// 农户申请供货
+app.post('/api/applications', authenticateToken, checkRole(['farmer']), async (req, res) => {
+  const { demand_id, quantity, price } = req.body;
+  const farmerId = req.user.userId;
+  
+  const result = await db.query(
+    'INSERT INTO purchase_applications (demand_id, farmer_id, quantity, price) VALUES ($1, $2, $3, $4) RETURNING *',
+    [demand_id, farmerId, quantity, price]
+  );
+  res.status(201).json(result.rows[0]);
+});
+
+// 新增种植记录接口
+app.post('/api/planting-records', authenticateToken, checkRole([ROLES.FARMER]), async (req, res) => {
+  const { product_name, province, city } = req.body;
+  const farmerId = req.user.userId;
+  const record = await db.query(
+    'INSERT INTO planting_records (farmer_id, product_name, province, city) VALUES ($1,$2,$3,$4) RETURNING *',
+    [farmerId, product_name, province, city]
+  );
+  res.status(201).json(record.rows[0]);
+});
+
+// 更新物流信息
+app.patch('/api/orders/:id/logistics', checkRole([ROLES.FARMER]), async (req, res) => {
+  const { tracking_number, carrier } = req.body;
+  await db.query(
+    'UPDATE orders SET tracking_number = $1, carrier = $2 WHERE order_id = $3',
+    [tracking_number, carrier, req.params.id]
+  );
+  res.json({ message: '物流信息更新成功' });
+});
+
+// 采购沟通接口
+app.post('/api/communications', authenticateToken, async (req, res) => {
+  const { application_id, content, image } = req.body;
+  const newComm = await db.query(
+    'INSERT INTO communications (application_id, sender_id, receiver_id, content, image_path) VALUES ($1,$2,$3,$4,$5) RETURNING *',
+    [application_id, req.user.userId, receiverId, content, image]
+  );
+  res.status(201).json(newComm.rows[0]);
+});
+
+// 价格趋势接口
+app.get('/api/price-trends', authenticateToken, checkRole([ROLES.BUYER]), async (req, res) => {
+  const { product, province } = req.query;
+  const trends = await db.query(`
+    SELECT update_date, AVG(avg_price) 
+    FROM price_references 
+    WHERE product_name = $1 AND province = $2 
+    GROUP BY update_date 
+    ORDER BY update_date
+  `, [product, province]);
+  res.json(trends.rows);
+});
+
+// 专家排名接口
+app.get('/api/expert-rankings', async (req, res) => {
+  const rankings = await db.query(`
+    SELECT e.*, COUNT(a.answer_id) AS answer_count 
+    FROM experts e 
+    LEFT JOIN answers a ON e.expert_id = a.expert_id 
+    GROUP BY e.expert_id 
+    ORDER BY answer_count DESC 
+    LIMIT 10
+  `);
+  res.json(rankings.rows);
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`服务器运行在 http://localhost:${PORT}`);
