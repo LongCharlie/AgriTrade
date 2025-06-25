@@ -1,18 +1,18 @@
 <template>
   <div class="register-container">
-    <h1>注册</h1>
+    <h1>BBB注册</h1>
     <form @submit.prevent="handleRegister" id="registerForm">
       <div>
         <label for="username">用户名:</label>
-        <input type="text" v-model="user.username" required />
+        <input type="text" v-model="userData.username" required />
       </div>
       <div>
         <label for="password">密码:</label>
-        <input type="password" v-model="user.password" required />
+        <input type="password" v-model="userData.password" required />
       </div>
       <div>
         <label for="role">角色:</label>
-        <select v-model="user.role" required>
+        <select v-model="userData.role" required>
           <option value="">选择角色</option>
           <option value="farmer">农户</option>
           <option value="expert">专家</option>
@@ -21,23 +21,23 @@
       </div>
       <div>
         <label for="phone">电话:</label>
-        <input type="tel" v-model="user.phone" required />
+        <input type="tel" v-model="userData.phone" required />
       </div>
       <div>
         <label for="province">省份:</label>
-        <input type="text" v-model="user.province" required />
+        <input type="text" v-model="userData.province" required />
       </div>
       <div>
         <label for="city">城市:</label>
-        <input type="text" v-model="user.city" required />
+        <input type="text" v-model="userData.city" required />
       </div>
       <div>
         <label for="district">区县:</label>
-        <input type="text" v-model="user.district" required />
+        <input type="text" v-model="userData.district" required />
       </div>
       <div>
         <label for="address_detail">详细地址:</label>
-        <input type="text" v-model="user.address_detail" required />
+        <input type="text" v-model="userData.address_detail" required />
       </div>
       <button type="submit">注册</button>
       <div v-if="error" class="error">{{ error }}</div>
@@ -49,8 +49,9 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { apiRequest } from '../utils/authExport.js';
 
-const user = ref({
+const userData = ref({
   username: '',
   password: '',
   role: '',
@@ -66,13 +67,7 @@ const router = useRouter();
 
 const handleRegister = async () => {
   try {
-    const response = await fetch('/api/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(user.value),
-    });
+    const response = await apiRequest('/api/register', 'POST', userData.value);
 
     if (!response.ok) {
       const errorData = await response.text();
@@ -80,9 +75,9 @@ const handleRegister = async () => {
     }
 
     alert('注册成功，请登录');
-    router.push('/login'); // 跳转到登录页面
+    router.push('/login'); // 注册成功后跳转到登录页面
   } catch (err) {
-    error.value = err.message; // 设置错误信息以供展示
+    error.value = err.message; // 显示错误信息
   }
 };
 </script>

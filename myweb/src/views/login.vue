@@ -1,6 +1,6 @@
 <template>
   <div class="login-container">
-    <h1>登录</h1>
+    <h1>BBB登录</h1>
     <form @submit.prevent="handleLogin" id="loginForm">
       <div>
         <label for="username">用户名:</label>
@@ -20,6 +20,10 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import {
+  apiRequest,
+  saveUserToStorage,
+} from '../utils/authExport.js';
 
 const username = ref('');
 const password = ref('');
@@ -30,7 +34,7 @@ const handleLogin = async () => {
   try {
     const response = await apiRequest('/api/login', 'POST', {
       username: username.value,
-      password: password.value,
+      password: password.value
     });
 
     // 保存用户信息
@@ -38,19 +42,15 @@ const handleLogin = async () => {
       token: response.token,
       username: response.user.username,
       role: response.user.role,
-      userId: response.user.id,
+      userId: response.user.id
     };
-    saveUserToStorage(currentUser);
+    saveUserToStorage(currentUser); // 保存用户数据到本地存储
 
     // 跳转到首页
-    router.push('/index');
+    router.push('/index'); // 跳转到首页
   } catch (err) {
-    error.value = err.message;
+    error.value = err.message; // 显示错误信息
   }
-};
-
-const saveUserToStorage = (user) => {
-  localStorage.setItem('currentUser', JSON.stringify(user));
 };
 </script>
 
@@ -75,7 +75,7 @@ input {
 
 button {
   padding: 10px;
-  background: #4caf50;
+  background: #4CAF50;
   color: white;
   border: none;
   cursor: pointer;

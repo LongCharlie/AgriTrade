@@ -1,9 +1,9 @@
 <template>
-  <div class="container">
-    <h1>农业咨询平台</h1>
+  <div class="platform-container">
+    <h1>BBB农业咨询平台</h1>
 
     <div class="user-info" v-if="isAuthenticated">
-      欢迎, <span>{{ user.username }}</span> (角色: <span>{{ user.role }}</span>)
+      欢迎, <span>{{ currentUser.username }}</span> (角色: <span>{{ currentUser.role }}</span>)
       <button @click="logout">退出登录</button>
     </div>
 
@@ -23,36 +23,29 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { loadUserFromStorage, checkAuth, checkRole, clearUser } from'../utils/authExport.js';
 
-// 这里将用于存储用户信息
-const user = ref({ username: '', role: '' });
+const currentUser = ref(null);
 const isAuthenticated = ref(false);
 const router = useRouter();
 
+// 检查角色权限
 onMounted(() => {
-  // 检查用户是否认证
+  loadUserFromStorage();
   isAuthenticated.value = checkAuth();
   if (isAuthenticated.value) {
-    // 获取用户信息
-    const currentUser = getUser(); // 请实现这个函数
-    user.value = currentUser;
+    currentUser.value = JSON.parse(localStorage.getItem('currentUser'));
   }
 });
-
-// 检查用户角色
-const checkRole = (allowedRoles) => {
-  return allowedRoles.includes(user.value.role);
-};
-
 // 退出登录
 const logout = () => {
-  clearUser(); // 请实现这个函数
+  clearUser(); // 清除用户信息
   router.push('/login'); // 跳转到登录页面
 };
 </script>
 
 <style scoped>
-.container {
+.platform-container {
   font-family: Arial, sans-serif;
   line-height: 1.6;
   margin: 0 auto;
