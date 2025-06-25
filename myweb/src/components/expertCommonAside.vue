@@ -10,6 +10,7 @@
             class="el-menu-vertical-demo full-height"
             @open="handleOpen"
             @close="handleClose"
+            :collapse=isCollapse
             background-color="#C3E6AB"
             text-color="#47543F"
             active-text-color="#EFCA00">
@@ -24,10 +25,10 @@
 </template>
 
 <script>
-
 export default {
   data() {
     return {
+      isCollapse: false,
       menuData: [
         {
           path: "/expert/home",

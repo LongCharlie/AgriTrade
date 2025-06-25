@@ -2,10 +2,12 @@
   <div>
     <el-container>
       <el-aside width="200px">
-        <CommonAside></CommonAside>
+        <expert-common-aside></expert-common-aside>
       </el-aside>
       <el-container>
-        <el-header>Header</el-header>
+        <el-header>
+          <expert-common-header></expert-common-header>
+        </el-header>
         <el-main>
           <h1>我是Main</h1>
           <router-view />
@@ -16,13 +18,21 @@
 </template>
 
 <script>
-import CommonAside from "../../components/expertCommonAside.vue";
+import expertCommonAside from "../../components/expertCommonAside.vue";
+import expertCommonHeader from "../../components/expertCommonHeader.vue";
 export default {
   data(){
     return {}
   },
   components: {
-    CommonAside
+    expertCommonAside,
+    expertCommonHeader
   }
 }
 </script>
+
+<style scoped>
+.el-header{
+  padding: 0;
+}
+</style>
