@@ -8,7 +8,14 @@ import expertCert from "@/views/expert/expertCert.vue";
 import expertQues from "@/views/expert/expertQues.vue";
 
 const routes = [
-    //main router
+    {
+        path: '',
+        component: () => import("../views/welcom.vue"),
+    },
+    {
+        path: '/login',
+        component: () => import("../views/login.vue"),
+    },
     {
         path: '/expert',
         redirect: '/expert/home', //removal
