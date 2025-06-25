@@ -35,11 +35,12 @@
 </template>
 
 <script>
+import profile from '../assets/logo.png'; // 引入头像
 export default {
   data() {
     return {
       user: {
-        avatar: "../assets/user_avatar.png", // 用户头像路径
+        avatar: profile, // 用户头像
         name: "农户1超长用户名不全部显示" // 用户名
       },
       menuData: [
