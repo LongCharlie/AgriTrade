@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 // 数据库连接配置
 const pool = new Pool({
   user: 'postgres',
-  host: '192.168.31.107',
+  host: '101.94.168.8',
   database: 'agriculture db',
   password: '12345678',
   port: 5432,

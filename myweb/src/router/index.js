@@ -8,11 +8,11 @@ import expertCert from "@/views/expert/expertCert.vue";
 import expertQues from "@/views/expert/expertQues.vue";
 
 const routes = [
-    // { path: '', component: () => import("../views/welcom.vue")},
-    //
-    // { path: '/login', component: () => import("../views/login.vue")},
-    //
-    // { path: '/register', component: () => import("../views/register.vue")},
+    { path: '', component: () => import("../views/welcom.vue")},
+
+    { path: '/login', component: () => import("../views/login.vue")},
+
+    { path: '/register', component: () => import("../views/register.vue")},
 
     {
         path: '/expert',
