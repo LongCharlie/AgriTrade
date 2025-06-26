@@ -6,10 +6,11 @@ const jwt = require('jsonwebtoken');
 // 数据库连接配置
 const pool = new Pool({
   user: 'postgres',
-  host: '192.168.31.107',
+  host: '101.94.168.8',
   database: 'agriculture db',
   password: '12345678',
   port: 5432,
+  ssl: false,
 });
 
 // 测试数据库连接
@@ -211,12 +212,62 @@ const updateQuestionStatus = async (questionId, status) => {
   return result.rows[0];
 };
 
+// 获取用户详细信息
+const getUserById = async (userId) => {
+  const result = await pool.query(
+    'SELECT * FROM users WHERE user_id = $1',
+    [userId]
+  );
+  return result.rows[0];
+};
+
+// 获取专家详细信息（包括专家表的信息）
+const getExpertDetails = async (expertId) => {
+  const userResult = await pool.query(
+    'SELECT * FROM users WHERE user_id = $1',
+    [expertId]
+  );
+  
+  const expertResult = await pool.query(
+    'SELECT * FROM experts WHERE expert_id = $1',
+    [expertId]
+  );
+  
+  return {
+    ...userResult.rows[0],
+    ...expertResult.rows[0]
+  };
+};
+
+// 更新用户基本信息
+const updateUserProfile = async (userId, updates) => {
+  const fields = Object.keys(updates);
+  if (fields.length === 0) {
+    throw new Error('没有可更新的字段');
+  }
+
+  const setClause = fields
+    .map((key, index) => `${key} = $${index + 1}`)
+    .join(', ');
+  
+  const values = fields.map(key => updates[key]);
+  values.push(userId);
+
+  const queryText = `UPDATE users SET ${setClause} WHERE user_id = $${values.length} RETURNING *`;
+  
+  const result = await pool.query(queryText, values);
+  return result.rows[0];
+};
+
+
+
 // 导出所有数据库操作方法
 module.exports = {
   checkUserExists,
   createUser,
   createQuestion,
   getQuestions,
+  updateUserProfile,
   getQuestionById,
   updateQuestionStatus,
   updateExpertProfile,
@@ -226,7 +277,9 @@ module.exports = {
   comparePassword,
   generateToken,
   checkFieldNeedsUpdate,
+  getExpertDetails,
   getExpertById,
+  getUserById,
   // 也可以导出原始的query方法以便特殊查询使用
   query: (text, params) => pool.query(text, params),
 };
