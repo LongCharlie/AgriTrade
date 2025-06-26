@@ -27,13 +27,7 @@
     <!-- 主内容区域 -->
     <div class="main-content">
       <div class="header">
-        <div class="search-box">
-          <input type="text" class="search-input" placeholder="搜索" v-model="searchQuery">
-          <span class="search-icon">🔍</span>
-        </div>
         <div class="user-profile">
-          <div class="avatar">商</div>
-          <div>商户2</div>
         </div>
       </div>
 
@@ -61,9 +55,9 @@
 
       <!-- 功能按钮区域 -->
       <div class="actions">
-        <div class="action-btn" @click="navigateTo('my-home')">我的首页</div>
+        <div class="action-btn" @click="$router.push('/farmer')">我的主页</div>
         <div class="action-btn" @click="navigateTo('publish')">发布采购</div>
-        <div class="action-btn" @click="navigateTo('my-purchase')">我的采购</div>
+        <div class="action-btn" @click="$router.push('/merchant/purchases')">我的采购</div>
       </div>
     </div>
   </div>
@@ -125,16 +119,16 @@ body {
 
 .app {
   display: flex;
-  background-color: #e8f5e9;
+  background-color: #b9eeb7ad;
   min-height: 100vh;
 }
 
 /* 侧边栏样式 */
 .sidebar {
-  width: 200px;
-  background-color: #dcedc8;
+  width: 160px;
+  background-color: #ffffff00;
   padding: 20px 0;
-  height: 100vh;
+  height: 150vh;
 }
 
 .logo {
@@ -184,7 +178,7 @@ body {
   padding: 20px;
   border-radius: 10px;
   margin: 20px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0);
 }
 
 .header {
@@ -194,49 +188,16 @@ body {
   margin-bottom: 20px;
 }
 
-.search-box {
-  width: 50%;
-  position: relative;
-}
-
-.search-input {
-  width: 100%;
-  padding: 10px 40px 10px 15px;
-  border: 1px solid #ddd;
-  border-radius: 20px;
-  outline: none;
-  font-size: 14px;
-}
-
-.search-icon {
-  position: absolute;
-  left: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #999;
-}
 
 .user-profile {
   display: flex;
   align-items: center;
 }
 
-.avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: #2e7d32;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 10px;
-}
-
 /* 轮播图区域 */
 .carousel-container {
   width: 100%;
-  height: 200px;
+  height: 380px;
   background-color: #eee;
   margin-bottom: 30px;
   overflow: hidden;
