@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人信息 - 农业咨询平台</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .profile-container {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .profile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .profile-section {
+            margin-bottom: 20px;
+        }
+        .profile-section h3 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+        .profile-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .profile-label {
+            font-weight: bold;
+            width: 120px;
+            color: #555;
+        }
+        .profile-value {
+            flex: 1;
+        }
+        .expert-info {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        .btn-edit {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-edit:hover {
+            background: #45a049;
+        }
+    </style>
+    <script src="/js/auth.js"></script>
+</head>
+<body>
+    <div class="profile-container">
+        <div class="profile-header">
+            <h2>个人信息</h2>
+            <button class="btn-edit" onclick="location.href='/profile-edit.html'">编辑信息</button>
+        </div>
+        
+        <div class="profile-section">
+            <h3>基本信息</h3>
+            <div class="profile-row">
+                <div class="profile-label">用户名:</div>
+                <div class="profile-value" id="username"></div>
+            </div>
+            <div class="profile-row">
+                <div class="profile-label">角色:</div>
+                <div class="profile-value" id="role"></div>
+            </div>
+            <div class="profile-row">
+                <div class="profile-label">手机号:</div>
+                <div class="profile-value" id="phone"></div>
+            </div>
+        </div>
+        
+        <div class="profile-section">
+            <h3>地址信息</h3>
+            <div class="profile-row">
+                <div class="profile-label">省份:</div>
+                <div class="profile-value" id="province"></div>
+            </div>
+            <div class="profile-row">
+                <div class="profile-label">城市:</div>
+                <div class="profile-value" id="city"></div>
+            </div>
+            <div class="profile-row">
+                <div class="profile-label">区县:</div>
+                <div class="profile-value" id="district"></div>
+            </div>
+            <div class="profile-row">
+                <div class="profile-label">详细地址:</div>
+                <div class="profile-value" id="address_detail"></div>
+            </div>
+        </div>
+        
+        <div id="expertInfoSection" class="expert-info" style="display: none;">
+            <h3>专家信息</h3>
+            <div class="profile-row">
+                <div class="profile-label">真实姓名:</div>
+                <div class="profile-value" id="real_name"></div>
+            </div>
+            <div class="profile-row">
+                <div class="profile-label">职称:</div>
+                <div class="profile-value" id="title"></div>
+            </div>
+            <div class="profile-row">
+                <div class="profile-label">机构:</div>
+                <div class="profile-value" id="institution"></div>
+            </div>
+            <div class="profile-row">
+                <div class="profile-label">专业领域:</div>
+                <div class="profile-value" id="expertise"></div>
+            </div>
+            <div class="profile-row">
+                <div class="profile-label">个人简介:</div>
+                <div class="profile-value" id="bio"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 检查登录状态
+            if (!checkAuth()) {
+                alert('请先登录');
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            try {
+                // 获取用户信息
+                const response = await apiRequest('/api/user/profile');
+                const userData = response;
+                
+                // 填充基本信息
+                document.getElementById('username').textContent = userData.username || '未设置';
+                document.getElementById('role').textContent = userData.role || '未设置';
+                document.getElementById('phone').textContent = userData.phone || '未设置';
+                
+                // 填充地址信息
+                document.getElementById('province').textContent = userData.province || '未设置';
+                document.getElementById('city').textContent = userData.city || '未设置';
+                document.getElementById('district').textContent = userData.district || '未设置';
+                document.getElementById('address_detail').textContent = userData.address_detail || '未设置';
+                
+                // 如果是专家，显示专家信息
+                if (userData.role === 'expert') {
+                    document.getElementById('expertInfoSection').style.display = 'block';
+                    document.getElementById('real_name').textContent = userData.real_name || '未设置';
+                    document.getElementById('title').textContent = userData.title || '未设置';
+                    document.getElementById('institution').textContent = userData.institution || '未设置';
+                    document.getElementById('expertise').textContent = userData.expertise || '未设置';
+                    document.getElementById('bio').textContent = userData.bio || '未设置';
+                }
+                
+            } catch (error) {
+                console.error('获取用户信息失败:', error);
+                alert('获取用户信息失败: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>
