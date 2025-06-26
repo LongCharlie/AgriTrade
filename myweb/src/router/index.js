@@ -31,7 +31,9 @@ const routes = [
         component: () => import("../views/farmer.vue"),
         children: [ // 子路由
             { path: '', name: 'FarmerHome', component: () => import("../views/farmer/farmerMain.vue") },  // 默认子路由
-            { path: 'purchases', component: () => import("../views/farmer/farmerPurchases.vue") },  // 相对路径
+            { path: 'purchases', component: () => import("../views/farmer/farmerPurchases.vue") },
+            { path: 'purchases/quote', component: () => import("../views/farmer/farmerPurchasesQuote.vue") },
+            { path: 'purchases/quotemodify', component: () => import("../views/farmer/farmerPurchasesQuoteModify.vue") },
             { path: 'orders', component: () => import("../views/farmer/farmerOrders.vue") },
             { path: 'messages', component: () => import("../views/farmer/farmerMessages.vue") },
             { path: 'planting', component: () => import("../views/farmer/farmerPlanting.vue") },
