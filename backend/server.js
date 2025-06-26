@@ -2,8 +2,10 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const db = require('./model'); // 引入数据库模型
 const jwt = require('jsonwebtoken');
+const cors = require('cors'); // 引入 CORS 中间件
 
 const app = express();
+app.use(cors()); // 允许所有来源的请求
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
