@@ -8,13 +8,8 @@
           style="width: 200px; margin-bottom: 20px;"
       ></el-input>
       <el-input
-          v-model="searchStorage"
-          placeholder="搜索收货地"
-          style="width: 200px; margin-bottom: 20px;"
-      ></el-input>
-      <el-input
           v-model="searchaddress"
-          placeholder="搜索采购地"
+          placeholder="搜索收货地"
           style="width: 200px; margin-bottom: 20px;"
       ></el-input>
       <el-input
@@ -29,9 +24,8 @@
     <el-table :data="filteredTableData" style="width: 100%">
       <el-table-column prop="product" label="产品种类" />
       <el-table-column prop="quantity" label="采购量" />
-      <el-table-column prop="storage" label="收货地" />
       <el-table-column prop="buyer" label="采购方" />
-      <el-table-column prop="address" label="采购地" />
+      <el-table-column prop="address" label="收货地" />
       <el-table-column prop="updateTime" label="更新时间" />
       <el-table-column label="操作">
         <template #default="scope">
@@ -52,19 +46,18 @@ const searchaddress = ref('');
 const searchQuantity = ref(null);
 
 const tableData = ref([
-  { product: '白米', quantity: 100, storage: '全国', buyer: 'A老板', address:'北京', updateTime: '1小时前' },
-  { product: '西瓜', quantity: 200, storage: '上海', buyer: '老王', address:'河北', updateTime: '3小时前' },
-  { product: '红薯', quantity: 50, storage: '全国', buyer: '孙经理', address:'广东',updateTime: '1天前' },
+  { product: '白米', quantity: 100, buyer: 'A老板', address:'北京', updateTime: '1小时前' },
+  { product: '西瓜', quantity: 200,  buyer: '老王', address:'河北', updateTime: '3小时前' },
+  { product: '红薯', quantity: 50, buyer: '孙经理', address:'广东',updateTime: '1天前' },
 ]);
 
 const filteredTableData = computed(() => {
   return tableData.value.filter(item => {
     const matchesProduct = item.product.includes(searchProduct.value);
-    const matchesStorage = item.storage.includes(searchStorage.value);
     const matchesaddress = item.address.includes(searchaddress.value);
     const matchesQuantity = searchQuantity.value ? item.quantity >= searchQuantity.value : true;
 
-    return matchesProduct && matchesStorage && matchesaddress && matchesQuantity;
+    return matchesProduct && matchesaddress && matchesQuantity;
   });
 });
 

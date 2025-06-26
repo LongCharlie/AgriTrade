@@ -6,7 +6,7 @@ import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue' //induct icon
 import App from './App.vue'
 import router from './router'
-import store from './store'
+import store from './stores'
 
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
