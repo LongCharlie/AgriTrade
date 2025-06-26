@@ -22,55 +22,30 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import axios from 'axios'; // 导入 Axios
 
 const username = ref('');
 const password = ref('');
 const error = ref('');
 const router = useRouter();
 
-// 定义 apiRequest 函数
-const apiRequest = async (url, method = 'GET', data = null) => {
-  const options = {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  };
-
-  if (data) {
-    options.body = JSON.stringify(data);
-  }
-
-  try {
-    const response = await fetch(url, options);
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || '请求失败');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('API请求错误:', error);
-    throw error;
-  }
-};
-
 // 处理用户登录
 const handleLogin = async () => {
   try {
-    const response = await apiRequest('/api/login', 'POST', {
+    // 使用 Axios 进行 API 请求
+    const response = await axios.post('http://localhost:3000/api/login', {
       username: username.value,
       password: password.value,
     });
 
     const currentUser = {
-      token: response.token,
-      username: response.user.username,
-      role: response.user.role,
-      userId: response.user.id,
+      token: response.data.token,
+      username: response.data.user.username,
+      role: response.data.user.role,
+      userId: response.data.user.id,
     };
 
+    // 路由跳转
     switch (currentUser.role) {
       case 'admin':
         router.push('/admin');
@@ -88,7 +63,7 @@ const handleLogin = async () => {
         router.push('/welcome');
     }
   } catch (err) {
-    error.value = err.message;
+    error.value = err.response ? err.response.data.error : '请求失败'; // 获取错误信息
   }
 };
 </script>

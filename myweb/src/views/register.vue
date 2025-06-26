@@ -53,6 +53,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import axios from 'axios'; // 引入 Axios
 
 // 定义用户数据和错误信息的响应式变量
 const userData = ref({
@@ -68,40 +69,14 @@ const userData = ref({
 const error = ref('');
 const router = useRouter();
 
-// 定义 API 请求的函数
-const apiRequest = async (url, method = 'POST', data = null) => {
-  const options = {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  };
-
-  if (data) {
-    options.body = JSON.stringify(data); // 转换为 JSON
-  }
-
-  try {
-    const response = await fetch(url, options);
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || '请求失败');
-    }
-    return await response.json(); // 返回 JSON 格式的响应
-  } catch (error) {
-    console.error('API请求错误:', error);
-    throw error;
-  }
-};
-
 // 处理用户注册
 const handleRegister = async () => {
   try {
-    const response = await apiRequest('/api/register', 'POST', userData.value);
+    const response = await axios.post('http://localhost:3000/api/register', userData.value); // 使用 Axios 进行 API 请求
     alert('注册成功，请登录');
     router.push('/login'); // 注册成功后跳转到登录页面
   } catch (err) {
-    error.value = err.message; // 显示错误信息
+    error.value = err.response ? err.response.data.error : '请求失败'; // 获取错误信息并显示
   }
 };
 </script>

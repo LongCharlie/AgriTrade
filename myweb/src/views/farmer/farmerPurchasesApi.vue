@@ -6,23 +6,23 @@
           v-model="searchProduct"
           placeholder="搜索产品种类"
           style="width: 200px; margin-bottom: 20px;"
-      ></el-input>
+      />
       <el-input
           v-model="searchStorage"
           placeholder="搜索收货地"
           style="width: 200px; margin-bottom: 20px;"
-      ></el-input>
+      />
       <el-input
-          v-model="searchaddress"
+          v-model="searchAddress"
           placeholder="搜索采购地"
           style="width: 200px; margin-bottom: 20px;"
-      ></el-input>
+      />
       <el-input
           v-model.number="searchQuantity"
           placeholder="搜索采购量(数量)"
           style="width: 200px; margin-bottom: 20px;"
           type="number"
-      ></el-input>
+      />
       <el-button type="primary" @click="sortByQuantity">按数量升序</el-button>
     </div>
 
@@ -44,27 +44,38 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import axios from 'axios'; // 导入 axios
 
 const searchProduct = ref('');
 const searchStorage = ref('');
-const searchaddress = ref('');
+const searchAddress = ref('');
 const searchQuantity = ref(null);
+const tableData = ref([]); // 用于存储从 API 获取的数据
 
-const tableData = ref([
-  { product: '白米', quantity: 100, storage: '全国', buyer: 'A老板', address:'北京', updateTime: '1小时前' },
-  { product: '西瓜', quantity: 200, storage: '上海', buyer: '老王', address:'河北', updateTime: '3小时前' },
-  { product: '红薯', quantity: 50, storage: '全国', buyer: '孙经理', address:'广东',updateTime: '1天前' },
-]);
+// 获取数据的函数
+const fetchData = async () => {
+  try {
+    const response = await axios.get('/api/purchases'); // 请求后端接口
+    tableData.value = response.data; // 将返回的数据保存在响应式变量中
+  } catch (error) {
+    console.error('获取数据失败:', error);
+  }
+};
+
+// 在组件挂载时调用 fetchData
+onMounted(() => {
+  fetchData();
+});
 
 const filteredTableData = computed(() => {
   return tableData.value.filter(item => {
     const matchesProduct = item.product.includes(searchProduct.value);
     const matchesStorage = item.storage.includes(searchStorage.value);
-    const matchesaddress = item.address.includes(searchaddress.value);
+    const matchesAddress = item.address.includes(searchAddress.value);
     const matchesQuantity = searchQuantity.value ? item.quantity >= searchQuantity.value : true;
 
-    return matchesProduct && matchesStorage && matchesaddress && matchesQuantity;
+    return matchesProduct && matchesStorage && matchesAddress && matchesQuantity;
   });
 });
 
@@ -84,6 +95,7 @@ const handleModify = (row) => {
 
 <style scoped>
 h1 {
+  text-align: center;
   margin-bottom: 20px;
 }
 
