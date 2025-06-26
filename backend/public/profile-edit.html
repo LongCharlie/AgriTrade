@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑个人信息 - 农业咨询平台</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .profile-container {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .profile-header {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .profile-section {
+            margin-bottom: 20px;
+        }
+        .profile-section h3 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        .form-group input, 
+        .form-group textarea, 
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .form-group textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        .btn-save {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn-save:hover {
+            background: #45a049;
+        }
+        .btn-cancel {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: 10px;
+        }
+        .btn-cancel:hover {
+            background: #d32f2f;
+        }
+        .expert-info {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        .button-group {
+            margin-top: 20px;
+            text-align: right;
+        }
+    </style>
+    <script src="/js/auth.js"></script>
+</head>
+<body>
+    <div class="profile-container">
+        <div class="profile-header">
+            <h2>编辑个人信息</h2>
+        </div>
+        
+        <form id="profileForm">
+            <div class="profile-section">
+                <h3>基本信息</h3>
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <input type="text" id="username" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="role">角色</label>
+                    <input type="text" id="role" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="phone">手机号</label>
+                    <input type="tel" id="phone" name="phone">
+                </div>
+            </div>
+            
+            <div class="profile-section">
+                <h3>地址信息</h3>
+                <div class="form-group">
+                    <label for="province">省份</label>
+                    <input type="text" id="province" name="province">
+                </div>
+                <div class="form-group">
+                    <label for="city">城市</label>
+                    <input type="text" id="city" name="city">
+                </div>
+                <div class="form-group">
+                    <label for="district">区县</label>
+                    <input type="text" id="district" name="district">
+                </div>
+                <div class="form-group">
+                    <label for="address_detail">详细地址</label>
+                    <input type="text" id="address_detail" name="address_detail">
+                </div>
+            </div>
+            
+            <div id="expertInfoSection" class="expert-info" style="display: none;">
+                <h3>专家信息</h3>
+                <div class="form-group">
+                    <label for="real_name">真实姓名</label>
+                    <input type="text" id="real_name" name="real_name">
+                </div>
+                <div class="form-group">
+                    <label for="title">职称</label>
+                    <input type="text" id="title" name="title">
+                </div>
+                <div class="form-group">
+                    <label for="institution">机构</label>
+                    <input type="text" id="institution" name="institution">
+                </div>
+                <div class="form-group">
+                    <label for="expertise">专业领域</label>
+                    <input type="text" id="expertise" name="expertise">
+                </div>
+                <div class="form-group">
+                    <label for="bio">个人简介</label>
+                    <textarea id="bio" name="bio"></textarea>
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button type="button" class="btn-cancel" onclick="location.href='/profile.html'">取消</button>
+                <button type="submit" class="btn-save">保存更改</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 检查登录状态
+            if (!checkAuth()) {
+                alert('请先登录');
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            try {
+                // 获取用户信息
+                const response = await apiRequest('/api/user/profile');
+                const userData = response;
+                
+                // 填充基本信息
+                document.getElementById('username').value = userData.username || '';
+                document.getElementById('role').value = userData.role || '';
+                document.getElementById('phone').value = userData.phone || '';
+                
+                // 填充地址信息
+                document.getElementById('province').value = userData.province || '';
+                document.getElementById('city').value = userData.city || '';
+                document.getElementById('district').value = userData.district || '';
+                document.getElementById('address_detail').value = userData.address_detail || '';
+                
+                // 如果是专家，显示专家信息并填充
+                if (userData.role === 'expert') {
+                    document.getElementById('expertInfoSection').style.display = 'block';
+                    document.getElementById('real_name').value = userData.real_name || '';
+                    document.getElementById('title').value = userData.title || '';
+                    document.getElementById('institution').value = userData.institution || '';
+                    document.getElementById('expertise').value = userData.expertise || '';
+                    document.getElementById('bio').value = userData.bio || '';
+                }
+                
+            } catch (error) {
+                console.error('获取用户信息失败:', error);
+                alert('获取用户信息失败: ' + error.message);
+            }
+        });
+
+        // 表单提交处理
+        document.getElementById('profileForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            try {
+                // 获取表单数据
+                const formData = {
+                    phone: document.getElementById('phone').value,
+                    province: document.getElementById('province').value,
+                    city: document.getElementById('city').value,
+                    district: document.getElementById('district').value,
+                    address_detail: document.getElementById('address_detail').value
+                };
+                
+                // 如果是专家，添加专家信息
+                if (document.getElementById('expertInfoSection').style.display === 'block') {
+                    formData.real_name = document.getElementById('real_name').value;
+                    formData.title = document.getElementById('title').value;
+                    formData.institution = document.getElementById('institution').value;
+                    formData.expertise = document.getElementById('expertise').value;
+                    formData.bio = document.getElementById('bio').value;
+                }
+                
+                // 发送更新请求
+                let response;
+                if (document.getElementById('expertInfoSection').style.display === 'block') {
+                    // 更新专家信息
+                    const expertData = {
+                        real_name: formData.real_name,
+                        title: formData.title,
+                        institution: formData.institution,
+                        expertise: formData.expertise,
+                        bio: formData.bio
+                    };
+                    
+                    // 先更新用户基本信息
+                    const userData = {
+                        phone: formData.phone,
+                        province: formData.province,
+                        city: formData.city,
+                        district: formData.district,
+                        address_detail: formData.address_detail
+                    };
+                    
+                    await apiRequest('/api/user/profile', 'PATCH', userData);
+                    response = await apiRequest('/api/expert/profile', 'PATCH', expertData);
+                } else {
+                    // 更新普通用户信息
+                    response = await apiRequest('/api/user/profile', 'PATCH', formData);
+                }
+                
+                alert('信息更新成功');
+                window.location.href = '/profile.html';
+                
+            } catch (error) {
+                console.error('更新信息失败:', error);
+                alert('更新失败: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>
