@@ -563,3 +563,60 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`服务器运行在 http://localhost:${PORT}`);
 });
+
+// 专家详情接口
+app.get('/api/experts/:id', async (req, res) => {
+  const expertId = req.params.id
+  try {
+    const result = await db.query(
+        'SELECT * FROM experts WHERE expert_id = $1',
+        [expertId]
+    )
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: '专家不存在' })
+    }
+    res.json(result.rows[0])
+  } catch (error) {
+    console.error('获取专家详情失败:', error)
+    res.status(500).json({ error: '服务器错误' })
+  }
+})
+
+//获取专家证书（通过token自动识别当前专家）
+app.get('/api/certificates/my', authenticateToken, checkRole([ROLES.EXPERT]), async (req, res) => {
+  const expertId = req.user.userId; // 从 token 中获取当前用户ID
+
+  try {
+    const result = await db.query(
+        'SELECT * FROM certificates WHERE expert_id = $1',
+        [expertId]
+    );
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('获取证书失败:', error);
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+// 获取专家最近的回答
+app.get('/api/answers/recent', authenticateToken, checkRole([ROLES.EXPERT]), async (req, res) => {
+  const expertId = req.user.userId;
+
+  try {
+    const result = await db.query(`
+      SELECT a.*, q.title 
+      FROM answers a
+      JOIN questions q ON a.question_id = q.question_id
+      WHERE a.expert_id = $1
+      ORDER BY a.answered_at DESC
+      LIMIT 5
+    `, [expertId]);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('获取最近回答失败:', error);
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+

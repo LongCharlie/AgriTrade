@@ -1,5 +1,6 @@
 //Create an instance of the store
 import { createStore } from 'vuex'
+import tab from './tab'
 
 export default createStore({
     state: {
@@ -9,6 +10,7 @@ export default createStore({
     actions: {
     },
     modules: {
+        tab //induct tab
     }
 })
 

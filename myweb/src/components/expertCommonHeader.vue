@@ -1,10 +1,10 @@
 <template>
   <div class="header-container">
     <div class="l-content">
-      <el-button type="info" size="small" :style="{ backgroundColor: '#4C9148'}">
+      <el-button  @click="handleMenu" type="info" size="small" :style="{ backgroundColor: '#4C9148'}">
         <el-icon><Menu /></el-icon>
       </el-button>
-      <span class="text">首页</span>
+<!--      <span class="text">首页</span>-->
     </div>
     <div class="r-content">
       <el-dropdown>
@@ -30,6 +30,11 @@ export default {
   },
   data(){
     return {}
+  },
+  methods: {
+    handleMenu() {
+      this.$store.commit('collapseMenu') //commit to mutation collapseMenu in store
+    }
   }
 }
 </script>
