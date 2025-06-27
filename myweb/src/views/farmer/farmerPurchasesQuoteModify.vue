@@ -43,7 +43,8 @@
           </el-select>
         </div>
 
-        <button type="submit" class="submit-button">确定修改</button>
+        <el-button type="primary" @click="submitQuote" class="submit-button">确认修改</el-button> <!-- 使用 Element Plus 的 el-button -->
+
       </form>
     </div>
   </div>
@@ -133,16 +134,6 @@ const submitQuote = () => {
 
 .submit-button {
   margin-top: 15px;
-  background-color: #4CAF50; /* 深绿色背景 */
-  border: none; /* 去掉边框 */
-  color: white; /* 白色文字 */
-  padding: 10px 20px; /* 按钮内边距 */
-  border-radius: 5px; /* 圆角按键 */
   cursor: pointer; /* 鼠标为手型 */
-  transition: background-color 0.3s; /* 背景颜色过渡 */
-}
-
-.submit-button:hover {
-  background-color: #45a049; /* 鼠标悬停时的颜色 */
 }
 </style>

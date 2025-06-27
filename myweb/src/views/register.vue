@@ -93,7 +93,7 @@ onBeforeRouteLeave((to, from, next) => {
 <style scoped>
 .register-container {
   font-family: Arial, sans-serif;
-  min-height: 100vh; /* 填满整个视口 */
+  min-height: 97vh; /* 填满整个视口 */
   display: flex;
   justify-content: center; /* 水平居中 */
   align-items: center; /* 垂直居中 */

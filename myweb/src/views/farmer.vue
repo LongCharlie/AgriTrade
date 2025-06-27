@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-container style="height: 100vh;">
-      <el-aside width="200px" style="overflow: hidden;">
+      <el-aside class="aside" width="200px" style="overflow: hidden;">
         <CommonAside></CommonAside>
       </el-aside>
       <el-container style="overflow: auto; margin-top: 91px;">
@@ -23,7 +23,5 @@ export default {
 </script>
 
 <style scoped>
-.el-container {
-  overflow: hidden;
-}
+
 </style>

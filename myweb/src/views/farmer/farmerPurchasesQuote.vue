@@ -7,7 +7,7 @@
       <el-table-column property="buyer" label="采购方" />
       <el-table-column property="address" label="收货地" />
       <el-table-column property="updateTime" label="更新时间" />
-      <el-table-column property="growthRecordId" label="种植记录ID" /> <!-- 新增种植记录ID列 -->
+      <el-table-column property="growthRecordId" label="种植记录ID" />
     </el-table>
 
     <div v-else>
@@ -42,13 +42,13 @@
             <el-option
                 v-for="record in growthRecords"
                 :key="record.id"
-                :label="`id: ${record.id} - 种类：${record.product} - 结束时间：${record.time} `"
+                :label="`id: ${record.id} - 种类：${record.product} - 结束时间：${record.time}`"
                 :value="record.id"
             />
           </el-select>
         </div>
 
-        <button type="submit" class="submit-button">提交报价</button>
+        <el-button type="primary" @click="submitQuote" class="submit-button">提交报价</el-button> <!-- 使用 Element Plus 的 el-button -->
       </form>
     </div>
   </div>
@@ -88,7 +88,7 @@ const growthRecords = ref([
 // 在组件挂载时获取用户信息和种植记录
 onMounted(async () => {
   try {
-    // 这里假设有一个接口可以获取用户个人信息
+    // 获取用户信息
     const userInfoResponse = await axios.get('http://localhost:3000/api/userInfo'); // 用户信息 API
     userAddress.value = userInfoResponse.data.address; // 假设用户信息中包含地址
 
@@ -138,16 +138,6 @@ const submitQuote = () => {
 
 .submit-button {
   margin-top: 15px;
-  background-color: #4CAF50; /* 深绿色背景 */
-  border: none; /* 去掉边框 */
-  color: white; /* 白色文字 */
-  padding: 10px 20px; /* 按钮内边距 */
-  border-radius: 5px; /* 圆角按键 */
   cursor: pointer; /* 鼠标为手型 */
-  transition: background-color 0.3s; /* 背景颜色过渡 */
-}
-
-.submit-button:hover {
-  background-color: #45a049; /* 鼠标悬停时的颜色 */
 }
 </style>

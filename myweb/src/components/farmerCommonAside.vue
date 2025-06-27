@@ -78,7 +78,7 @@ export default {
     calculateMenuHeight() {
       const headerElement = this.$refs.header; // 获取header
       const headerHeight = headerElement ? headerElement.clientHeight : 0; // 获取header的高度
-      this.menuHeight = window.innerHeight - headerHeight; // 计算el-menu的高度
+      this.menuHeight = window.innerHeight - headerHeight ; // 计算el-menu的高度
     },
     handleOpen(key, keyPath) {
       console.log(key, keyPath);

@@ -8,17 +8,22 @@
           style="width: 200px; margin-bottom: 20px;"
       ></el-input>
       <el-input
-          v-model="searchaddress"
-          placeholder="搜索收货地"
-          style="width: 200px; margin-bottom: 20px;"
-      ></el-input>
-      <el-input
           v-model.number="searchQuantity"
-          placeholder="搜索采购量(kg)"
+          placeholder="采购量大于(kg)"
           style="width: 200px; margin-bottom: 20px;"
           type="number"
       ></el-input>
       <el-button type="primary" @click="sortByQuantity">按数量升序</el-button>
+      <el-input
+          v-model="searchaddress"
+          placeholder="搜索收货地"
+          style="width: 200px; margin-bottom: 20px;"
+      ></el-input>
+      <el-select v-model="filterOption" placeholder="选择筛选" style="width: 200px; margin-bottom: 20px;">
+        <el-option label="全部" value="all"></el-option>
+        <el-option label="已报价" value="quoted"></el-option>
+        <el-option label="未报价" value="notQuoted"></el-option>
+      </el-select>
     </div>
 
     <el-table :data="filteredTableData" style="width: 100%">
@@ -29,8 +34,8 @@
       <el-table-column prop="updateTime" label="更新时间" />
       <el-table-column label="操作">
         <template #default="scope">
-          <el-button @click="handleQuote(scope.row)" type="text">[去报价]</el-button>
-          <el-button @click="handleModify(scope.row)" type="text">[修改]</el-button>
+          <el-button @click="handleQuote(scope.row)" type="text" v-if="!isQuoted(scope.row)">[去报价]</el-button>
+          <el-button @click="handleModify(scope.row)" type="text" v-else>[修改]</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -39,38 +44,62 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import axios from 'axios'; // 导入 axios
 import { useQuoteStore } from '../../stores/quote'; // 导入报价 Store
 import { useRouter } from 'vue-router';
+import axios from 'axios'; // 导入 axios
+import { useUserStore } from '../../stores/user'; // 用户 Store
 
 const searchProduct = ref('');
 const searchaddress = ref('');
 const searchQuantity = ref(null);
+const filterOption = ref('all'); // 选择筛选的状态
 const router = useRouter();
 const quoteStore = useQuoteStore(); // 使用报价 Store
+const userStore = useUserStore(); // 使用用户 Store
 
-// 初始化表格数据
-const tableData = ref([]);
+// 采购需求数据
+const tableData = ref([]); // 采购数据
 
-// 当组件挂载时从 API 获取数据
+// 已报价的记录ID
+const quotedIds = ref([]); // 存储已报价记录的 ID
+
+// 获取当前用户 ID
+const userId = userStore.currentUserId; // 假设存储用户信息的 Store
+
+// 在组件挂载时获取数据
 onMounted(async () => {
   try {
-    const response = await axios.get('http://localhost:3000/api/all-purchases'); // 替换为真实的 API 地址
-    tableData.value = response.data; // 假设接口返回的数据为数组形式
+    // 获取采购需求数据
+    const purchasesResponse = await axios.get('http://localhost:3000/api/purchases-all');
+    tableData.value = purchasesResponse.data; // 假设返回的数据是数组
+
+    // 获取已报价记录的 ID
+    const quotedResponse = await axios.get(`http://localhost:3000/api/quotedIds?userId=${userId}`);
+    quotedIds.value = quotedResponse.data; // 假设返回的数据是数组
   } catch (error) {
     console.error('获取数据失败:', error);
   }
 });
 
+// 过滤表格数据
 const filteredTableData = computed(() => {
   return tableData.value.filter(item => {
     const matchesProduct = item.product.includes(searchProduct.value);
     const matchesaddress = item.address.includes(searchaddress.value);
     const matchesQuantity = searchQuantity.value ? item.quantity >= searchQuantity.value : true;
+    const matchesFilterOption =
+        filterOption.value === 'all' ||
+        (filterOption.value === 'quoted' && quotedIds.value.includes(item.id)) ||
+        (filterOption.value === 'notQuoted' && !quotedIds.value.includes(item.id));
 
-    return matchesProduct && matchesaddress && matchesQuantity;
+    return matchesProduct && matchesaddress && matchesQuantity && matchesFilterOption;
   });
 });
+
+// 判断是否已报价
+const isQuoted = (row) => {
+  return quotedIds.value.includes(row.id);
+};
 
 // 按数量排序的函数
 const sortByQuantity = () => {

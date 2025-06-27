@@ -13,7 +13,6 @@
           style="width: 200px; margin-bottom: 20px;"
           type="number"
       ></el-input>
-      <el-button type="primary" @click="sortByQuantity">按数量升序</el-button>
       <el-input
           v-model="searchaddress"
           placeholder="搜索收货地"
@@ -22,8 +21,9 @@
       <el-select v-model="filterOption" placeholder="选择筛选" style="width: 200px; margin-bottom: 20px;">
         <el-option label="全部" value="all"></el-option>
         <el-option label="已报价" value="quoted"></el-option>
-        <el-option label="未报价" value="notQuoted"></el-option> <!-- 新增未报价选项 -->
+        <el-option label="未报价" value="notQuoted"></el-option>
       </el-select>
+      <el-button type="primary" @click="performSearch">确认搜索</el-button> <!-- 确认搜索按钮 -->
     </div>
 
     <el-table :data="filteredTableData" style="width: 100%">
@@ -64,35 +64,36 @@ const tableData = ref([
 // 模拟已报价的记录ID
 const quotedIds = ref([1, 3]); // 假设农户已在这两个记录中报价
 
-const filteredTableData = computed(() => {
-  return tableData.value.filter(item => {
+// 用于存储过滤后的表格数据
+const filteredTableData = ref(tableData.value); // 初始化为全部
+
+// 确认搜索的处理函数
+const performSearch = () => {
+  filteredTableData.value = tableData.value.filter(item => {
     const matchesProduct = item.product.includes(searchProduct.value);
     const matchesaddress = item.address.includes(searchaddress.value);
     const matchesQuantity = searchQuantity.value ? item.quantity >= searchQuantity.value : true;
     const matchesFilterOption =
         filterOption.value === 'all' ||
         (filterOption.value === 'quoted' && quotedIds.value.includes(item.id)) ||
-        (filterOption.value === 'notQuoted' && !quotedIds.value.includes(item.id)); // 添加未报价的过滤条件
+        (filterOption.value === 'notQuoted' && !quotedIds.value.includes(item.id));
 
     return matchesProduct && matchesaddress && matchesQuantity && matchesFilterOption;
   });
-});
+};
 
 // 判断是否已报价
 const isQuoted = (row) => {
   return quotedIds.value.includes(row.id);
 };
 
-// 按数量排序的函数
-const sortByQuantity = () => {
-  tableData.value.sort((a, b) => a.quantity - b.quantity);
-};
-
+// 跳转到报价页面
 const handleQuote = (row) => {
   quoteStore.currentQuote = row; // 保存当前行的表格信息到 Store
   router.push('/farmer/purchases/quote'); // 跳转到报价页面
 };
 
+// 跳转到修改页面
 const handleModify = (row) => {
   quoteStore.currentQuote = row; // 保存当前行的表格信息到 Store
   router.push('/farmer/purchases/quotemodify'); // 跳转到修改页面
