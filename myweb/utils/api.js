@@ -47,6 +47,33 @@ export async function get(url, params) {
     return back
 }
 
+function f_base_post(url, params){
+    return new Promise((resolve, reject) => {
+        axios.post(url, params)
+            .then(res => {
+                resolve(res.data)
+            })
+            .catch(err => {
+                reject(err)
+            })
+    })
+}
+
+//  将Promise 的错误统一捕获
+export async function post (url, params) {
+    let back = null
+    try{
+        back = await f_base_post(url, params)
+    }catch(e){
+        if (e.response.data === 'The CSRF token is missing.'){
+            console.log('CSRF token miss, try again')
+            back = await post(url, params)
+        }
+        console.log('async post', e)
+    }
+    return back
+}
+
 // //处理请求时带上token, csrf等参数，检查登录状态跳转登录，错误捕获。
 // import axios from 'axios'
 // import { useCookies } from "vue3-cookies";
