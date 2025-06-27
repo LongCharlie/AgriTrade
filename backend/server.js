@@ -563,3 +563,21 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`服务器运行在 http://localhost:${PORT}`);
 });
+
+// 专家详情接口
+app.get('/api/experts/:id', async (req, res) => {
+  const expertId = req.params.id
+  try {
+    const result = await db.query(
+        'SELECT * FROM experts WHERE expert_id = $1',
+        [expertId]
+    )
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: '专家不存在' })
+    }
+    res.json(result.rows[0])
+  } catch (error) {
+    console.error('获取专家详情失败:', error)
+    res.status(500).json({ error: '服务器错误' })
+  }
+})

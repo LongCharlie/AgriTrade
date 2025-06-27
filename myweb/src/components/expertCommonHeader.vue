@@ -4,7 +4,7 @@
       <el-button  @click="handleMenu" type="info" size="small" :style="{ backgroundColor: '#4C9148'}">
         <el-icon><Menu /></el-icon>
       </el-button>
-      <span class="text">首页</span>
+<!--      <span class="text">首页</span>-->
     </div>
     <div class="r-content">
       <el-dropdown>

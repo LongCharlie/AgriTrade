@@ -6,6 +6,7 @@ import expertRank from '@/views/expert/expertRank.vue'
 import expertMain from '@/views/expert/expertMain.vue'
 import expertCert from "@/views/expert/expertCert.vue";
 import expertQues from "@/views/expert/expertQues.vue";
+import ExpertDetail from "@/views/expert/expertDetail.vue";
 
 const routes = [
     { path: '', component: () => import("../views/welcom.vue")},
@@ -25,6 +26,11 @@ const routes = [
             { path: '/expert/cert', component: expertCert },
             { path: '/expert/ques', component: expertQues },
         ]
+    },
+    {
+        path: '/expert/detail/:id',
+        component: ExpertDetail,
+        meta: { requiresAuth: true } // 需要登录才能访问
     },
     {
         path: "/farmer",
