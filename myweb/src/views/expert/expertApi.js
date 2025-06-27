@@ -34,3 +34,8 @@ export async function submitAnswer(data) {
 export async function getRecentAnswers(expertId) {
   return await get(`/api/answers/recent?expert_id=${expertId}`);
 }
+
+// 更新专家信息
+export async function updateExpertProfile(expertId, updates) {
+  return await patch('/api/expert/profile', updates);
+}
