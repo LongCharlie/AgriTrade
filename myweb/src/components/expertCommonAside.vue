@@ -3,14 +3,14 @@
     <el-row class="tac full-height">
       <el-col :span="24" class="full-height">
         <header class="header">
-          <img src="../assets/platform_logo.png" alt="Logo" class="logo"/>
+          <img v-if="!isCollapse" src="../assets/platform_logo.png" alt="Logo" class="logo"/>
         </header>
         <el-menu
             default-active="首页"
             class="el-menu-vertical-demo full-height"
             @open="handleOpen"
             @close="handleClose"
-            :collapse=isCollapse
+            :collapse="isCollapse"
             background-color="#C3E6AB"
             text-color="#47543F"
             active-text-color="#EFCA00">
@@ -28,7 +28,6 @@
 export default {
   data() {
     return {
-      isCollapse: false,
       menuData: [
         {
           path: "/expert/home",
@@ -70,7 +69,12 @@ export default {
         this.$router.push(item.path);
       }
     }
-  }
+  },
+  computed: {
+    isCollapse() {
+      return this.$store.state.tab.isCollapse; //gain the collapse state in store
+    }
+  },
 }
 </script>
 
