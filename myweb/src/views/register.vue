@@ -5,15 +5,15 @@
       <form @submit.prevent="handleRegister" id="registerForm">
         <div class="input-group">
           <label for="username">用户名:</label>
-          <input type="text" v-model="userData.username" required />
+          <input type="text" v-model="registerStore.username" required />
         </div>
         <div class="input-group">
           <label for="password">密码:</label>
-          <input type="password" v-model="userData.password" required />
+          <input type="password" v-model="registerStore.password" required />
         </div>
         <div class="input-group">
           <label for="role">角色:</label>
-          <select v-model="userData.role" required>
+          <select v-model="registerStore.role" required>
             <option value="">选择角色</option>
             <option value="farmer">农户</option>
             <option value="expert">专家</option>
@@ -22,25 +22,25 @@
         </div>
         <div class="input-group">
           <label for="phone">电话:</label>
-          <input type="tel" v-model="userData.phone" required />
+          <input type="tel" v-model="registerStore.phone" required />
         </div>
         <div class="address-group">
           <div class="address-input">
             <label for="province">省份:</label>
-            <input type="text" v-model="userData.province" required />
+            <input type="text" v-model="registerStore.province" required />
           </div>
           <div class="address-input">
             <label for="city">城市:</label>
-            <input type="text" v-model="userData.city" required />
+            <input type="text" v-model="registerStore.city" required />
           </div>
           <div class="address-input">
             <label for="district">区县:</label>
-            <input type="text" v-model="userData.district" required />
+            <input type="text" v-model="registerStore.district" required />
           </div>
         </div>
         <div class="input-group">
           <label for="address_detail">详细地址:</label>
-          <input type="text" v-model="userData.address_detail" required />
+          <input type="text" v-model="registerStore.address_detail" required />
         </div>
         <button type="submit">注册</button>
         <div v-if="error" class="error">{{ error }}</div>
@@ -52,34 +52,43 @@
 
 <script setup>
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, onBeforeRouteLeave } from 'vue-router'; // 导入 onBeforeRouteLeave
+import { useRegisterStore } from '../stores/register'; // 导入 Pinia Store
 import axios from 'axios'; // 引入 Axios
 
-// 定义用户数据和错误信息的响应式变量
-const userData = ref({
-  username: '',
-  password: '',
-  role: '',
-  phone: '',
-  province: '',
-  city: '',
-  district: '',
-  address_detail: ''
-});
+const registerStore = useRegisterStore(); // 使用注册 Store
 const error = ref('');
 const router = useRouter();
 
 // 处理用户注册
 const handleRegister = async () => {
   try {
-    const response = await axios.post('http://localhost:3000/api/register', userData.value); // 使用 Axios 进行 API 请求
+    const response = await axios.post('http://localhost:3000/api/register', {
+      username: registerStore.username,
+      password: registerStore.password,
+      role: registerStore.role,
+      phone: registerStore.phone,
+      province: registerStore.province,
+      city: registerStore.city,
+      district: registerStore.district,
+      address_detail: registerStore.address_detail
+    }); // 使用 Axios 进行 API 请求
+
     alert('注册成功，请登录');
     router.push('/login'); // 注册成功后跳转到登录页面
   } catch (err) {
     error.value = err.response ? err.response.data.error : '请求失败'; // 获取错误信息并显示
   }
 };
+
+// 在离开当前路由时清空注册数据
+onBeforeRouteLeave((to, from, next) => {
+  registerStore.$reset(); // 重置注册 Store 数据
+  next(); // 继续路由跳转
+});
 </script>
+
+
 
 <style scoped>
 .register-container {
