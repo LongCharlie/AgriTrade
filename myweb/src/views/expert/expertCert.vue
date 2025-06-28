@@ -9,7 +9,7 @@
 查看图片，图片字段用 image_path 显示图片
 分页加载
 审核状态显示 -->
-    <el-table :data="certifications" border style="width: 100%">
+    <el-table :data="certifications" style="width: 100%">
       <el-table-column prop="certificateId" label="证书ID" align="center" />
       <el-table-column prop="obtainTime" label="获得时间" align="center" />
       <el-table-column prop="level" label="等级" align="center" />

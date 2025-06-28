@@ -3,7 +3,7 @@
     <el-row class="tac full-height">
       <el-col :span="24" class="full-height">
         <header class="header">
-          <img v-if="!isCollapse" src="../assets/platform_logo.png" alt="Logo" class="logo"/>
+          <img v-if="!isCollapse" src="../assets/platform_logo2.png" alt="Logo" class="logo"/>
         </header>
         <el-menu
             default-active="首页"
@@ -11,7 +11,7 @@
             @open="handleOpen"
             @close="handleClose"
             :collapse="isCollapse"
-            background-color="#C3E6AB"
+            background-color="#D9EEDD"
             text-color="#47543F"
             active-text-color="#EFCA00">
           <el-menu-item @click="clickMenu(item)" v-for="item in menuData" :key="item.name" :index="item.name">
@@ -81,8 +81,15 @@ export default {
 <style lang="less" scoped>
 .full-height-container {
   height: 100vh;
+  display: flex;
+  flex-direction: column;
   margin: 0;
   padding: 0;
+}
+
+.tac {
+  flex: 1;
+  overflow: hidden;
 }
 
 .full-height {
@@ -98,8 +105,7 @@ export default {
    align-items: center;
    justify-content: flex-start;
    padding: 10px 20px;
-   background-color: #C3E6AB;
-   border-bottom: 1px solid #eaeaea;
+   background-color: #D9EEDD;
  }
 
 .logo {

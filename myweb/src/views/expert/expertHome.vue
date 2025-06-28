@@ -4,10 +4,7 @@
     <el-row :gutter="20" class="welcome-section">
       <el-col :span="18">
         <h2>您好，{{ expert.realName }}！</h2>
-        <p>欢迎回到农业问答平台，这里是您的专属工作台。</p>
-      </el-col>
-      <el-col :span="6">
-        <el-avatar :src="getDefaultAvatar(expert.expertId)" size="large" />
+        <p>欢迎回到耘联农业平台，快来解惑吧！</p>
       </el-col>
     </el-row>
 
@@ -66,16 +63,16 @@
     <!-- 快捷操作 -->
     <el-row :gutter="20" class="quick-actions">
       <el-col :span="6">
-        <el-button type="primary" @click="$router.push('/expert/ques')">去回答问题</el-button>
+        <el-button @click="$router.push('/expert/ques')" style="width: 100%; background-color: #e6f7ff;">去回答问题</el-button>
       </el-col>
       <el-col :span="6">
-        <el-button type="success" @click="$router.push('/expert/cert')">查看我的证书</el-button>
+        <el-button @click="$router.push('/expert/cert')" style="width: 100%; background-color: #fff7e6;">查看我的证书</el-button>
       </el-col>
       <el-col :span="6">
-        <el-button type="warning" @click="$router.push('/expert/rank')">查看排行榜</el-button>
+        <el-button @click="$router.push('/expert/rank')" style="width: 100%; background-color: #f9f9f9;">查看排行榜</el-button>
       </el-col>
       <el-col :span="6">
-        <el-button type="info" @click="$router.push('/expert/profile')">完善个人信息</el-button>
+        <el-button @click="$router.push('/expert/profile')" style="width: 100%; background-color: #f0f9eb;">完善个人信息</el-button>
       </el-col>
     </el-row>
 
@@ -126,7 +123,7 @@ export default {
         const expert = await getExpertById(userId);
         this.expert = {
           expertId: expert.user_id,
-          realName: expert.real_name,
+          realName: expert.real_name || '未登录专家',
           title: expert.title || '暂无职称',
           institution: expert.institution || '暂无机构',
           expertise: expert.expertise || '暂无领域',
@@ -175,9 +172,15 @@ export default {
 .quick-actions {
   margin: 20px 0;
 }
+.quick-actions .el-button {
+  padding: 30px 70px;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
 .recent-answers ul {
   list-style-type: none;
   padding-left: 0;
+  margin-bottom: 20px;
 }
 .answer-item {
   margin-bottom: 10px;
