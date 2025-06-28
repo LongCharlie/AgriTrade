@@ -1,193 +1,96 @@
 <template>
-  <div class="app">
-    <!-- 左侧导航栏 -->
-    <div class="sidebar">
-      <div class="logo">
-        耘联
-        <span class="menu-icon">≡</span>
-      </div>
-      <div class="sidebar-item active">
-        <div class="sidebar-icon">🏠</div>
-        首页
-      </div>
-      <div class="sidebar-item">
-        <div class="sidebar-icon">📦</div>
-        采购
-      </div>
-      <div class="sidebar-item">
-        <div class="sidebar-icon">📝</div>
-        订单
-      </div>
-      <div class="sidebar-item">
-        <div class="sidebar-icon">💬</div>
-        消息
+  <div>
+    <div class="header">
+      <div class="user-profile">
+        <!-- 用户信息区域 -->
       </div>
     </div>
-
-    <!-- 主内容区域 -->
-    <div class="main-content">
-      <div class="header">
-        <div class="user-profile">
+    
+    <!-- 轮播图区域 -->
+    <div class="carousel-container">
+      <div class="carousel" :style="{ transform: `translateX(-${currentIndex * 33.33}%)` }">
+        <div class="carousel-item" v-for="(image, index) in carouselImages" :key="index">
+          <img :src="image" alt="轮播图" style="max-width: 100%; max-height: 100%;">
         </div>
       </div>
 
-      <!-- 轮播图区域 -->
-      <div class="carousel-container">
-        <div class="carousel" :style="{ transform: `translateX(-${currentIndex * 33.33}%)` }">
-          <div class="carousel-item" v-for="(image, index) in carouselImages" :key="index">
-            <img :src="image" alt="轮播图" style="max-width: 100%; max-height: 100%;">
-          </div>
-        </div>
-
-        <div class="carousel-indicators">
-          <div class="indicator" 
-               v-for="(image, index) in carouselImages" 
-               :key="index + '-indicator'"
-               :class="{ active: currentIndex === index }"
-               @click="setActiveSlide(index)"></div>
-        </div>
-
-        <div class="carousel-btn prev-btn" @click="prevSlide">❮</div>
-        <div class="carousel-btn next-btn" @click="nextSlide">❯</div>
-
-        <div class="carousel-caption">轮播图</div>
+      <div class="carousel-indicators">
+        <div class="indicator" 
+             v-for="(image, index) in carouselImages" 
+             :key="index + '-indicator'"
+             :class="{ active: currentIndex === index }"
+             @click="setActiveSlide(index)"></div>
       </div>
 
-      <!-- 功能按钮区域 -->
-      <div class="actions">
-        <div class="action-btn" @click="$router.push('/merchant/orders')">我的主页</div>
-        <div class="action-btn" @click="navigateTo('AddPurchase')">发布采购</div>
-        <div class="action-btn" @click="$router.push('/merchant/purchases')">我的采购</div>
-      </div>
+      <div class="carousel-btn prev-btn" @click="prevSlide">❮</div>
+      <div class="carousel-btn next-btn" @click="nextSlide">❯</div>
+    </div>
+
+    <!-- 功能按钮区域 -->
+    <div class="actions">
+      <div class="action-btn" @click="navigateTo('my-home')">我的主页</div>
+      <div class="action-btn" @click="navigateTo('publish')">发布采购</div>
+      <div class="action-btn" @click="navigateTo('my-purchase')">我的采购</div>
     </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'App',
+  name: 'HomePage',
   data() {
     return {
-      searchQuery: '',
       currentIndex: 0,
       carouselImages: [
-        'https://via.placeholder.com/800x200?text=轮播图1',
-        'https://via.placeholder.com/800x200?text=轮播图2',
-        'https://via.placeholder.com/800x200?text=轮播图3'
+        // 'https://via.placeholder.com/800x200?text=轮播图1',
+        // 'https://via.placeholder.com/800x200?text=轮播图2',
+        // 'https://via.placeholder.com/800x200?text=轮播图3'
+        '/images/1(.jpg',
+        '/images/2.jpg',
+        '/images/3.jpg'
       ],
       intervalId: null
     }
   },
   methods: {
     prevSlide() {
-      this.currentIndex = (this.currentIndex - 1 + this.carouselImages.length) % this.carouselImages.length
+      this.currentIndex = (this.currentIndex - 1 + this.carouselImages.length) % this.carouselImages.length;
     },
     nextSlide() {
-      this.currentIndex = (this.currentIndex + 1) % this.carouselImages.length
+      this.currentIndex = (this.currentIndex + 1) % this.carouselImages.length;
     },
     setActiveSlide(index) {
-      this.currentIndex = index
+      this.currentIndex = index;
     },
     autoSlide() {
-      this.currentIndex = (this.currentIndex + 1) % this.carouselImages.length
+      this.currentIndex = (this.currentIndex + 1) % this.carouselImages.length;
     },
     navigateTo(path) {
-      console.log(`导航到: ${path}`)
+      if (path === 'my-home') {
+        this.$router.push('/');
+      } else if (path === 'publish') {
+        console.log('发布采购');
+      } else if (path === 'my-purchase') {
+        console.log('我的采购');
+      }
     }
   },
   mounted() {
-    this.intervalId = setInterval(this.autoSlide, 3000)
+    this.intervalId = setInterval(this.autoSlide, 3000);
   },
   beforeUnmount() {
-    clearInterval(this.intervalId)
+    clearInterval(this.intervalId);
   }
 }
 </script>
 
-<style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
-}
-
-body {
-  background-color: #f5f5f5;
-  color: #333;
-}
-
-.app {
-  display: flex;
-  background-color: #b9eeb7ad;
-  min-height: 100vh;
-}
-
-/* 侧边栏样式 */
-.sidebar {
-  width: 160px;
-  background-color: #ffffff00;
-  padding: 20px 0;
-  height: 150vh;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  padding: 0 20px 20px;
-  font-size: 24px;
-  font-weight: bold;
-  color: #2e7d32;
-}
-
-.menu-icon {
-  margin-left: 10px;
-  font-size: 20px;
-}
-
-.sidebar-item {
-  padding: 15px 20px;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  color: #2e7d32;
-}
-
-.sidebar-item:hover {
-  background-color: #c5e1a5;
-}
-
-.sidebar-item.active {
-  background-color: #aed581;
-  border-radius: 8px;
-}
-
-.sidebar-icon {
-  margin-right: 10px;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* 主内容区域样式 */
-.main-content {
-  flex: 1;
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 10px;
-  margin: 20px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0);
-}
-
+<style scoped>
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
 }
-
 
 .user-profile {
   display: flex;

@@ -9,6 +9,15 @@ import expertQues from "@/views/expert/expertQues.vue";
 import expertDetail from "@/views/expert/expertDetail.vue";
 import expertProfile from "@/views/expert/expertProfile.vue";
 
+import MainLayout from '@/views/merchant/MainLayout.vue'
+import MerchantHome from '@/views/merchant/merchantHome.vue'
+import MerchantOrder from '@/views/merchant/merchantOrder.vue'
+import merchantPurchaseDetails from '@/views/merchant/merchantPurchaseDetails.vue'
+import AddPurchase from '@/views/merchant/merchantAddPurchase.vue'
+import MerchantPurchase from '@/views/merchant/merchantPurchase.vue';
+import MerchantAddPurchase from '@/views/merchant/merchantAddPurchase.vue';
+import MerchantMain from '@/views/merchant/merchantMain.vue'
+
 const routes = [
     { path: '', component: () => import("../views/welcom.vue")},
 
@@ -54,18 +63,37 @@ const routes = [
             { path: 'profile', component: () => import("../views/farmer/farmerProfile.vue") }
         ]
 },
-{
-        path: "/merchant",
-        component: () => import("../views/merchant/merchantMain.vue"),
-        children: [ 
-            // 子路由
-            { path: 'purchases', name: 'merchantPurchase', component: () => import("../views/merchant/merchantPurchase.vue") },  // 采购
-            { path: 'orders', name: 'merchantOrders', component: () => import("../views/merchant/merchantOrder.vue") },        //订单
-            { path: 'addpurchase', name: 'AddPurchase', component: () => import("../views/merchant/merchantAddPurchase.vue") },    //采购发布
-            { path: 'purchasedetail', name: 'purchaseDetails', component: () =>import("../views/merchant/merchantPurchaseDetails.vue")}, //订单详情
-            { path: 'merchantHome', name: 'merchantHome', component: () =>import("../views/merchant/merchantMain.vue")}           //主页
-        ]
-}
+      {
+            path: '/',
+            component: MainLayout,
+            children: [
+              {
+                path: '',
+                name: 'Main',
+                component: MerchantMain
+              },
+              {
+                path: '/order',
+                name: 'Order',
+                component: MerchantOrder
+              },
+              {
+                path: '/purchases',
+                name: 'Purchases',
+                component: MerchantPurchase
+              },
+              {
+                path: '/purchaseDetail',
+                name: 'PurchaseDetail',
+                component: merchantPurchaseDetails
+              },
+              {
+                path: '/addPurchase',
+                name: 'AddPurchase',
+                component: MerchantAddPurchase
+              }
+            ]
+        }
 ]
 
 const router = createRouter({
