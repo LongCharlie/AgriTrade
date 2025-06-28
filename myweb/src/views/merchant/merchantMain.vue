@@ -55,8 +55,8 @@
 
       <!-- 功能按钮区域 -->
       <div class="actions">
-        <div class="action-btn" @click="$router.push('/farmer')">我的主页</div>
-        <div class="action-btn" @click="navigateTo('publish')">发布采购</div>
+        <div class="action-btn" @click="$router.push('/merchant/orders')">我的主页</div>
+        <div class="action-btn" @click="navigateTo('AddPurchase')">发布采购</div>
         <div class="action-btn" @click="$router.push('/merchant/purchases')">我的采购</div>
       </div>
     </div>

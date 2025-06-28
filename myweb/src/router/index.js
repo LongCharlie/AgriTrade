@@ -42,14 +42,14 @@ const routes = [
 },
 {
         path: "/merchant",
-        component: () => import("../views/merchant/merchantAddPurchase.vue"),
-        children: [ // 子路由
-            { path: '', name: 'FarmerHome', component: () => import("../views/merchant/merchantAddPurchase.vue") },  // 默认子路由,首页
-            { path: 'purchases', component: () => import("../views/merchant/merchantPurchase.vue") },  // 采购
-            { path: 'orders', component: () => import("../views/merchant/merchantOrder.vue") },        //订单
-            { path: 'addpurchase', component: () => import("../views/merchant/merchantAddPurchase.vue") },    //采购发布
-            { path: 'purchasedetail', component: () =>import("../views/merchant/merchantPurchaseDetails.vue")}, //订单详情
-            { path: 'merchanthome', component: () =>import("../views/merchant/merchantMain.vue")}           //主页
+        component: () => import("../views/merchant/merchantMain.vue"),
+        children: [ 
+            // 子路由
+            { path: 'purchases', name: 'merchantPurchase', component: () => import("../views/merchant/merchantPurchase.vue") },  // 采购
+            { path: 'orders', name: 'merchantOrders', component: () => import("../views/merchant/merchantOrder.vue") },        //订单
+            { path: 'addpurchase', name: 'AddPurchase', component: () => import("../views/merchant/merchantAddPurchase.vue") },    //采购发布
+            { path: 'purchasedetail', name: 'purchaseDetails', component: () =>import("../views/merchant/merchantPurchaseDetails.vue")}, //订单详情
+            { path: 'merchantHome', name: 'merchantHome', component: () =>import("../views/merchant/merchantMain.vue")}           //主页
         ]
 }
 ]

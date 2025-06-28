@@ -1,12 +1,12 @@
 <template>
-  <h1>我的订单</h1>
+  <div>
+    <h1>订单</h1>
+  </div>
 </template>
-
-<script setup>
-
-
+<script>
+export default {
+  data(){
+    return {}
+  }
+}
 </script>
-
-<style scoped>
-
-</style>
