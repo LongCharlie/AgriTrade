@@ -9,7 +9,6 @@
           <expert-common-header></expert-common-header>
         </el-header>
         <el-main>
-          <h1>我是Main</h1>
           <router-view />
         </el-main>
       </el-container>

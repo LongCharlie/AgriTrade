@@ -174,6 +174,81 @@ app.patch('/api/expert/profile', authenticateToken, checkRole([ROLES.EXPERT]), a
   }
 });
 
+// 获取用户个人信息
+app.get('/api/user/profile', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const role = req.user.role;
+    
+    let userData;
+    
+    if (role === 'expert') {
+      // 专家用户获取更多信息
+      userData = await db.getExpertDetails(userId);
+    } else {
+      // 普通用户
+      userData = await db.getUserById(userId);
+    }
+    
+    if (!userData) {
+      return res.status(404).json({ error: '用户未找到' });
+    }
+    
+    // 移除敏感信息
+    delete userData.password;
+    
+    res.json(userData);
+    
+  } catch (error) {
+    console.error('获取用户信息错误:', error);
+    res.status(500).json({ error: '获取用户信息失败' });
+  }
+});
+
+// 更新用户基本信息（所有用户通用）
+app.patch('/api/user/profile', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { phone, province, city, district, address_detail } = req.body;
+
+    // 构建更新字段
+    const updates = {};
+    const fields = ['phone', 'province', 'city', 'district', 'address_detail'];
+    
+    fields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
+    });
+
+    // 如果没有可更新的字段
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: '没有提供可更新的字段' });
+    }
+
+    // 执行更新
+    const setClause = Object.keys(updates)
+      .map((key, index) => `${key} = $${index + 1}`)
+      .join(', ');
+    
+    const values = Object.values(updates);
+    values.push(userId);
+
+    const query = `UPDATE users SET ${setClause} WHERE user_id = $${values.length} RETURNING *`;
+    const result = await db.query(query, values);
+
+    res.json({
+      message: '用户信息更新成功',
+      user: result.rows[0]
+    });
+    
+  } catch (error) {
+    console.error('更新用户信息错误:', error);
+    res.status(500).json({ error: '更新用户信息失败' });
+  }
+});
+
+
 // 查询各省份作物平均价格
 app.get('/api/product-price',authenticateToken, checkRole([ROLES.FARMER,ROLES.BUYER]), async (req, res) => {
   try {
@@ -243,7 +318,7 @@ app.get('/api/questions', authenticateToken,checkRole([ROLES.EXPERT,ROLES.FARMER
     const filter = {};
     
     // 如果是农户，只获取自己的问题
-    if (req.user.role === ROLES.FARMER) {
+     if (req.user.role === ROLES.FARMER) {
       filter.farmerId = req.user.userId;
     }
     
@@ -322,10 +397,10 @@ app.patch('/api/questions/:id/status', authenticateToken, checkRole([ROLES.FARME
 // 专家上传证书
 app.post('/api/certificates', authenticateToken, checkRole([ROLES.EXPERT]), async (req, res) => {
   try {
-    const { expert_id, obtain_time, level } = req.body;
+    const { expert_id, obtain_time, level, valid_period } = req.body;
     const result = await db.query(
-      'INSERT INTO certificates (expert_id, obtain_time, level) VALUES ($1, $2, $3) RETURNING *',
-      [expert_id, obtain_time, level]
+      'INSERT INTO certificates (expert_id, obtain_time, level, valid_period) VALUES ($1, $2, $3, $4) RETURNING certificate_id',
+      [expert_id, obtain_time, level, valid_period]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -404,7 +479,7 @@ app.patch('/api/experiences/:id/approve', authenticateToken, checkRole([ROLES.AD
 });
 
 // 采购商发布需求
-app.post('/api/demands', authenticateToken, checkRole(['buyer']), async (req, res) => {
+app.post('/api/demands', authenticateToken, checkRole([ROLES.BUYER]), async (req, res) => {
   const { product_name, quantity, delivery_city } = req.body;
   const buyerId = req.user.userId;
   
@@ -416,7 +491,7 @@ app.post('/api/demands', authenticateToken, checkRole(['buyer']), async (req, re
 });
 
 // 农户申请供货
-app.post('/api/applications', authenticateToken, checkRole(['farmer']), async (req, res) => {
+app.post('/api/applications', authenticateToken, checkRole([ROLES.FARMER]), async (req, res) => {
   const { demand_id, quantity, price } = req.body;
   const farmerId = req.user.userId;
   
@@ -488,3 +563,60 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`服务器运行在 http://localhost:${PORT}`);
 });
+
+// 专家详情接口
+app.get('/api/experts/:id', async (req, res) => {
+  const expertId = req.params.id
+  try {
+    const result = await db.query(
+        'SELECT * FROM experts WHERE expert_id = $1',
+        [expertId]
+    )
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: '专家不存在' })
+    }
+    res.json(result.rows[0])
+  } catch (error) {
+    console.error('获取专家详情失败:', error)
+    res.status(500).json({ error: '服务器错误' })
+  }
+})
+
+//获取专家证书（通过token自动识别当前专家）
+app.get('/api/certificates/my', authenticateToken, checkRole([ROLES.EXPERT]), async (req, res) => {
+  const expertId = req.user.userId; // 从 token 中获取当前用户ID
+
+  try {
+    const result = await db.query(
+        'SELECT * FROM certificates WHERE expert_id = $1',
+        [expertId]
+    );
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('获取证书失败:', error);
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+// 获取专家最近的回答
+app.get('/api/answers/recent', authenticateToken, checkRole([ROLES.EXPERT]), async (req, res) => {
+  const expertId = req.user.userId;
+
+  try {
+    const result = await db.query(`
+      SELECT a.*, q.title 
+      FROM answers a
+      JOIN questions q ON a.question_id = q.question_id
+      WHERE a.expert_id = $1
+      ORDER BY a.answered_at DESC
+      LIMIT 5
+    `, [expertId]);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('获取最近回答失败:', error);
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
