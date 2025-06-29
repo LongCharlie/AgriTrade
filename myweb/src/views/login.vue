@@ -22,31 +22,32 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import axios from 'axios'; // 导入 Axios
+import axios from 'axios';
+import { useUserStore } from '../stores/user'; // 导入用户状态 Store
 
 const username = ref('');
 const password = ref('');
 const error = ref('');
 const router = useRouter();
 
+const userStore = useUserStore(); // 使用用户 Store
+
 // 处理用户登录
 const handleLogin = async () => {
   try {
-    // 使用 Axios 进行 API 请求
     const response = await axios.post('http://localhost:3000/api/login', {
       username: username.value,
       password: password.value,
     });
 
-    const currentUser = {
-      token: response.data.token,
-      username: response.data.user.username,
-      role: response.data.user.role,
-      userId: response.data.user.id,
-    };
+    // 更新用户 Store 的状态
+    userStore.token = response.data.token;
+    userStore.username = response.data.user.username;
+    userStore.role = response.data.user.role;
+    userStore.userId = response.data.user.id;
 
     // 路由跳转
-    switch (currentUser.role) {
+    switch (userStore.role) {
       case 'admin':
         router.push('/admin');
         break;
@@ -63,7 +64,7 @@ const handleLogin = async () => {
         router.push('/welcome');
     }
   } catch (err) {
-    error.value = err.response ? err.response.data.error : '请求失败'; // 获取错误信息
+    error.value = err.response ? err.response.data.error : '请求失败';
   }
 };
 </script>
@@ -71,7 +72,7 @@ const handleLogin = async () => {
 <style scoped>
 .login-container {
   font-family: Arial, sans-serif;
-  min-height: 100vh; /* 填满整个视口 */
+  min-height: 97vh; /* 填满整个视口 */
   display: flex;
   justify-content: center; /* 水平居中 */
   align-items: center; /* 垂直居中 */
