@@ -25,6 +25,16 @@ export const apiRequest = async (url, method = 'GET', data = null) => {
     }
 };
 
+// PATCH 请求封装
+export async function patch(url, data) {
+    return await apiRequest(url, 'PATCH', data);
+}
+
+// DELETE 请求封装
+export async function del(url) {
+    return await apiRequest(url, 'DELETE');
+}
+
 import axios from 'axios'
 function f_base_get (url, params) {
     return new Promise((resolve, reject) => {

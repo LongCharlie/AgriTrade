@@ -1,4 +1,4 @@
-import { get, post } from '../../../utils/api'
+import { get, post, del, patch } from '../../../utils/api'
 
 // 获取排名
 export async function getExpertRank() {
@@ -10,7 +10,7 @@ export async function getExpertById(id) {
   return await get('/api/experts/:id', { id })
 }
 
-// 获取证书
+// 获取所有证书
 export async function getMyCertificates() {
   return await get('/api/certificates/my');
 }
@@ -18,6 +18,16 @@ export async function getMyCertificates() {
 // 上传证书
 export async function uploadCertificate(data) {
   return await post('/api/certificates', data);
+}
+
+// 删除证书
+export async function deleteCertificate(id) {
+  return await del(`/api/certificates/${id}`);
+}
+
+// 更新证书
+export async function updateCertificate(id, updates) {
+  return await patch(`/api/certificates/${id}`, updates);
 }
 
 // 获取所有问题

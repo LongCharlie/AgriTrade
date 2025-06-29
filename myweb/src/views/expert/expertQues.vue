@@ -2,8 +2,15 @@
   <div class="expert-answer-container">
     <h2>专家问答</h2>
 
+    <el-input
+        v-model="searchQuery"
+        placeholder="请输入问题标题或提问者姓名"
+        style="margin-bottom: 20px; width: 100%;"
+        clearable
+    />
+
     <!-- 待回答的问题 -->
-    <el-card v-for="question in questions" :key="question.questionId" shadow="hover" style="margin-bottom: 20px;">
+    <el-card v-for="question in filteredQuestions" :key="question.questionId" shadow="hover" style="margin-bottom: 20px;">
       <div slot="header">
         <span>{{ question.title }}</span>
       </div>
@@ -23,7 +30,7 @@
     </el-card>
 
     <!-- 空数据提示 -->
-    <div v-if="!questions.length" class="no-data">
+    <div v-if="!filteredQuestions.length" class="no-data">
       暂无待回答的问题
     </div>
   </div>
@@ -35,17 +42,58 @@ import { getAllQuestions, submitAnswer } from '../../views/expert/expertApi';
 export default {
   data() {
     return {
-      questions: []
+      questions: [],
+      searchQuery: ''
     };
   },
   mounted() {
     this.fetchQuestions();
   },
+  computed: {
+    filteredQuestions() {
+      if (!this.searchQuery) {
+        return this.questions;
+      }
+
+      const query = this.searchQuery.toLowerCase();
+      return this.questions.filter(q =>
+          q.title.toLowerCase().includes(query) ||
+          (q.farmerName && q.farmerName.toLowerCase().includes(query))
+      );
+    }
+  },
   methods: {
     async fetchQuestions() {
       try {
+        //mock
+        const mockData = [
+          {
+            questionId: 1,
+            farmerName: '张三',
+            title: '如何防治小麦锈病？',
+            content: '我种植的小麦最近出现了锈病，请问有什么有效的防治方法？',
+            createdAt: '2025-04-05 10:30:00',
+            answerContent: ''
+          },
+          {
+            questionId: 2,
+            farmerName: '李四',
+            title: '玉米种植的最佳时间是什么时候？',
+            content: '我在北方种植玉米，想知道最佳的播种时间以及需要注意的事项。',
+            createdAt: '2025-04-06 15:45:00',
+            answerContent: ''
+          },
+          {
+            questionId: 3,
+            farmerName: '王五',
+            title: '有机肥料对土壤的作用有哪些？',
+            content: '我想了解有机肥料对改善土壤的具体作用，以及如何正确使用。',
+            createdAt: '2025-04-07 09:20:00',
+            answerContent: ''
+          }
+        ]
         const res = await getAllQuestions();
-        this.questions = res.map(q => ({
+        this.questions = mockData.map(q => ({//mock
           questionId: q.question_id,
           farmerName: q.username,
           title: q.title,
