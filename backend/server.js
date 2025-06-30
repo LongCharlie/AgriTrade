@@ -696,3 +696,25 @@ app.patch('/api/certificates/:id', authenticateToken, checkRole([ROLES.EXPERT]),
   }
 });
 
+//修改种植记录
+app.patch('/api/planting-records/:id/status', authenticateToken, checkRole([ROLES.FARMER]), async (req, res) => {
+  try {
+    const recordId = parseInt(req.params.id);
+    const newStatus = 'harvested'; 
+    
+    const record = await db.query(
+      'SELECT * FROM planting_records WHERE record_id = $1 AND farmer_id = $2',
+      [recordId, req.user.userId]
+    );
+    if (record.rows.length === 0) {
+      return res.status(404).json({ error: '无权修改此种植记录' });
+    }
+    
+    const updatedRecord = await db.updatePlantingRecordStatus(recordId, newStatus);
+    res.json(updatedRecord);
+  } catch (error) {
+    console.error('修改种植状态失败:', error);
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
