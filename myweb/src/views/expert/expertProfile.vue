@@ -1,6 +1,6 @@
 <template>
   <div class="expert-profile-container">
-    <el-card class="profile-card">
+<!--    <el-card class="profile-card">-->
       <div slot="header">
         <h3>个人信息</h3>
       </div>
@@ -57,7 +57,7 @@
         </el-table>
         <p v-else>暂无证书</p>
       </div>
-    </el-card>
+<!--    </el-card>-->
   </div>
 </template>
 
@@ -130,24 +130,79 @@ export default {
       }
     },
 
+    // uploadCertificate() {
+    //   this.$prompt('请输入证书获得时间（YYYY-MM-DD）、等级、有效期（年）', '上传证书', {
+    //     formLabelWidth: '150px',
+    //     inputType: 'date',
+    //     inputValue: new Date().toISOString().slice(0, 10),
+    //     inputValidator: (value) => {
+    //       if (!value) return '日期不能为空';
+    //       if (!this.levelInput && !this.periodInput) return '请输入等级和有效期';
+    //     },
+    //     showCancelButton: true,
+    //     confirmButtonText: '确定',
+    //     cancelButtonText: '取消'
+    //   }).then(async ({ value: obtainTime, levelInput, periodInput }) => {
+    //     const data = {
+    //       expert_id: this.$store.getters.userId,
+    //       obtain_time: obtainTime,
+    //       level: levelInput,
+    //       valid_period: periodInput
+    //     };
+    //     await uploadCertApi(data);
+    //     this.$message.success('证书上传成功');
+    //     this.initData(); // 刷新证书列表
+    //   }).catch(() => {
+    //     this.$message.info('取消上传');
+    //   });
+    //   }
     uploadCertificate() {
-      this.$prompt('请输入证书获得时间（YYYY-MM-DD）、等级、有效期（年）', '上传证书', {
-        formLabelWidth: '150px',
-        inputType: 'date',
-        inputValue: new Date().toISOString().slice(0, 10),
-        inputValidator: (value) => {
-          if (!value) return '日期不能为空';
-          if (!this.levelInput && !this.periodInput) return '请输入等级和有效期';
-        },
-        showCancelButton: true,
+      this.$prompt('请填写证书信息', '上传证书', {
         confirmButtonText: '确定',
-        cancelButtonText: '取消'
-      }).then(async ({ value: obtainTime, levelInput, periodInput }) => {
+        cancelButtonText: '取消',
+        formItems: [
+          {
+            label: '获得时间',
+            type: 'date',
+            modelKey: 'obtain_time',
+            value: new Date().toISOString().slice(0, 10),
+            rules: [{ required: true, message: '日期不能为空' }]
+          },
+          {
+            label: '等级',
+            type: 'number',
+            modelKey: 'level',
+            value: 1,
+            rules: [{ required: true, message: '等级不能为空' }]
+          },
+          {
+            label: '有效期 (年)',
+            type: 'number',
+            modelKey: 'valid_period',
+            value: 1,
+            rules: [{ required: true, message: '有效期不能为空' }]
+          },
+          {
+            label: '授权单位',
+            type: 'input',
+            modelKey: 'authorizing_unit',
+            value: '中国农业协会'
+          },
+          {
+            label: '描述',
+            type: 'input',
+            modelKey: 'description',
+            value: '暂无描述'
+          }
+        ]
+      }).then(async ({ form }) => {
         const data = {
           expert_id: this.$store.getters.userId,
-          obtain_time: obtainTime,
-          level: levelInput,
-          valid_period: periodInput
+          obtain_time: form.obtain_time,
+          level: form.level,
+          valid_period: form.valid_period,
+          authorizing_unit: form.authorizing_unit || '中国农业协会',
+          description: form.description || '暂无描述'
         };
         await uploadCertApi(data);
         this.$message.success('证书上传成功');
@@ -156,6 +211,7 @@ export default {
         this.$message.info('取消上传');
       });
     }
+
   }
 };
 </script>
@@ -165,8 +221,8 @@ export default {
   padding: 20px;
 }
 .profile-card {
-  max-width: 800px;
-  margin: auto;
+  //max-width: 800px;
+  //margin: auto;
 }
 .user-info {
   margin-bottom: 20px;
