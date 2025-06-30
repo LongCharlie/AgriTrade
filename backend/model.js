@@ -259,7 +259,13 @@ const updateUserProfile = async (userId, updates) => {
   return result.rows[0];
 };
 
-
+const updatePlantingRecordStatus = async (recordId, status) => {
+  const result = await pool.query(
+    'UPDATE planting_records SET growth_status = $1 WHERE record_id = $2 RETURNING *',
+    [status, recordId]
+  );
+  return result.rows[0];
+};
 
 // 导出所有数据库操作方法
 module.exports = {
