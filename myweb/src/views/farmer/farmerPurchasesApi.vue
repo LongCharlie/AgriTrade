@@ -64,7 +64,7 @@ const tableData = ref([]); // 采购数据
 const quotedIds = ref([]); // 存储已报价记录的 ID
 
 // 获取当前用户 ID
-const userId = userStore.currentUserId; // 假设存储用户信息的 Store
+const userId = userStore.userId; // 假设存储用户信息的 Store
 
 // 在组件挂载时获取数据
 onMounted(async () => {

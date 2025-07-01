@@ -24,19 +24,16 @@
           <label for="phone">电话:</label>
           <input type="tel" v-model="registerStore.phone" required />
         </div>
-        <div class="address-group">
-          <div class="address-input">
-            <label for="province">省份:</label>
-            <input type="text" v-model="registerStore.province" required />
-          </div>
-          <div class="address-input">
-            <label for="city">城市:</label>
-            <input type="text" v-model="registerStore.city" required />
-          </div>
-          <div class="address-input">
-            <label for="district">区县:</label>
-            <input type="text" v-model="registerStore.district" required />
-          </div>
+        <div class="input-group">
+          <label for="address">地址:</label>
+          <el-cascader
+              size="large"
+              :options="pcaTextArr"
+              v-model="selectedOptions"
+              @change="handleAddressChange"
+              :placeholder="'请选择省、市、区'"
+              clearable
+          />
         </div>
         <div class="input-group">
           <label for="address_detail">详细地址:</label>
@@ -55,10 +52,25 @@ import { ref } from 'vue';
 import { useRouter, onBeforeRouteLeave } from 'vue-router'; // 导入 onBeforeRouteLeave
 import { useRegisterStore } from '../stores/register'; // 导入 Pinia Store
 import axios from 'axios'; // 引入 Axios
+import { pcaTextArr } from 'element-china-area-data'; // 引入省市区数据
 
 const registerStore = useRegisterStore(); // 使用注册 Store
 const error = ref('');
 const router = useRouter();
+const selectedOptions = ref([]); // 用于存储地址选择
+
+// 处理地址选择变化
+const handleAddressChange = (value) => {
+  if (value.length === 3) {
+    registerStore.province = value[0]; // 赋值省
+    registerStore.city = value[1]; // 赋值市
+    registerStore.district = value[2]; // 赋值区
+  } else {
+    registerStore.province = '';
+    registerStore.city = '';
+    registerStore.district = '';
+  }
+};
 
 // 处理用户注册
 const handleRegister = async () => {
@@ -87,8 +99,6 @@ onBeforeRouteLeave((to, from, next) => {
   next(); // 继续路由跳转
 });
 </script>
-
-
 
 <style scoped>
 .register-container {
@@ -123,16 +133,6 @@ form {
 .input-group {
   display: flex;
   flex-direction: column; /* 垂直排列标签和输入框 */
-}
-
-.address-group {
-  display: flex; /* 水平排列 */
-  gap: 20px; /* 输入框之间的间距 */
-}
-
-.address-input {
-  font-size: 16px;
-  max-width: 175px; /* 最大宽度 */
 }
 
 input, select {

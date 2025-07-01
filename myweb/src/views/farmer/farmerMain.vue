@@ -64,12 +64,12 @@ const userStore = useUserStore(); // 使用用户 Store
 
 // 从用户状态中获取农户信息
 const farmer = ref({
-  farmerName: userStore.username || '未登录农户' // 默认为 '农户' 如果未登录
+  farmerName: userStore.username || '默认农户' // 默认为 '农户' 如果未登录
 });
 
 // 页面导航函数
 const goToHome = () => {
-  router.push('/farmer/frofile'); // 跳转到我的主页
+  router.push('/farmer/profile'); // 跳转到我的主页
 };
 
 const goToOrders = () => {
