@@ -620,3 +620,101 @@ app.get('/api/answers/recent', authenticateToken, checkRole([ROLES.EXPERT]), asy
   }
 });
 
+// 删除证书
+app.delete('/api/certificates/:id', authenticateToken, checkRole([ROLES.EXPERT]), async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // 检查证书是否存在
+    const certResult = await db.query('SELECT * FROM certificates WHERE certificate_id = $1 AND expert_id = $2', [
+      id,
+      req.user.userId
+    ]);
+
+    if (certResult.rows.length === 0) {
+      return res.status(404).json({ error: '证书未找到或无权操作' });
+    }
+
+    // 执行删除
+    await db.query('DELETE FROM certificates WHERE certificate_id = $1', [id]);
+
+    res.json({ message: '证书删除成功' });
+  } catch (error) {
+    console.error('删除证书失败:', error);
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+// 更新证书
+app.patch('/api/certificates/:id', authenticateToken, checkRole([ROLES.EXPERT]), async (req, res) => {
+  const { id } = req.params;
+  const updates = req.body;
+
+  try {
+    // 检查证书是否存在且属于当前专家
+    const certResult = await db.query('SELECT * FROM certificates WHERE certificate_id = $1 AND expert_id = $2', [
+      id,
+      req.user.userId
+    ]);
+
+    if (certResult.rows.length === 0) {
+      return res.status(404).json({ error: '证书未找到或无权操作' });
+    }
+
+    // 构建 SQL 更新语句
+    const fields = ['obtain_time', 'level', 'valid_period', 'authorizing_unit', 'description'];
+    const updateFields = {};
+
+    fields.forEach(field => {
+      if (updates[field] !== undefined) {
+        updateFields[field] = updates[field];
+      }
+    });
+
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({ error: '没有可更新的字段' });
+    }
+
+    const setClause = Object.keys(updateFields)
+        .map((key, index) => `${key} = $${index + 1}`)
+        .join(', ');
+
+    const values = Object.values(updateFields);
+    values.push(id);
+
+    const query = `UPDATE certificates SET ${setClause} WHERE certificate_id = $${values.length} RETURNING *`;
+
+    const result = await db.query(query, values);
+
+    res.json({
+      message: '证书更新成功',
+      certificate: result.rows[0]
+    });
+  } catch (error) {
+    console.error('更新证书失败:', error);
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+//修改种植记录
+app.patch('/api/planting-records/:id/status', authenticateToken, checkRole([ROLES.FARMER]), async (req, res) => {
+  try {
+    const recordId = parseInt(req.params.id);
+    const newStatus = 'harvested'; 
+    
+    const record = await db.query(
+      'SELECT * FROM planting_records WHERE record_id = $1 AND farmer_id = $2',
+      [recordId, req.user.userId]
+    );
+    if (record.rows.length === 0) {
+      return res.status(404).json({ error: '无权修改此种植记录' });
+    }
+    
+    const updatedRecord = await db.updatePlantingRecordStatus(recordId, newStatus);
+    res.json(updatedRecord);
+  } catch (error) {
+    console.error('修改种植状态失败:', error);
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+

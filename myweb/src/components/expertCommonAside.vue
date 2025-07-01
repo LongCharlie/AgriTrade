@@ -101,6 +101,7 @@ export default {
 }
 
 .header {
+   //position: fixed;
    display: flex;
    align-items: center;
    justify-content: flex-start;

@@ -35,14 +35,14 @@
         </el-card>
       </el-col>
 
-      <el-col :span="8" v-for="(crop, index) in filteredCrops" :key="index">
+      <el-col :span="8" v-for="(crop, index) in filteredCrops" :key="index" @click="goToAdd">
         <el-card class="crop-card">
           <div class="card-header">
             <span class="crop-name">{{ crop.name }}</span>
           </div>
-          <div class="card-body">
-            <img :src="crop.image" alt="作物图片" class="crop-image" />
-          </div>
+<!--          <div class="card-body">-->
+<!--            <img :src="crop.image" alt="作物图片" class="crop-image" />-->
+<!--          </div>-->
           <div class="card-footer">
             <span class="start-time">{{ crop.startTime }}</span>
             <span class="status">{{ crop.status }}</span>
@@ -93,6 +93,11 @@ const goToAddNewCrop = () => {
   router.push('/farmer/planting/new');
 };
 
+// 跳转到添加种植记录页面
+const goToAdd = () => {
+  router.push('/farmer/planting/add');
+};
+
 // Update the filter based on button click
 const filterRecords = (status) => {
   filter.value = status; // Update the filter
@@ -138,6 +143,7 @@ const filterRecords = (status) => {
   width: 100%; /* 适应父容器宽度 */
   margin: 20px 0; /* 上下间距 */
   cursor: pointer;
+  height: 150px; /* 固定高度 */
 }
 
 .add-card {
@@ -152,6 +158,9 @@ const filterRecords = (status) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 10px; /* 添加卡片头部和底部之间的间距 */
+  font-size: 20px; /* 字体大小 */
+  font-weight: bold; /* 加粗文字 */
 }
 
 .card-body {
@@ -170,6 +179,7 @@ const filterRecords = (status) => {
 .card-footer {
   display: flex;
   justify-content: space-between;
+  margin-top: 60px;
 }
 
 .planting-record-title {

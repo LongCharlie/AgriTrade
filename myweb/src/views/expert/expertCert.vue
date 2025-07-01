@@ -2,59 +2,75 @@
   <div class="certifications-container">
     <h2>我的证书</h2>
 
-    <!-- 证书列表 -->
-    <!--
-删除按钮 + /api/certificates/:id DELETE 接口
-修改证书，添加编辑弹窗 + PATCH 接口
-查看图片，图片字段用 image_path 显示图片
-分页加载
-审核状态显示 -->
-    <el-table :data="certifications" style="width: 100%">
-      <el-table-column prop="certificateId" label="证书ID" align="center" />
-      <el-table-column prop="obtainTime" label="获得时间" align="center" />
-      <el-table-column prop="level" label="等级" align="center" />
-      <el-table-column prop="validPeriod" label="有效期(年)" align="center" />
-      <el-table-column prop="authorizingUnit" label="授权单位" align="center" />
-      <el-table-column prop="description" label="描述" align="center" />
-      <el-table-column prop="status" label="状态" align="center">
-        <template #default="scope">
-          <el-tag :type="scope.row.status === 'valid' ? 'success' : 'danger'">
-            {{ scope.row.status === 'valid' ? '有效' : '过期' }}
-          </el-tag>
-        </template>
-      </el-table-column>
-    </el-table>
-
-    <!-- 上传证书表单 -->
-    <h3 style="margin-top: 40px">上传新证书</h3>
-    <el-form @submit.prevent="uploadCertificate" label-width="120px">
-      <el-form-item label="获得时间">
-        <el-date-picker v-model="newCert.obtainTime" type="date" placeholder="选择日期" />
-      </el-form-item>
-      <el-form-item label="等级">
-        <el-input-number v-model="newCert.level" :min="1" :max="5" />
-      </el-form-item>
-      <el-form-item label="有效期(年)">
-        <el-input-number v-model="newCert.validPeriod" :min="1" :max="10" />
-      </el-form-item>
-      <el-form-item label="授权单位">
-        <el-input v-model="newCert.authorizingUnit" />
-      </el-form-item>
-      <el-form-item label="描述">
-        <el-input v-model="newCert.description" type="textarea" />
-      </el-form-item>
-      <el-button type="primary" native-type="submit">提交</el-button>
-    </el-form>
-
-    <!-- 空数据提示 -->
-    <div v-if="!certifications.length" class="no-data">
-      暂无证书记录
+    <!-- 状态筛选按钮 -->
+    <div class="filter-buttons">
+      <el-button :type="filter === 'all' ? 'primary' : 'default'" @click="filterCertificates('all')">全部</el-button>
+      <el-button :type="filter === 'valid' ? 'primary' : 'default'" @click="filterCertificates('valid')">有效</el-button>
+      <el-button :type="filter === 'expired' ? 'primary' : 'default'" @click="filterCertificates('expired')">过期</el-button>
     </div>
+
+    <!-- 证书卡片展示区域 -->
+    <el-row :gutter="40" class="crop-cards">
+      <!-- 添加新证书卡片 -->
+      <el-col :span="8" @click="goToAddNewCert">
+        <el-card class="crop-card add-card">
+          <div class="card-content">
+            <p>+</p>
+            <p>上传新证书</p>
+          </div>
+        </el-card>
+      </el-col>
+
+      <!-- 已有证书卡片 -->
+      <el-col :span="8" v-for="(cert, index) in filteredCertificates" :key="index">
+        <el-card class="crop-card">
+          <div class="card-header">
+            <span class="cert-name">{{ cert.authorizingUnit }}</span>
+            <el-tag :type="cert.status === 'valid' ? 'success' : 'danger'">
+              {{ cert.status === 'valid' ? '有效' : '过期' }}
+            </el-tag>
+          </div>
+          <div class="card-body">
+            <p><strong>获得时间：</strong>{{ cert.obtainTime }}</p>
+            <p><strong>等级：</strong>{{ cert.level }}</p>
+            <p><strong>有效期：</strong>{{ cert.validPeriod }} 年</p>
+            <p><strong>描述：</strong>{{ cert.description || '暂无描述' }}</p>
+          </div>
+          <div class="card-footer">
+            <span class="delete-btn" @click.stop="deleteCertificate(cert.certificateId)">删除</span>
+            <span class="edit-btn" @click.stop="editCertificate(cert)">编辑</span>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 弹窗 - 编辑证书 -->
+    <el-dialog title="编辑证书" :visible.sync="dialogVisible" width="50%">
+      <el-form @submit.prevent="updateCertificate" label-width="120px">
+        <el-form-item label="获得时间">
+          <el-date-picker v-model="editingCert.obtainTime" type="date" placeholder="选择日期" />
+        </el-form-item>
+        <el-form-item label="等级">
+          <el-input-number v-model="editingCert.level" :min="1" :max="5" />
+        </el-form-item>
+        <el-form-item label="有效期(年)">
+          <el-input-number v-model="editingCert.validPeriod" :min="1" :max="10" />
+        </el-form-item>
+        <el-form-item label="授权单位">
+          <el-input v-model="editingCert.authorizingUnit" />
+        </el-form-item>
+        <el-form-item label="描述">
+          <el-input v-model="editingCert.description" type="textarea" />
+        </el-form-item>
+        <el-button type="primary" native-type="submit">保存</el-button>
+        <el-button @click="dialogVisible = false">取消</el-button>
+      </el-form>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { getMyCertificates, uploadCertificate } from '../../views/expert/expertApi';
+import { getMyCertificates, uploadCertificate, deleteCertificate, updateCertificate } from '../../views/expert/expertApi';
 
 export default {
   data() {
@@ -66,8 +82,22 @@ export default {
         validPeriod: 5,
         authorizingUnit: '中国农业协会',
         description: ''
-      }
+      },
+      editingCert: null,
+      dialogVisible: false,
+      filter: 'all' // 默认显示全部证书
     };
+  },
+  computed: {
+    // 根据状态过滤证书
+    filteredCertificates() {
+      if (this.filter === 'valid') {
+        return this.certifications.filter(cert => cert.status === 'valid');
+      } else if (this.filter === 'expired') {
+        return this.certifications.filter(cert => cert.status === 'expired');
+      }
+      return this.certifications;
+    }
   },
   created() {
     this.fetchCertificates();
@@ -75,14 +105,62 @@ export default {
   methods: {
     async fetchCertificates() {
       try {
-        const res = await getMyCertificates(); // 不再需要传 expertId
-        this.certifications = res.map(cert => ({
+        //mock
+        const mockData = [
+          {
+            certificate_id: 1,
+            obtain_time: '2020-05-15',
+            level: 3,
+            valid_period: 5,
+            authorizing_unit: '中国农业协会',
+            description: '高级农业技术专家认证',
+            status: 'valid'
+          },
+          {
+            certificate_id: 2,
+            obtain_time: '2018-10-20',
+            level: 4,
+            valid_period: 10,
+            authorizing_unit: '农业农村部',
+            description: '作物栽培与管理专家资格证',
+            status: 'expired'
+          },
+          {
+            certificate_id: 3,
+            obtain_time: '2021-03-12',
+            level: 2,
+            valid_period: 5,
+            authorizing_unit: '国家农科院',
+            description: '植物病虫害防治专业认证',
+            status: 'valid'
+          },
+          {
+            certificate_id: 4,
+            obtain_time: '2019-07-01',
+            level: 5,
+            valid_period: 3,
+            authorizing_unit: '国际农业合作组织',
+            description: '有机农业国际认证',
+            status: 'valid'
+          },
+          {
+            certificate_id: 5,
+            obtain_time: '2022-01-10',
+            level: 1,
+            valid_period: 2,
+            authorizing_unit: '中国农业大学',
+            description: '农业可持续发展研究认证',
+            status: 'valid'
+          }
+        ];
+        const res = await getMyCertificates();
+        this.certifications = mockData.map(cert => ({ //mock
           certificateId: cert.certificate_id,
           obtainTime: cert.obtain_time,
           level: cert.level,
           validPeriod: cert.valid_period,
           authorizingUnit: cert.authorizing_unit,
-          description: cert.description || '暂无描述',
+          description: cert.description,
           status: cert.status
         }));
       } catch (error) {
@@ -90,11 +168,22 @@ export default {
         this.certifications = [];
       }
     },
+    goToAddNewCert() {
+      this.editingCert = {
+        obtainTime: '',
+        level: 1,
+        validPeriod: 5,
+        authorizingUnit: '中国农业协会',
+        description: ''
+      };
+      this.dialogVisible = true;
+    },
     async uploadCertificate() {
       try {
-        const expertId = this.$store.getters.userId; // 或者从 Vuex/token 中获取
+        const expertId = this.$store.getters.userId;
+
         const payload = {
-          expert_id: expertId, // 当前专家的 ID
+          expert_id: expertId,
           obtain_time: this.newCert.obtainTime,
           level: this.newCert.level,
           valid_period: this.newCert.validPeriod,
@@ -127,19 +216,104 @@ export default {
         this.$message.error('证书上传失败');
         console.error('上传证书失败:', error);
       }
+    },
+    async updateCertificate() {
+      try {
+        const payload = {
+          obtain_time: this.editingCert.obtainTime,
+          level: this.editingCert.level,
+          valid_period: this.editingCert.validPeriod,
+          authorizing_unit: this.editingCert.authorizingUnit,
+          description: this.editingCert.description
+        };
+
+        await updateCertificate(this.editingCert.certificateId, payload);
+
+        const cert = this.certifications.find(c => c.certificateId === this.editingCert.certificateId);
+        if (cert) {
+          Object.assign(cert, this.editingCert);
+        }
+
+        this.dialogVisible = false;
+        this.$message.success('证书更新成功');
+      } catch (error) {
+        this.$message.error('证书更新失败');
+        console.error('更新证书失败:', error);
+      }
+    },
+    async deleteCertificate(id) {
+      try {
+        await deleteCertificate(id);
+        this.certifications = this.certifications.filter(cert => cert.certificateId !== id);
+        this.$message.success('证书删除成功');
+      } catch (error) {
+        this.$message.error('证书删除失败');
+        console.error('删除证书失败:', error);
+      }
+    },
+    editCertificate(cert) {
+      this.editingCert = { ...cert };
+      this.dialogVisible = true;
+    },
+    filterCertificates(status) {
+      this.filter = status;
     }
   }
 };
 </script>
 
 <style scoped>
-.certifications-container {
-  padding: 20px;
+.crop-cards {
+  margin-top: 20px;
 }
 
-.no-data {
+.crop-card {
+  width: 100%;
+  margin: 20px 0;
+  cursor: pointer;
+}
+
+.add-card {
   text-align: center;
-  margin-top: 20px;
+  background-color: #f5f5f5;
+  border: 1px dashed #ccc;
+  min-height: 100px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-body {
+  padding: 10px 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
   color: #999;
+  margin-top: 10px;
+}
+
+.delete-btn,
+.edit-btn {
+  cursor: pointer;
+  color: #409EFF;
+  margin-left: 10px;
+}
+
+.delete-btn {
+  color: #f56c6c;
+}
+
+.filter-buttons {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
 }
 </style>

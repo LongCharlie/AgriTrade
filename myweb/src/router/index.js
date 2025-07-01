@@ -8,6 +8,7 @@ import expertCert from "@/views/expert/expertCert.vue";
 import expertQues from "@/views/expert/expertQues.vue";
 import expertDetail from "@/views/expert/expertDetail.vue";
 import expertProfile from "@/views/expert/expertProfile.vue";
+import expertAnswer from "@/views/expert/expertAnswer.vue";
 
 import MainLayout from '@/views/merchant/MainLayout.vue'
 import MerchantHome from '@/views/merchant/merchantHome.vue'
@@ -42,6 +43,11 @@ const routes = [
         path: '/expert/detail/:id',
         component: expertDetail,
         meta: { requiresAuth: true } // 需要登录才能访问
+    },
+    {
+        path: '/expert/ques/:id/answer',
+        component: expertAnswer,
+        meta: { requiresAuth: true, role: ['expert'] }
     },
     {
         path: "/farmer",
