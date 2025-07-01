@@ -73,16 +73,18 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useDemandStore } from '../../stores/demand';
+import { useQuoteStore } from '../../stores/quote';
 import { useUserStore } from '../../stores/user'; // 导入用户存储
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 
 const router = useRouter();
 const demandStore = useDemandStore();
+const quoteStore = useQuoteStore();
 const userStore = useUserStore(); // 使用用户存储
 
 const currentDemand = demandStore.currentDemand;
-const currentQuote = demandStore.currentQuote; // 从 demandStore 中获取当前报价
+const currentQuote = quoteStore.currentQuote; // 从 demandStore 中获取当前报价
 const userProvince = ref(''); // 改为存储省份
 const formData = ref({
   quantity: currentQuote ? currentQuote.quantity : null,
@@ -93,8 +95,8 @@ const formData = ref({
 const mockGrowthRecords = [
   { record_id: 51, product_name: '萝卜', province: '陕西省', growth_status: 'harvested', created_at: '2024/01/03' },
   { record_id: 56, product_name: '番茄', province: '河北省', growth_status: 'harvested', created_at: '2024/08/25' },
-  { record_id: 57, product_name: '萝卜', province: '陕西省', growth_status: 'growing', created_at: '2024/10/11' },
-  { record_id: 52, product_name: '南瓜', province: '陕西省', growth_status: 'harvested', created_at: '2024/06/09' },
+  { record_id: 57, product_name: '萝卜', province: '广东省', growth_status: 'harvested', created_at: '2024/10/11' },
+  { record_id: 52, product_name: '南瓜', province: '陕西省', growth_status: 'growing', created_at: '2024/06/09' },
   { record_id: 53, product_name: '黄瓜', province: '陕西省', growth_status: 'harvested', created_at: '2023/12/14' },
   { record_id: 54, product_name: '番茄', province: '陕西省', growth_status: 'harvested', created_at: '2024/05/07' },
   { record_id: 55, product_name: '辣椒', province: '陕西省', growth_status: 'harvested', created_at: '2025/03/22' },
@@ -157,17 +159,17 @@ const submitQuote = async () => {
 
   // 准备发送到后端的数据
   const requestData = {
-    demand_id: currentDemand ? currentDemand.demand_id : null, // 获取 currentDemand 的 id
+    application_id: currentQuote.application_id,
+    record_id: growthRecord,
     quantity,
     price,
-    record_id: growthRecord,
     province: userProvince.value, // 使用选中的省份
   };
 
   // 发送请求到后端
   try {
     const token = userStore.token; // 从用户存储中获取 token
-    const response = await axios.post('http://localhost:3000/api/applications', requestData, {
+    const response = await axios.post('http://localhost:3000/api/applications-modify', requestData, {
       headers: {
         'Authorization': `Bearer ${token}` // 发送 token
       }

@@ -91,8 +91,8 @@ const formData = ref({
 const mockGrowthRecords = [
   { record_id: 51, product_name: '萝卜', province: '陕西省', growth_status: 'harvested', created_at: '2024/01/03' },
   { record_id: 56, product_name: '番茄', province: '河北省', growth_status: 'harvested', created_at: '2024/08/25' },
-  { record_id: 57, product_name: '萝卜', province: '陕西省', growth_status: 'growing', created_at: '2024/10/11' },
-  { record_id: 52, product_name: '南瓜', province: '陕西省', growth_status: 'harvested', created_at: '2024/06/09' },
+  { record_id: 57, product_name: '萝卜', province: '广东省', growth_status: 'harvested', created_at: '2024/10/11' },
+  { record_id: 52, product_name: '南瓜', province: '陕西省', growth_status: 'growing', created_at: '2024/06/09' },
   { record_id: 53, product_name: '黄瓜', province: '陕西省', growth_status: 'harvested', created_at: '2023/12/14' },
   { record_id: 54, product_name: '番茄', province: '陕西省', growth_status: 'harvested', created_at: '2024/05/07' },
   { record_id: 55, product_name: '辣椒', province: '陕西省', growth_status: 'harvested', created_at: '2025/03/22' },

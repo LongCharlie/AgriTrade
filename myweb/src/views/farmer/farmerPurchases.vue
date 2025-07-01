@@ -45,7 +45,8 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
-import { useDemandStore } from '../../stores/demand'; // 导入需求 Store
+import { useDemandStore } from '../../stores/demand';
+import { useQuoteStore } from '../../stores/quote';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '../../stores/user'; // 假设在这里获取用户信息
 
@@ -54,8 +55,9 @@ const searchaddress = ref('');
 const searchQuantity = ref(null);
 const filterOption = ref('all'); // 选择筛选的状态
 const router = useRouter();
-const demandStore = useDemandStore(); // 使用需求 Store
-const userStore = useUserStore(); // 使用用户 Store
+const demandStore = useDemandStore();
+const quoteStore = useQuoteStore();
+const userStore = useUserStore();
 
 // 用于存储采购需求数据和已报价数据
 const motableData = ref([]);
@@ -63,24 +65,27 @@ const moquotedIds = ref([]);
 
 // 模拟数据
 const simulatedMotableData = [
-  { demand_id: 21, product_name: '番茄', quantity: 100, buyerName: 'A老板', buyer_id: 7, address: '北京', updated_at: '1小时前' },
-  { demand_id: 22, product_name: '黄瓜', quantity: 200, buyerName: '老王', buyer_id: 7, address: '河北', updated_at: '3小时前' },
-  { demand_id: 23, product_name: '萝卜', quantity: 50, buyerName: '孙经理', buyer_id: 7, address: '广东', updated_at: '1天前' },
+  { demand_id: 21, product_name: '番茄', quantity: 100, buyerName: 'A老板', buyer_id: 7, address: '北京市', updated_at: '2025-07-01 12:30:45.123' },
+  { demand_id: 22, product_name: '黄瓜', quantity: 200, buyerName: '老王', buyer_id: 7, address: '河北省', updated_at: '2025-06-02 12:30:45.123' },
+  { demand_id: 23, product_name: '萝卜', quantity: 50, buyerName: '孙经理', buyer_id: 7, address: '广东省', updated_at: '202-07-02 12:30:45.123' },
 ];
 
 const simulatedMoquotedIds = [
-  { application_id: 1, demand_id: 21, record_id: 56, quantity: 70, price: 15, province: '河北' },
-  { application_id: 2, demand_id: 23, record_id: 57, quantity: 45, price: 20, province: '陕西' },
+  { application_id: 1, demand_id: 21, record_id: 56, quantity: 70, price: 15, province: '河北省' },
+  { application_id: 2, demand_id: 23, record_id: 57, quantity: 45, price: 20, province: '陕西省' },
 ];
 
 // 用于存储过滤后的表格数据
 const filteredTableData = ref([]); // 初始化为空
 
 const fetchData = async () => {
-  const userId = userStore.userId; // 从 userStore 获取用户ID
-
+  const token = userStore.token; // 从用户存储中获取 token
   try {
-    const productResponse = await axios.get(`/api/products?userId=${userId}`); // 替换为你的 API 地址
+    const productResponse = await axios.get('http://localhost:3000/api/demands/all', {
+      headers: {
+        'Authorization': `Bearer ${token}` // 设置 Authorization 头
+      }
+    });
     motableData.value = productResponse.data; // 假设 API 返回的数据就是我们需要的格式
   } catch (error) {
     console.error('获取采购需求数据失败，使用模拟数据', error);
@@ -88,7 +93,11 @@ const fetchData = async () => {
   }
 
   try {
-    const quotedResponse = await axios.get(`/api/quotes?userId=${userId}`); // 替换为你的 API 地址
+    const quotedResponse = await axios.get('http://localhost:3000/api/quotes', {
+      headers: {
+        'Authorization': `Bearer ${token}` // 设置 Authorization 头
+      }
+    });
     moquotedIds.value = quotedResponse.data; // 假设 API 返回的数据就是我们需要的格式
   } catch (error) {
     console.error('获取已报价数据失败，使用模拟数据', error);
@@ -131,9 +140,9 @@ const handleModify = (row) => {
   // 查找对应的报价信息
   const currentQuote = moquotedIds.value.find(quoted => quoted.demand_id === row.demand_id);
   if (currentQuote) {
-    demandStore.currentQuote = currentQuote;
+    quoteStore.currentQuote = currentQuote;
   } else {
-    demandStore.currentQuote = null;
+    quoteStore.currentQuote = null;
   }
   router.push('/farmer/purchases/quotemodify'); // 跳转到修改页面
 };
