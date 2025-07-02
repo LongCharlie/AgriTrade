@@ -58,7 +58,7 @@ const handleLogin = async () => {
         router.push('/expert');
         break;
       case 'buyer':
-        router.push('/buyer');
+        router.push('/merchant');
         break;
       default:
         router.push('/welcome');
