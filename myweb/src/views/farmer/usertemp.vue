@@ -28,7 +28,7 @@
 
         <!-- 昵称 -->
         <el-form-item label="昵称">
-          <el-input v-model="user.nickname" disabled></el-input>
+          <el-input v-model="user.nickname"></el-input>
         </el-form-item>
 
         <!-- 位置 -->
@@ -51,12 +51,11 @@
         <el-form-item label="详细地址">
           <el-input v-model="user.address_detail"></el-input>
         </el-form-item>
-
         <!-- 联系方式 -->
+
         <el-form-item label="联系方式">
           <el-input v-model="user.phone"></el-input>
         </el-form-item>
-
         <!-- 保存按钮 -->
         <el-form-item>
           <el-button type="primary" @click="saveProfile">保存修改</el-button>
@@ -76,22 +75,22 @@ import profile from '../../assets/logo.png'; // 引入默认头像
 
 const userStore = useUserStore();
 const user = ref({
-  id: null,  // 备用 ID
-  nickname: '',  // 备用昵称
-  province: '',  // 备用省份
-  city: '',      // 备用城市
-  district: '',   // 备用区县
+  id: null,
+  nickname: '',
+  province: '',
+  city: '',
+  district: '',
   phone: '',
-  address_detail: '', // 备用详细地址
-  avatar_url: profile        // 备用头像
+  address_detail: '',
+  avatar_url: ''
 });
 
 const mockuser = ref({
   id: '0000',  // 备用 ID
   nickname: '默认用户',  // 备用昵称
-  province: '北京市',  // 备用省份
-  city: '市辖区',      // 备用城市
-  district: '朝阳区',   // 备用区县
+  province: '河北省',  // 备用省份
+  city: '保定市',      // 备用城市
+  district: '徐水区',   // 备用区县
   phone: '12345678900', // 备用电话
   address_detail: '默认详细地址', // 备用详细地址
   avatar_url: profile        // 备用头像
@@ -100,7 +99,6 @@ const mockuser = ref({
 // 定义选择的省市区
 const selectedLocation = ref([user.value.province, user.value.city, user.value.district]);
 const tempAvatarUrl = ref(user.value.avatar_url); // 使用头像 URL
-const token = userStore.token; // 从用户存储中获取 token
 
 // 获取用户信息
 onMounted(async () => {
@@ -116,11 +114,13 @@ onMounted(async () => {
       user.value.address_detail = data.value.address_detail;
       user.value.avatar_url = data.avatar_url;
       tempAvatarUrl.value = ref(user.value.avatar_url);
+      selectedLocation.value = ref([user.value.province, user.value.city, user.value.district]);
     } else {
       ElMessage.warning('没有用户信息，使用默认值');
       user.value = mockuser.value;
-      selectedLocation.value = [mockuser.value.province, mockuser.value.city, mockuser.value.district];
-      }
+      selectedLocation.value = ref([mockuser.value.province, mockuser.value.city, mockuser.value.district]);
+      tempAvatarUrl.value = profile;
+    }
   } catch (error) {
     console.error('获取用户信息失败:', error);
   }
@@ -162,19 +162,11 @@ const handleLocationChange = (value) => {
 // 保存数据
 const saveProfile = async () => {
   try {
-    await axios.patch('http://localhost:3000/api/user/profile', {
-      phone: user.value.phone,
-      province: user.value.province,
-      city: user.value.city,
-      district: user.value.district,
-      address_detail: user.value.address_detail,
+    await axios.patch('/api/user/profile', {
+      ...user.value,
       avatar_url: tempAvatarUrl.value
-    }, {
-      headers: {
-        'Authorization': `Bearer ${token}` // 发送 token
-      }
+
     });
-    user.value.avatar_url = tempAvatarUrl.value;
     userStore.setUser(user.value); // 更新 Pinia 中的用户信息
     ElMessage.success('保存成功');
   } catch (error) {

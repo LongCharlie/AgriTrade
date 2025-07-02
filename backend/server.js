@@ -209,11 +209,11 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
 app.patch('/api/user/profile', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { phone, province, city, district, address_detail } = req.body;
+    const { phone, province, city, district, address_detail, avatar_url } = req.body;
 
     // 构建更新字段
     const updates = {};
-    const fields = ['phone', 'province', 'city', 'district', 'address_detail'];
+    const fields = ['phone', 'province', 'city', 'district', 'address_detail', 'avatar_url'];
     
     fields.forEach(field => {
       if (req.body[field] !== undefined) {
@@ -504,11 +504,11 @@ app.post('/api/applications', authenticateToken, checkRole([ROLES.FARMER]), asyn
 
 // 新增种植记录接口
 app.post('/api/planting-records', authenticateToken, checkRole([ROLES.FARMER]), async (req, res) => {
-  const { product_name, province, city } = req.body;
+  const { product_name, province} = req.body;
   const farmerId = req.user.userId;
   const record = await db.query(
-    'INSERT INTO planting_records (farmer_id, product_name, province, city) VALUES ($1,$2,$3,$4) RETURNING *',
-    [farmerId, product_name, province, city]
+    'INSERT INTO planting_records (farmer_id, product_name, province) VALUES ($1,$2,$3,$4) RETURNING *',
+    [farmerId, product_name, province]
   );
   res.status(201).json(record.rows[0]);
 });

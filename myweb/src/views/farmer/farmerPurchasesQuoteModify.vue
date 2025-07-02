@@ -121,7 +121,7 @@ onMounted(async () => {
     });
     growthRecords.value = growthRecordsResponse.data;
   } catch (error) {
-    console.error('获取数据失败:', error);
+    console.error('获取种植记录数据失败，使用模拟数据:', error);
     growthRecords.value = mockGrowthRecords;
   }
 });
