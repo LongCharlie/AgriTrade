@@ -76,36 +76,7 @@
       </el-table-column>
     </el-table>
 
-    <!-- 物流信息弹窗 -->
-    <el-dialog v-model="dialogVisible" title="确认发货">
-      <!-- 给输入框添加底部间距 -->
-      <el-input
-          type="textarea"
-          v-model="logisticsInfo"
-          placeholder="描述物流信息，如订单号等"
-          class="logistics-input"
-          :rows="4"
-      ></el-input>
-      <template #footer>
-        <span class="dialog-footer">
-        <el-button @click="dialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="submitDelivery">确认发货</el-button>
-      </span>
-      </template>
-    </el-dialog>
 
-    <!-- 退货原因弹窗 -->
-    <el-dialog v-model="reasonDialogVisible" title="售后原因">
-      <div>{{ reason }}</div>
-    </el-dialog>
-
-    <!-- 售后通过理由弹窗 -->
-    <el-dialog v-model="successReasonDialogVisible" title="售后通过理由">
-      <div>
-        <p>售后原因: {{ reason }}</p>
-        <p>通过理由: {{ successReason }}</p>
-      </div>
-    </el-dialog>
   </div>
 </template>
 
@@ -120,13 +91,6 @@ const filterYear = ref('');
 const filterMonth = ref('');
 const filterDay = ref('');
 const filterOption = ref('all'); // 选择筛选的状态
-const dialogVisible = ref(false); // 控制发货弹窗显示
-const logisticsInfo = ref(''); // 物流信息输入
-const reasonDialogVisible = ref(false); // 控制售后原因弹窗
-const successReasonDialogVisible = ref(false); // 控制售后通过理由弹窗
-const reason = ref(''); // 售后原因
-const successReason = ref(''); // 售后通过理由
-
 const router = useRouter();
 
 // 模拟订单数据
@@ -134,20 +98,24 @@ const tableData = ref([
   { id: 1, product: '白米', quantity: 100, price: 15, address: '北京', buyer: 'A老板', contact: '123456789', updateTime: '2023-10-01', status: '待发货' },
   { id: 2, product: '西瓜', quantity: 200, price: 10, address: '河北', buyer: '老王', contact: '987654321', updateTime: '2023-10-02', status: '已完成' },
   { id: 3, product: '白米', quantity: 50, price: 8, address: '广东', buyer: '孙经理', contact: '135792468', updateTime: '2024-10-03', status: '已完成' },
-  { id: 4, product: '玉米', quantity: 150, price: 12, address: '四川', buyer: '小李', contact: '159753864', updateTime: '2024-10-04', status: '售后中', afterSaleReason: '玉米变质（附图）' },
-  { id: 5, product: '黄豆', quantity: 80, price: 20, address: '江苏', buyer: '老张', contact: '246813579', updateTime: '2024-11-05', status: '已售后', afterSaleReason: '变质（附图）', successReason: '同意' },
-  { id: 6, product: '白米', quantity: 100, price: 8, address: '广东', buyer: '孙经理', contact: '135792468', updateTime: '2024-11-03', status: '待确认' },
+  { id: 4, product: '玉米', quantity: 150, price: 12, address: '四川', buyer: '小李', contact: '159753864', updateTime: '2024-10-04', status: '售后中' },
+  { id: 5, product: '黄豆', quantity: 80, price: 20, address: '江苏', buyer: '老张', contact: '246813579', updateTime: '2024-11-05', status: '已售后' },
+  { id: 6, product: '白米', quantity: 100, price: 8, address: '广东', buyer: '孙经理', contact: '135792468', updateTime: '2024-11-03', status: '已完成' },
   { id: 7, product: '玉米', quantity: 150, price: 12, address: '四川', buyer: '小李', contact: '159753864', updateTime: '2024-11-04', status: '已完成' },
   { id: 8, product: '黄豆', quantity: 80, price: 20, address: '江苏', buyer: '老张', contact: '246813579', updateTime: '2024-11-05', status: '已完成' },
   { id: 9, product: '玉米', quantity: 150, price: 12, address: '四川', buyer: '小李', contact: '159753864', updateTime: '2024-11-04', status: '已完成' },
   { id: 10, product: '黄豆', quantity: 80, price: 20, address: '江苏', buyer: '老张', contact: '246813579', updateTime: '2024-11-05', status: '已完成' },
-
-  // 其他订单数据
-]);
+  { id: 11, product: '白米', quantity: 100, price: 15, address: '北京', buyer: 'A老板', contact: '123456789', updateTime: '2023-10-01', status: '待发货' },
+  { id: 12, product: '西瓜', quantity: 200, price: 10, address: '河北', buyer: '老王', contact: '987654321', updateTime: '2023-10-02', status: '已完成' },
+  { id: 13, product: '白米', quantity: 50, price: 8, address: '广东', buyer: '孙经理', contact: '135792468', updateTime: '2024-10-03', status: '已完成' },
+  { id: 14, product: '玉米', quantity: 150, price: 12, address: '四川', buyer: '小李', contact: '159753864', updateTime: '2024-10-04', status: '售后中' },
+  { id: 15, product: '黄豆', quantity: 80, price: 20, address: '江苏', buyer: '老张', contact: '246813579', updateTime: '2024-11-05', status: '已售后' },
+  { id: 16, product: '白米', quantity: 100, price: 8, address: '广东', buyer: '孙经理', contact: '135792468', updateTime: '2024-11-03', status: '已完成' },
+  ]);
 
 // 计算总收入
 const totalRevenue = computed(() => {
-  return (filteredTableData.value || []).filter(order => order.status === '已完成')
+  return (filteredTableData.value || []).filter(order => order.status === '已完成') // 只计算已完成的订单
       .reduce((sum, order) => sum + (order.quantity * order.price), 0);
 });
 
@@ -184,29 +152,17 @@ const performSearch = () => {
 // 操作处理函数
 const confirmDelivery = (order) => {
   console.log('确认发货', order);
-  dialogVisible.value = true; // 打开发货弹窗
-};
-
-const submitDelivery = () => {
-  console.log('发货信息', logisticsInfo.value);
-  // 更新 order 的状态等...
-
-  dialogVisible.value = false;
-  // 更新物流信息
-  logisticsInfo.value = '';
+  // 这里可以处理确认发货逻辑
 };
 
 const viewReason = (order) => {
   console.log('查看原因', order);
-  reason.value = order.afterSaleReason; // 从订单中获取售后原因
-  reasonDialogVisible.value = true; // 打开售后原因弹窗
+  // 这里可以处理查看售后原因
 };
 
 const viewSuccessReason = (order) => {
-  console.log('查看通过理由', order);
-  reason.value = order.afterSaleReason; // 获取售后原因
-  successReason.value = order.successReason; // 获取通过理由
-  successReasonDialogVisible.value = true; // 打开售后通过理由弹窗
+  console.log('查看理由', order);
+  // 这里可以处理查看同意售后理由
 };
 </script>
 
@@ -221,22 +177,4 @@ h1 {
   gap: 10px; /* 输入框之间的间距 */
 }
 
-/* 通过深度选择器修改输入框样式（scoped 模式下需穿透） */
-::v-deep .logistics-input {
-  margin-bottom: 10px;  /* 输入框与底部按钮的间距 */
-}
-
-/* 关键：仅控制弹窗容器居中，不影响内部内容布局 */
-::v-deep .el-dialog {
-  /* 固定定位，相对于整个视口 */
-  position: fixed !important;
-  /* 水平居中：左边缘在视口50%位置 */
-  left: 50% !important;
-  /* 垂直居中：上边缘在视口50%位置 */
-  top: 50% !important;
-  /* 通过位移修正居中（向左/上移动自身50%宽度/高度） */
-  transform: translate(-50%, -50%) !important;
-  /* 清除默认margin，避免干扰居中 */
-  margin: 0 !important;
-}
 </style>

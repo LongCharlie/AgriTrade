@@ -25,20 +25,21 @@
       </el-select>
       <el-button type="primary" @click="performSearch">确认搜索</el-button> <!-- 确认搜索按钮 -->
     </div>
-
-    <el-table :data="filteredTableData" style="width: 100%">
-      <el-table-column prop="product_name" label="产品种类" />
-      <el-table-column prop="quantity" label="采购量(kg)" />
-      <el-table-column prop="buyerName" label="采购方" />
-      <el-table-column prop="address" label="收货地" />
-      <el-table-column prop="updated_at" label="更新时间" />
-      <el-table-column label="操作">
-        <template #default="scope">
-          <el-button @click="handleQuote(scope.row)" type="text" v-if="!isQuoted(scope.row)">[去报价]</el-button>
-          <el-button @click="handleModify(scope.row)" type="text" v-else>[修改]</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <div class="table-container">
+      <el-table :data="filteredTableData" style="width: 100%">
+        <el-table-column prop="product_name" label="产品种类" />
+        <el-table-column prop="quantity" label="采购量(kg)" />
+        <el-table-column prop="buyerName" label="采购方" />
+        <el-table-column prop="address" label="收货地" />
+        <el-table-column prop="updated_at" label="更新时间" />
+        <el-table-column label="操作">
+          <template #default="scope">
+            <el-button @click="handleQuote(scope.row)" type="text" v-if="!isQuoted(scope.row)">[去报价]</el-button>
+            <el-button @click="handleModify(scope.row)" type="text" v-else>[修改]</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
   </div>
 </template>
 

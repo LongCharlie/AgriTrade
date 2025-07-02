@@ -1,19 +1,37 @@
 <template>
   <div>
     <h1>种植建议</h1>
-    <p>表格列出上一年的总数和均价 + 点击产品可以查看近几年的总数和均价趋势图</p>
   </div>
   <div class="container">
     <div class="chart-container">
       <canvas ref="pieChart"></canvas>
     </div>
-
     <div class="table-container">
-      <el-table :data="sortedProductSummary" style="width: 100%">
-        <el-table-column prop="name" label="产品种类"></el-table-column>
-        <el-table-column prop="total" label="总数(kg)" sortable></el-table-column>
-        <el-table-column prop="averagePrice" label="平均单价(元/kg)" sortable :formatter="formatAveragePrice"></el-table-column>
-      </el-table>
+      <table>
+        <thead>
+        <tr>
+          <th @click="sort('name')">
+            产品种类
+            <span :class="['sort-icon', getSortIconClass('name')]"></span>
+          </th>
+          <th @click="sort('total')">
+            总数(kg)
+            <span :class="['sort-icon', getSortIconClass('total')]">{{ getSortIcon('total') }}</span>
+          </th>
+          <th @click="sort('averagePrice')">
+            平均单价
+            <span :class="['sort-icon', getSortIconClass('averagePrice')]">{{ getSortIcon('averagePrice') }}</span>
+          </th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="(item, index) in sortedProductSummary" :key="index">
+          <td>{{ item.name }}</td>
+          <td>{{ item.total }}</td>
+          <td>{{ item.averagePrice.toFixed(2) }}</td>
+        </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </template>
@@ -102,6 +120,19 @@ const sort = (field) => {
   });
 };
 
+// 获取排序图标
+const getSortIcon = (field) => {
+  if (sorting.value.field === field) {
+    return sorting.value.order === 'asc' ? '▲' : '▼'; // 使用简单的箭头符号
+  }
+  return '▲▼'; // 默认返回占位符
+};
+
+// 获取排序图标的类名
+const getSortIconClass = (field) => {
+  return sorting.value.field === field ? 'active' : '';
+};
+
 // 生成 HSL 颜色函数
 const generateHSLColor = (index) => {
   const hue = (index * 30) % 360; // 色相，每个颜色间隔30度
@@ -139,11 +170,6 @@ const renderChart = () => {
       }
     }
   });
-};
-
-// 格式化平均单价为两位小数
-const formatAveragePrice = (row, column, cellValue) => {
-  return cellValue ? cellValue.toFixed(2) : '0.00';
 };
 
 onMounted(() => {
