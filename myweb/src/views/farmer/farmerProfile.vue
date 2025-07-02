@@ -13,7 +13,8 @@
             action="/api/upload"
             :show-file-list="false"
             :on-change="handleAvatarChange"
-            :before-upload="beforeAvatarUpload">
+            :before-upload="beforeAvatarUpload"
+        >
           <el-button type="primary">上传头像</el-button>
         </el-upload>
       </div>
@@ -33,14 +34,15 @@
         <!-- 位置 -->
         <el-form-item label="位置">
           <el-row :gutter="10">
-            <el-col :span="8">
-              <el-input v-model="user.province" placeholder="省"></el-input>
-            </el-col>
-            <el-col :span="8">
-              <el-input v-model="user.city" placeholder="市"></el-input>
-            </el-col>
-            <el-col :span="8">
-              <el-input v-model="user.district" placeholder="区"></el-input>
+            <el-col :span="24">
+              <el-cascader
+                  size="large"
+                  :options="pcaTextArr"
+                  v-model="selectedLocation"
+                  @change="handleLocationChange"
+                  :placeholder="'请选择省、市、区'"
+                  clearable
+              />
             </el-col>
           </el-row>
         </el-form-item>
@@ -49,15 +51,14 @@
         <el-form-item label="详细地址">
           <el-input v-model="user.address_detail"></el-input>
         </el-form-item>
-
         <!-- 联系方式 -->
+
         <el-form-item label="联系方式">
           <el-input v-model="user.phone"></el-input>
         </el-form-item>
-
         <!-- 保存按钮 -->
         <el-form-item>
-          <el-button type="primary" @click="saveProfile">保存</el-button>
+          <el-button type="primary" @click="saveProfile">保存修改</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -69,53 +70,47 @@ import { ref, onMounted } from 'vue';
 import { useUserStore } from '@/stores/user'; // 引入 Pinia 用户存储
 import { ElMessage } from 'element-plus';
 import axios from 'axios';
+import { pcaTextArr } from 'element-china-area-data'; // 引入省市区数据
+import profile from '../../assets/logo.png'; // 引入默认头像
 
 const userStore = useUserStore();
 const user = ref({
-  id: '',
-  nickname: '',
-  province: '',
-  city: '',
-  district: '',
-  phone: '',
-  address_detail: '',
-  avatar_url: '' // 用户头像URL字段
-});
+  id: '0000',  // 备用 ID
+  nickname: '默认用户',  // 备用昵称
+  province: '河北省',  // 备用省份
+  city: '保定市',      // 备用城市
+  district: '徐水区',   // 备用区县
+  phone: '12345678900', // 备用电话
+  address_detail: '默认详细地址', // 备用详细地址
+  avatar_url: profile        // 备用头像
+}); // 设置备用值
 
-// 临时保存头像 URL
-const tempAvatarUrl = ref('');
-
-// 默认用户数据
-const defaultUserData = {
-  id: '0001',
-  nickname: '默认用户',
-  province: '广东',
-  city: '广州',
-  district: '越秀区',
-  phone: '12345678901',
-  address_detail: '默认地址',
-  avatar_url: '../../assets/logo.png' // 默认头像
-};
+// 定义选择的省市区
+const selectedLocation = ref([user.value.province, user.value.city, user.value.district]);
+const tempAvatarUrl = ref(user.value.avatar_url || profile); // 使用头像 URL
 
 // 获取用户信息
 onMounted(async () => {
   try {
-    const { data } = await axios.get('/api/user/profile');
-    userStore.setUser(data);
-    user.value = { ...data };
-    tempAvatarUrl.value = data.avatar_url || ''; // 初始化头像 URL
+    const data = userStore.$state; // 从 Pinia 中获取用户信息
+    if (data && Object.keys(data).length) {
+      // 如果从 userStore 获取的值不为空
+      Object.assign(user.value, data); // 合并用户信息
+      tempAvatarUrl.value = user.value.avatar_url || profile;
+      user.value.phone = data.phone || '12345678900';
+      user.value.address_detail = data.address_detail || '默认详细地址';
+    } else {
+      ElMessage.warning('没有用户信息，使用默认值');
+    }
   } catch (error) {
-    console.error('加载个人信息失败:', error);
-    ElMessage.error('加载数据失败，将使用默认数据');
-    user.value = { ...defaultUserData };
-    tempAvatarUrl.value = defaultUserData.avatar_url; // 设置默认头像
+    console.error('获取用户信息失败:', error);
   }
 });
 
 // 处理头像上传
 const handleAvatarChange = (file) => {
   if (file.status === 'success') {
-    tempAvatarUrl.value = file.response.url; // 假设响应中返回了文件的 URL
+    tempAvatarUrl.value = file.response.url;
     ElMessage.success('头像上传成功');
   } else if (file.status === 'fail') {
     ElMessage.error('头像上传失败');
@@ -127,9 +122,22 @@ const beforeAvatarUpload = (file) => {
   const isImage = file.type.startsWith('image/');
   if (!isImage) {
     ElMessage.error('只能上传图片格式的文件!');
-    return false; // 阻止上传
+    return false;
   }
-  return true; // 允许上传
+  return true;
+};
+
+// 处理位置变化
+const handleLocationChange = (value) => {
+  if (Array.isArray(value) && value.length === 3) {
+    user.value.province = value[0];
+    user.value.city = value[1];
+    user.value.district = value[2];
+  } else {
+    user.value.province = '';
+    user.value.city = '';
+    user.value.district = '';
+  }
 };
 
 // 保存数据
@@ -137,9 +145,9 @@ const saveProfile = async () => {
   try {
     await axios.patch('/api/user/profile', {
       ...user.value,
-      avatar_url: tempAvatarUrl.value // 提交最新的头像 URL
+      avatar_url: tempAvatarUrl.value
     });
-    userStore.setUser(user.value);
+    userStore.setUser(user.value); // 更新 Pinia 中的用户信息
     ElMessage.success('保存成功');
   } catch (error) {
     console.error('保存失败:', error);
@@ -149,7 +157,6 @@ const saveProfile = async () => {
 </script>
 
 <style scoped>
-
 .farmer-profile-container {
   padding: 20px;
 }
@@ -167,7 +174,7 @@ const saveProfile = async () => {
   height: 80px;
   border-radius: 50%;
   margin-right: 10px;
-  border: 1px solid #D0D0D0; /* 添加浅灰色边框 */
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); /* 添加阴影效果，仅作为视觉增强 */
+  border: 1px solid #D0D0D0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 </style>

@@ -2,10 +2,10 @@
   <div class="full-height-container">
     <!-- 右上角用户信息 -->
     <el-dropdown>
-    <div class="user-info" @click="navigateToProfile">
-      <img :src="user.avatar" alt="User Avatar" class="user-avatar"/>
-      <span class="user-name">{{ user.name }}</span>
-    </div>
+      <div class="user-info" @click="navigateToProfile">
+        <img :src="user.avatar" alt="User Avatar" class="user-avatar"/>
+        <span class="user-name">{{ user.name }}</span>
+      </div>
       <template #dropdown>
         <el-dropdown-menu>
           <el-dropdown-item @click="navigateToProfile">个人中心</el-dropdown-item>
@@ -13,42 +13,62 @@
         </el-dropdown-menu>
       </template>
     </el-dropdown>
+
+    <!-- 加载状态 -->
+    <div v-if="loading" class="loading">加载中...</div>
   </div>
 </template>
 
 <script>
-import profile from '../assets/logo.png'; // 引入头像
+import profile from '../assets/logo.png'; // 引入默认头像
 import { useUserStore } from '../stores/user'; // 导入用户状态 Store
+import axios from 'axios';
 
 export default {
   data() {
     return {
+      loading: true, // 加载状态
       user: {
-        avatar: profile, // 用户头像
-        name: "农户1超长用户名不全部显示" // 用户名
+        avatar: profile, // 默认用户头像
+        name: "默认农户" // 默认用户名
       },
     }
   },
   mounted() {
-    this.calculateMenuHeight();
-    // 监听窗口大小变化以调整高度
-    window.addEventListener('resize', this.calculateMenuHeight);
+    this.fetchUserProfile(); // 获取用户信息
   },
-  beforeUnmount() {
-    // 清理监听器
-    window.removeEventListener('resize', this.calculateMenuHeight);
-  },
+
   methods: {
-    calculateMenuHeight() {
-      const headerElement = this.$refs.header; // 获取header
-      const headerHeight = headerElement ? headerElement.clientHeight : 0; // 获取header的高度
-      this.menuHeight = window.innerHeight - headerHeight ; // 计算el-menu的高度
-    },
-    handleOpen(key, keyPath) {
-      console.log(key, keyPath);
-    },
-    handleClose(key, keyPath) {
-      console.log(key, keyPath);
+    async fetchUserProfile() {
+      try {
+        const userStore = useUserStore();
+        const response = await axios.get('/api/user/profile'); // 获取用户信息
+        const userData = response.data;
+
+        // 更新用户信息
+        userStore.setUser({
+          username: userData.username || "默认农户",
+          phone: userData.phone || "",
+          role: userData.role || "农户",
+          userId: userData.userId || null,
+          avatar_url: userData.avatar_url || profile,
+          province: userData.province || "",
+          city: userData.city || "",
+          district: userData.district || "",
+          address_detail: userData.address_detail || ""
+        });
+
+        // 更新用户显示
+        this.user.avatar = userStore.avatar_url;
+        this.user.name = userStore.username;
+      } catch (error) {
+        console.error('获取用户信息失败:', error);
+        // 在获取失败时使用默认信息
+        this.user.avatar = profile; // 默认头像
+        this.user.name = "默认农户超长用户名不全部显示"; // 默认用户名
+      } finally {
+        this.loading = false; // 加载完成
+      }
     },
     navigateToProfile() {
       this.$router.push('/farmer/profile'); // 跳转到用户个人主页
@@ -97,4 +117,12 @@ export default {
   max-width: 100px; /* 控制最大宽度，以便文字过长时能够展示省略号 */
 }
 
+.loading {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 18px;
+  color: #333;
+}
 </style>

@@ -27,11 +27,11 @@
     </div>
 
     <el-table :data="filteredTableData" style="width: 100%">
-      <el-table-column prop="product" label="产品种类" />
+      <el-table-column prop="product_name" label="产品种类" />
       <el-table-column prop="quantity" label="采购量(kg)" />
-      <el-table-column prop="buyer" label="采购方" />
+      <el-table-column prop="buyerName" label="采购方" />
       <el-table-column prop="address" label="收货地" />
-      <el-table-column prop="updateTime" label="更新时间" />
+      <el-table-column prop="updated_at" label="更新时间" />
       <el-table-column label="操作">
         <template #default="scope">
           <el-button @click="handleQuote(scope.row)" type="text" v-if="!isQuoted(scope.row)">[去报价]</el-button>
@@ -64,7 +64,21 @@ const tableData = ref([]); // 采购数据
 const quotedIds = ref([]); // 存储已报价记录的 ID
 
 // 获取当前用户 ID
-const userId = userStore.currentUserId; // 假设存储用户信息的 Store
+const userId = userStore.userId; // 假设存储用户信息的 Store
+
+
+// 模拟的采购需求数据
+const motableData = ref([
+  { demand_id: 1, product_name: '白米', quantity: 100, buyerName: 'A老板', buyer_id:7, address: '北京', updated_at: '1小时前' },
+  { demand_id: 2, product_name: '西瓜', quantity: 200, buyerName: '老王', buyer_id:7, address: '河北', updated_at: '3小时前' },
+  { demand_id: 3, product_name: '红薯', quantity: 50, buyerName: '孙经理', buyer_id:7, address: '广东', updated_at: '1天前' },
+]);
+
+// 模拟已报价的记录ID
+const moquotedIds = ref([
+  { application_id: 1, demand_id: 1, record_id: 56, quantity: 100, price: 15, province: '广东' },
+  { application_id: 2, demand_id: 2, record_id: 57, quantity: 200, price: 20, province: '河南' },
+]);
 
 // 在组件挂载时获取数据
 onMounted(async () => {
