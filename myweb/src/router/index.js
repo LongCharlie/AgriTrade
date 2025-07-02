@@ -11,13 +11,13 @@ import expertProfile from "@/views/expert/expertProfile.vue";
 import expertAnswer from "@/views/expert/expertAnswer.vue";
 
 import MainLayout from '@/views/merchant/MainLayout.vue'
-import MerchantHome from '@/views/merchant/merchantHome.vue'
 import MerchantOrder from '@/views/merchant/merchantOrder.vue'
 import merchantPurchaseDetails from '@/views/merchant/merchantPurchaseDetails.vue'
-import AddPurchase from '@/views/merchant/merchantAddPurchase.vue'
 import MerchantPurchase from '@/views/merchant/merchantPurchase.vue';
 import MerchantAddPurchase from '@/views/merchant/merchantAddPurchase.vue';
 import MerchantMain from '@/views/merchant/merchantMain.vue'
+import MerchantHome from '@/views/merchant/merchantHome.vue'
+import MerchantMessage from '@/views/merchant/merchantMessage.vue'
 
 const routes = [
     { path: '', component: () => import("../views/welcom.vue")},
@@ -70,36 +70,46 @@ const routes = [
         ]
 },
       {
-            path: '/',
-            component: MainLayout,
-            children: [
-              {
-                path: '',
-                name: 'Main',
-                component: MerchantMain
-              },
-              {
-                path: '/order',
-                name: 'Order',
-                component: MerchantOrder
-              },
-              {
-                path: '/purchases',
-                name: 'Purchases',
-                component: MerchantPurchase
-              },
-              {
-                path: '/purchaseDetail',
-                name: 'PurchaseDetail',
-                component: merchantPurchaseDetails
-              },
-              {
-                path: '/addPurchase',
-                name: 'AddPurchase',
-                component: MerchantAddPurchase
-              }
-            ]
+      path: '/',
+      component: MainLayout,
+      children: [
+        {
+          path: '',
+          name: 'Main',
+          component: MerchantMain
+        },
+        {
+          path: '/order',
+          name: 'Order',
+          component: MerchantOrder
+        },
+        {
+          path: '/purchases',
+          name: 'Purchases',
+          component: MerchantPurchase
+        },
+        {
+          path: '/purchaseDetail',
+          name: 'PurchaseDetail',
+          component: merchantPurchaseDetails
+        },
+        {
+          path: '/addPurchase',
+          name: 'AddPurchase',
+          component: MerchantAddPurchase
+        },
+        {
+          path: '/merchantHome',
+          name: 'MerchantHome',
+          component: MerchantHome
+        },
+        {
+          path: '/merchantMessage',
+          name: 'MerchantMessage',
+          component: MerchantMessage
         }
+      ]
+  }
 ]
 
 const router = createRouter({

@@ -32,9 +32,14 @@ export default {
         case 'purchases':
           this.$router.push('/purchases');
           break;
+        case 'MerchantMessage':
+          this.$router.push('merchantMessage');
+          break;
+        case 'MerchantHome':
+          this.$router.push('/merchantHome');
+          break;
       }
     },
-    
     // 处理采购页面跳转到新增采购
     goToAddPurchase() {
       this.$router.push('/addPurchase');

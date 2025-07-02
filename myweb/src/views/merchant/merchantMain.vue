@@ -28,9 +28,9 @@
 
     <!-- 功能按钮区域 -->
     <div class="actions">
-      <div class="action-btn" @click="navigateTo('my-home')">我的主页</div>
+      <div class="action-btn" @click="navigateTo('myhome')">我的主页</div>
       <div class="action-btn" @click="navigateTo('publish')">发布采购</div>
-      <div class="action-btn" @click="navigateTo('my-purchase')">我的采购</div>
+      <div class="action-btn" @click="navigateTo('mypurchase')">我的采购</div>
     </div>
   </div>
 </template>
@@ -66,12 +66,12 @@ export default {
       this.currentIndex = (this.currentIndex + 1) % this.carouselImages.length;
     },
     navigateTo(path) {
-      if (path === 'my-home') {
-        this.$router.push('/');
+      if (path === 'myhome') {
+        this.$router.push('/MerchantHome');
       } else if (path === 'publish') {
-        console.log('发布采购');
-      } else if (path === 'my-purchase') {
-        console.log('我的采购');
+        this.$router.push('/addPurchase');
+      } else if (path === 'mypurchase') {
+        this.$router.push('/purchases');
       }
     }
   },

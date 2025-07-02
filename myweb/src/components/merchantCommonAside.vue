@@ -1,5 +1,5 @@
 <template>
-  <div class="sidebar">
+  <div :class="['sidebar', isCollapsed ? 'collapsed' : '']">
     <!-- LOGO -->
     <div class="logo-container">
       <img src="@/assets/platform_logo.png" alt="系统LOGO" class="logo-image">
@@ -12,18 +12,32 @@
         <span>🏠</span> 首页
       </li>
       
+      <!-- 采购 -->
+      <li class="nav-item" 
+          :class="{ active: $route.path === '/purchases' || $route.path === '/addPurchase' || $route.path === '/purchaseDetail' }"
+          @click="$emit('navigate', 'purchases')">
+        <span>🛒</span> 采购
+      </li>
+
       <!-- 订单 -->
       <li class="nav-item" 
           :class="{ active: $route.path === '/order' }"
           @click="$emit('navigate', 'orders')">
         <span>📋</span> 订单
       </li>
-      
-      <!-- 采购 -->
+
+      <!-- 消息 -->
       <li class="nav-item" 
-          :class="{ active: $route.path === '/purchases' || $route.path === '/addPurchase' || $route.path === '/purchaseDetail' }"
-          @click="$emit('navigate', 'purchases')">
-        <span>🛒</span> 采购
+          :class="{ active: $route.path === '/merchantMessage' }"
+          @click="$emit('navigate', 'MerchantMessage')">
+        <span>✉️</span> 消息
+      </li>
+      
+      <!-- 我的 -->
+      <li class="nav-item" 
+          :class="{ active: $route.path === '/MerchantHome' }"
+          @click="$emit('navigate', 'MerchantHome')">
+        <span>👤</span> 我的
       </li>
     </ul>
   </div>
@@ -31,29 +45,62 @@
 
 <script>
 export default {
-  name: 'SideBarNav'
-}
+  name: 'SideBarNav',
+  props: {
+    isCollapsed: {
+      type: Boolean,
+      default: false
+    }
+  }
+};
 </script>
 
 <style scoped>
 .sidebar {
-  width: 200px;
+  width: 100px;
   background-color: #b9eeb7ad;
-  color: white;
+  color: black;
   height: 100vh;
   padding: 20px 0;
   display: flex;
   flex-direction: column;
+  z-index: 100;
 }
 
-/* 修改LOGO容器样式 */
+/* 侧边栏折叠样式 */
+.sidebar.collapsed {
+  width: 60px; /* 折叠后的宽度 */
+  overflow: hidden;
+}
+
+/* 折叠时只显示图标 */
+.sidebar.collapsed .nav-item span {
+  margin-right: 0;
+}
+
+.sidebar.collapsed .nav-item span::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 70px;
+  background: white;
+  color: black;
+  padding: 5px 10px;
+  border-radius: 3px;
+  display: none;
+}
+
+.sidebar.collapsed .nav-item:hover span::after {
+  display: block;
+}
+
+/* LOGO容器样式 */
 .logo-container {
   text-align: center;
   margin-bottom: 30px;
   padding: 0 10px;
 }
 
-/* 添加LOGO图片样式 */
+/* LOGO图片样式 */
 .logo-image {
   max-width: 100%; /* 确保图片不超过容器宽度 */
   max-height: 80px; /* 控制LOGO高度 */
