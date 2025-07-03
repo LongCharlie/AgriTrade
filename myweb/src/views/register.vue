@@ -18,7 +18,6 @@
             <option value="farmer">农户</option>
             <option value="expert">专家</option>
             <option value="buyer">买家</option>
-            <option value="admin">管理员</option>
           </select>
         </div>
         <div class="input-group">
@@ -35,6 +34,7 @@
               :placeholder="'请选择省、市、区'"
               clearable
           />
+          <span v-if="!addressSelected" class="error">地址为必选项</span>
         </div>
         <div class="input-group">
           <label for="address_detail">详细地址:</label>
@@ -50,31 +50,42 @@
 
 <script setup>
 import { ref } from 'vue';
-import { useRouter, onBeforeRouteLeave } from 'vue-router'; // 导入 onBeforeRouteLeave
-import { useRegisterStore } from '../stores/register'; // 导入 Pinia Store
-import axios from 'axios'; // 引入 Axios
-import { pcaTextArr } from 'element-china-area-data'; // 引入省市区数据
+import { useRouter, onBeforeRouteLeave } from 'vue-router';
+import { useRegisterStore } from '../stores/register';
+import axios from 'axios';
+import { pcaTextArr } from 'element-china-area-data';
 
-const registerStore = useRegisterStore(); // 使用注册 Store
+const registerStore = useRegisterStore();
 const error = ref('');
 const router = useRouter();
-const selectedOptions = ref([]); // 用于存储地址选择
+const selectedOptions = ref([]);
+const addressSelected = ref(false); // 记录地址选择状态
 
-// 处理地址选择变化
 const handleAddressChange = (value) => {
-  if (value.length === 3) {
-    registerStore.province = value[0]; // 赋值省
-    registerStore.city = value[1]; // 赋值市
-    registerStore.district = value[2]; // 赋值区
+  // 确保 value 是定义的，并且是一个数组
+  if (Array.isArray(value) && value.length === 3) {
+    registerStore.province = value[0];
+    registerStore.city = value[1];
+    registerStore.district = value[2];
+    addressSelected.value = true; // 地址已选择
   } else {
-    registerStore.province = '';
+    // When address is cleared or invalid
+    registerStore.province = ''; // Reset these values to empty
     registerStore.city = '';
     registerStore.district = '';
+    addressSelected.value = false; // 地址未选择状态
   }
 };
 
-// 处理用户注册
 const handleRegister = async () => {
+  console.log("注册函数被调用"); // 调试信息
+
+  // 检查地址是否被选择
+  if (!addressSelected.value) {
+    error.value = '地址是必选项，请选择地址';
+    return;
+  }
+
   try {
     const response = await axios.post('http://localhost:3000/api/register', {
       username: registerStore.username,
@@ -85,19 +96,22 @@ const handleRegister = async () => {
       city: registerStore.city,
       district: registerStore.district,
       address_detail: registerStore.address_detail
-    }); // 使用 Axios 进行 API 请求
-
+    });
+    if (!response.ok) {
+      const errorData = await response.text();
+      throw new Error(errorData || '注册失败');
+    }
     alert('注册成功，请登录');
-    router.push('/login'); // 注册成功后跳转到登录页面
+    router.push('/login');
   } catch (err) {
-    error.value = err.response ? err.response.data.error : '请求失败'; // 获取错误信息并显示
+    console.log('报错' + `err`); // 打印错误以便调试
+    error.value = err.response.data;
   }
 };
 
-// 在离开当前路由时清空注册数据
 onBeforeRouteLeave((to, from, next) => {
-  registerStore.$reset(); // 重置注册 Store 数据
-  next(); // 继续路由跳转
+  registerStore.$reset();
+  next();
 });
 </script>
 

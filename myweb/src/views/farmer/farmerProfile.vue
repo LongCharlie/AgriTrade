@@ -80,10 +80,10 @@ const user = ref({
   nickname: '',  // 备用昵称
   province: '',  // 备用省份
   city: '',      // 备用城市
-  district: '',   // 备用区县
+  district: '',  // 备用区县
   phone: '',
   address_detail: '', // 备用详细地址
-  avatar_url: profile        // 备用头像
+  avatar_url: ''        // 备用头像
 });
 
 const mockuser = ref({
@@ -98,31 +98,32 @@ const mockuser = ref({
 }); // 设置备用值
 
 // 定义选择的省市区
-const selectedLocation = ref([user.value.province, user.value.city, user.value.district]);
+const selectedLocation = ref([]); // 初始化为空数组以便后续设置
+
 const tempAvatarUrl = ref(user.value.avatar_url); // 使用头像 URL
 const token = userStore.token; // 从用户存储中获取 token
 
 // 获取用户信息
 onMounted(async () => {
-  try {
-    const data = userStore.$state; // 从 Pinia 中获取用户信息
-    if (data.userId) {
-      user.value.id = data.userId;
-      user.value.nickname = data.username;
-      user.value.province = data.value.province;
-      user.value.city = data.value.city;
-      user.value.district = data.value.district;
-      user.value.phone = data.value.phone;
-      user.value.address_detail = data.value.address_detail;
-      user.value.avatar_url = data.avatar_url;
-      tempAvatarUrl.value = ref(user.value.avatar_url);
-    } else {
-      ElMessage.warning('没有用户信息，使用默认值');
-      user.value = mockuser.value;
-      selectedLocation.value = [mockuser.value.province, mockuser.value.city, mockuser.value.district];
-      }
-  } catch (error) {
-    console.error('获取用户信息失败:', error);
+  user.value.id = userStore.userId;
+  user.value.nickname = userStore.username;
+  user.value.province = userStore.province;
+  user.value.city = userStore.city;
+  user.value.district = userStore.district;
+  user.value.phone = userStore.phone;
+  user.value.address_detail = userStore.address_detail;
+  user.value.avatar_url = userStore.avatar_url;
+
+  console.log('用户主页//user.value');
+  console.log(user.value);
+  if (user.value.id) {
+    // 依据用户信息设置省市区选择的默认值
+    selectedLocation.value = [user.value.province, user.value.city, user.value.district];
+    console.log('用户主页//拿到数据');
+  } else {
+    console.error('没有用户信息，使用默认值');
+    user.value = mockuser.value;
+    selectedLocation.value = [mockuser.value.province, mockuser.value.city, mockuser.value.district];
   }
 });
 
@@ -168,14 +169,20 @@ const saveProfile = async () => {
       city: user.value.city,
       district: user.value.district,
       address_detail: user.value.address_detail,
-      avatar_url: tempAvatarUrl.value
+      // avatar_url: tempAvatarUrl.value
     }, {
       headers: {
         'Authorization': `Bearer ${token}` // 发送 token
       }
     });
     user.value.avatar_url = tempAvatarUrl.value;
-    userStore.setUser(user.value); // 更新 Pinia 中的用户信息
+    // 更新 Pinia 中的用户信息
+    userStore.phone = user.value.phone,
+    userStore.province = user.value.province,
+    userStore.city = user.value.city,
+    userStore.district = user.value.district,
+    userStore.address_detail = user.value.address_detail,
+    userStore.avatar_url = user.value.avatar_url;
     ElMessage.success('保存成功');
   } catch (error) {
     console.error('保存失败:', error);

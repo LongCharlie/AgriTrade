@@ -209,11 +209,11 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
 app.patch('/api/user/profile', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { phone, province, city, district, address_detail, avatar_url } = req.body;
+    const { phone, province, city, district, address_detail } = req.body;
 
     // 构建更新字段
     const updates = {};
-    const fields = ['phone', 'province', 'city', 'district', 'address_detail', 'avatar_url'];
+    const fields = ['phone', 'province', 'city', 'district', 'address_detail'];
     
     fields.forEach(field => {
       if (req.body[field] !== undefined) {

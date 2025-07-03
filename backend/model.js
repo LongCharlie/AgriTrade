@@ -6,10 +6,10 @@ const jwt = require('jsonwebtoken');
 // 数据库连接配置
 const pool = new Pool({
   user: 'postgres',
-  host: '10.139.189.116',
+  host: '22.tcp.cpolar.top',
   database: 'agriculture db',
   password: '12345678',
-  port: 65432,
+  port: 14963,
   ssl: false,
 });
 

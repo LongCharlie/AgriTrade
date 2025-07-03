@@ -42,25 +42,43 @@ export default {
     async fetchUserProfile() {
       try {
         const userStore = useUserStore();
-        const response = await axios.get('/api/user/profile'); // 获取用户信息
-        const userData = response.data;
+        const token = userStore.token; // 从用户存储中获取 token
 
-        // 更新用户信息
-        userStore.setUser({
-          username: userData.username || "默认农户",
-          phone: userData.phone || "",
-          role: userData.role || "农户",
-          userId: userData.userId || null,
-          avatar_url: userData.avatar_url || profile,
-          province: userData.province || "",
-          city: userData.city || "",
-          district: userData.district || "",
-          address_detail: userData.address_detail || ""
+        const response = await axios.get('http://localhost:3000/api/user/profile', {
+          headers: {
+            'Authorization': `Bearer ${token}` // 设置 Authorization 头
+          }
         });
+        console.log('这里是Header//response');
+        console.log(response.data);
+        const userData = response.data;
+        console.log('这里是Header//userData');
+        console.log(userData);
+        // 更新用户信息
+        userStore.userId = userData.user_id;
+        userStore.userName = userData.userName;
+        userStore.role = userData.role;
+        userStore.phone = userData.phone;
+        userStore.province = userData.province;
+        userStore.city = userData.city;
+        userStore.district = userData.district;
+        userStore.address_detail = userData.address_detail;
+        userStore.avatar_url = userData.avatar_url;
 
+        console.log('这里是Header//userStore');
+        console.log(userStore.userId);
+        console.log(userStore.username);
+        console.log(userStore.role);
+        console.log(userStore.phone);
+        console.log(userStore.province);
+        console.log(userStore.city);
+        console.log(userStore.district);
+        console.log(userStore.address_detail);
+        console.log(userStore.avatar_url);
         // 更新用户显示
         this.user.avatar = userStore.avatar_url;
         this.user.name = userStore.username;
+
       } catch (error) {
         console.error('获取用户信息失败:', error);
         // 在获取失败时使用默认信息
