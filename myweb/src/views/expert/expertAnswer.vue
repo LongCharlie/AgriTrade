@@ -28,6 +28,7 @@
                 <el-input v-model="question.answerContent" type="textarea" :rows="4" />
               </el-form-item>
               <el-button type="primary" native-type="submit">提交回答</el-button>
+              <el-button @click="$router.back()">取消</el-button>
             </el-form>
           </div>
         </el-card>

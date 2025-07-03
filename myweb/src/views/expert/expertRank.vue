@@ -9,25 +9,25 @@
       <!-- 第二名 -->
       <div class="podium-item second" v-if="topExperts[1]">
         <div class="podium-rank">2</div>
-        <el-avatar @click="viewDetails" :src="getDefaultAvatar(topExperts[1].expertId)" size="large" />
-        <div class="podium-name">{{ topExperts[1].realName }}</div>
-        <div class="podium-score">{{ topExperts[1].answerCount }} 回答</div>
+        <el-avatar @click="viewDetails(2)" :src="getDefaultAvatar(topExperts[1].expert_id)" size="large" />
+        <div class="podium-name">{{ topExperts[1].real_name }}</div>
+        <div class="podium-score">{{ topExperts[1].answer_count }} 回答</div>
       </div>
 
       <!-- 第一名 -->
       <div class="podium-item first" v-if="topExperts[0]">
         <div class="podium-rank">1</div>
-        <el-avatar :src="getDefaultAvatar(topExperts[0].expertId)" size="large" />
-        <div class="podium-name">{{ topExperts[0].realName }}</div>
-        <div class="podium-score">{{ topExperts[0].answerCount }} 回答</div>
+        <el-avatar @click="viewDetails(1)" :src="getDefaultAvatar(topExperts[0].expert_id)" size="large" />
+        <div class="podium-name">{{ topExperts[0].real_name }}</div>
+        <div class="podium-score">{{ topExperts[0].answer_count }} 回答</div>
       </div>
 
       <!-- 第三名 -->
       <div class="podium-item third" v-if="topExperts[2]">
         <div class="podium-rank">3</div>
-        <el-avatar :src="getDefaultAvatar(topExperts[2].expertId)" size="large" />
-        <div class="podium-name">{{ topExperts[2].realName }}</div>
-        <div class="podium-score">{{ topExperts[2].answerCount }} 回答</div>
+        <el-avatar @click="viewDetails(3)" :src="getDefaultAvatar(topExperts[2].expert_id)" size="large" />
+        <div class="podium-name">{{ topExperts[2].real_name }}</div>
+        <div class="podium-score">{{ topExperts[2].answer_count }} 回答</div>
       </div>
     </div>
 
@@ -44,18 +44,18 @@
       </el-table-column>
 
       <!-- 姓名 -->
-      <el-table-column prop="realName" label="专家姓名" align="center" />
+      <el-table-column prop="real_name" label="专家姓名" align="center" />
 
       <!-- 专业领域 -->
       <el-table-column prop="expertise" label="专业领域" align="center" />
 
       <!-- 回答数 -->
-      <el-table-column prop="answerCount" label="回答数" align="center" sortable />
+      <el-table-column prop="answer_count" label="回答数" align="center" sortable />
 
       <!-- 查看详情 -->
       <el-table-column label="操作" align="center">
         <template #default="scope">
-          <el-button @click="viewDetails(scope.row)" type="text">[查看详情]</el-button>
+          <el-button @click="viewDetails(scope.row.expert_id)" type="text">[查看详情]</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -86,11 +86,56 @@ export default {
       searchKeyword: '',
       //mock
       mockRankList: [
-        { expertId: 1, realName: '张三', expertise: '农业经济', answerCount: 45 },
-        { expertId: 2, realName: '李四', expertise: '植物保护', answerCount: 30 },
-        { expertId: 3, realName: '王五', expertise: '土壤科学', answerCount: 28 },
-        { expertId: 4, realName: '赵六', expertise: '畜牧养殖', answerCount: 20 },
-        { expertId: 5, realName: '陈七', expertise: '农业机械', answerCount: 15 }
+        {
+          expert_id: 1,
+          real_name: '张三',
+          title: '教授',
+          institution: '中国农业科学院',
+          expertise: '农业经济',
+          answer_count: 45,
+          expert_rank: 1,
+          bio: '专注于农村经济发展与政策研究，具有丰富的实践经验。'
+        },
+        {
+          expert_id: 2,
+          real_name: '李四',
+          title: '高级农艺师',
+          institution: '北京农业大学',
+          expertise: '植物保护',
+          answer_count: 30,
+          expert_rank: 2,
+          bio: '长期从事农作物病虫害防治研究，发表多篇核心论文。'
+        },
+        {
+          expert_id: 3,
+          real_name: '王五',
+          title: '研究员',
+          institution: '南京土壤研究所',
+          expertise: '土壤科学',
+          answer_count: 28,
+          expert_rank: 3,
+          bio: '专长于土壤改良和土地可持续利用研究。'
+        },
+        {
+          expert_id: 4,
+          real_name: '赵六',
+          title: '副教授',
+          institution: '华中农业大学',
+          expertise: '畜牧养殖',
+          answer_count: 20,
+          expert_rank: 4,
+          bio: '研究方向为畜禽遗传育种与规模化养殖技术。'
+        },
+        {
+          expert_id: 5,
+          real_name: '陈七',
+          title: '博士',
+          institution: '华南农业技术中心',
+          expertise: '农业机械',
+          answer_count: 15,
+          expert_rank: 5,
+          bio: '致力于智能农机装备研发，拥有多项专利技术。'
+        }
       ]
     };
   },
@@ -98,7 +143,7 @@ export default {
     this.fetchExpertRank(); // 页面加载完成后立即请求排行榜数据
     //mock
     this.rankList = this.mockRankList;
-    this.updateChartData();
+    //this.updateChartData();
   },
   methods: {
     getDefaultAvatar(expertId) {
@@ -146,9 +191,9 @@ export default {
         }))
       };
     },
-    viewDetails(row) {
+    viewDetails(expertId) {
       // 跳转到专家详情页
-      this.$router.push(`/expert/detail/${row.expertId}`);
+      this.$router.push(`/expert/detail/${expertId}`);
     }
   },
   computed: {
