@@ -9,6 +9,8 @@ import expertQues from "@/views/expert/expertQues.vue";
 import expertDetail from "@/views/expert/expertDetail.vue";
 import expertProfile from "@/views/expert/expertProfile.vue";
 import expertAnswer from "@/views/expert/expertAnswer.vue";
+import expertCertAdd from "@/views/expert/expertCertAdd.vue";
+import expertCertDetail from "@/views/expert/expertCertDetail.vue";
 
 const routes = [
     { path: '', component: () => import("../views/welcom.vue")},
@@ -27,13 +29,16 @@ const routes = [
             { path: '/expert/rank', component: expertRank },
             { path: '/expert/cert', component: expertCert },
             { path: '/expert/ques', component: expertQues },
-            { path: '/expert/profile', component: expertProfile}
+            { path: '/expert/profile', component: expertProfile},
+            { path: '/expert/detail/:id', component: expertDetail },
+            { path: '/expert/cert/new', component: expertCertAdd },
+            { path: '/expert/cert/detail/:id', component: expertCertDetail },
         ]
     },
     {
         path: '/expert/detail/:id',
         component: expertDetail,
-        meta: { requiresAuth: true } // 需要登录才能访问
+        //meta: { requiresAuth: true } // 需要登录才能访问，连了数据库再开
     },
     {
         path: '/expert/ques/:id/answer',

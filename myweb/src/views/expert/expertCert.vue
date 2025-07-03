@@ -23,7 +23,7 @@
 
       <!-- 已有证书卡片 -->
       <el-col :span="8" v-for="(cert, index) in filteredCertificates" :key="index">
-        <el-card class="crop-card">
+        <el-card class="crop-card" @click="viewCertificateDetail(cert.certificateId)">
           <div class="card-header">
             <span class="cert-name">{{ cert.authorizingUnit }}</span>
             <el-tag :type="cert.status === 'valid' ? 'success' : 'danger'">
@@ -169,14 +169,19 @@ export default {
       }
     },
     goToAddNewCert() {
-      this.editingCert = {
-        obtainTime: '',
-        level: 1,
-        validPeriod: 5,
-        authorizingUnit: '中国农业协会',
-        description: ''
-      };
-      this.dialogVisible = true;
+      // 弹窗逻辑
+      // this.editingCert = {
+      //   obtainTime: '',
+      //   level: 1,
+      //   validPeriod: 5,
+      //   authorizingUnit: '中国农业协会',
+      //   description: ''
+      // };
+      // this.dialogVisible = true;
+      this.$router.push('/expert/cert/new');
+    },
+    viewCertificateDetail(certificateId) {
+      this.$router.push(`/expert/cert/detail/${certificateId}`);
     },
     async uploadCertificate() {
       try {
