@@ -11,17 +11,12 @@
 
         <div class="input-group">
           <label for="startDate">开始日期:</label>
-          <el-input id="startDate" v-model="formattedStartDate" placeholder="选择开始日期" disabled style="width: 200px;" />
+          <el-input id="startDate" v-model="formattedStartDate" disabled style="width: 200px;" />
         </div>
 
         <div class="input-group">
           <label for="province">省份:</label>
-          <el-input id="province" v-model="formData.province" placeholder="请输入省份" style="width: 200px;" />
-        </div>
-
-        <div class="input-group">
-          <label for="city">城市:</label>
-          <el-input id="city" v-model="formData.city" placeholder="请输入城市" style="width: 200px;" />
+          <el-input id="province" v-model="formData.province" placeholder="跟随农户地址" disabled style="width: 200px;" />
         </div>
 
         <el-button type="primary" @click="submitQuote" class="submit-button">确认创建</el-button>
@@ -34,16 +29,17 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios'; // 引入 axios
-import { useUserStore } from '@/stores/user'; // 引入 Pinia 用户存储
+import { useUserStore } from '../../stores/user'; // 引入 Pinia 用户存储
+import { ElMessage } from 'element-plus';
 
 const router = useRouter();
 const userStore = useUserStore(); // 获取用户状态
+const token = userStore.token; // 从用户存储中获取 token
 
 // 表单数据结构
 const formData = ref({
   crop: '',
-  province: '',
-  city: '',
+  province: userStore.province,
 });
 
 // 格式化开始日期
@@ -58,22 +54,20 @@ const formattedStartDate = computed(() => {
 
 // 提交表单的处理程序
 const submitQuote = async () => {
-  formData.value.startDate = formattedStartDate.value; // 在提交时添加格式化的日期
-  console.log('提交的表单数据:', formData.value);
-
   try {
     const response = await axios.post('/api/planting-records', {
-      product_name: formData.value.crop,
-      province: formData.value.province,
-      city: formData.value.city,
-      userId: userStore.userId, // 从 Pinia 获取用户 ID
+      product_name: formData.value.crop, // 作物种类
+      province: formData.value.province // 省份
+    }, {
+      headers: {
+        'Authorization': `Bearer ${token}`, // 设置 Authorization 头
+      }
     });
-
-    console.log('成功创建记录:', response.data);
-    router.push('/farmer/planting'); // 成功后重定向
+    ElMessage.success('成功创建种植记录');
+    router.push('/farmer/activities');
   } catch (error) {
-    console.error('提交失败:', error);
-    // 可在此处理错误通知
+    console.error('创建种植记录失败:', error);
+    ElMessage.error('创建种植记录失败，请重试！');
   }
 };
 </script>

@@ -25,58 +25,100 @@
       </el-select>
       <el-button type="primary" @click="performSearch">确认搜索</el-button> <!-- 确认搜索按钮 -->
     </div>
-
-    <el-table :data="filteredTableData" style="width: 100%">
-      <el-table-column prop="product" label="产品种类" />
-      <el-table-column prop="quantity" label="采购量(kg)" />
-      <el-table-column prop="buyer" label="采购方" />
-      <el-table-column prop="address" label="收货地" />
-      <el-table-column prop="updateTime" label="更新时间" />
-      <el-table-column label="操作">
-        <template #default="scope">
-          <el-button @click="handleQuote(scope.row)" type="text" v-if="!isQuoted(scope.row)">[去报价]</el-button>
-          <el-button @click="handleModify(scope.row)" type="text" v-else>[修改]</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <div class="table-container">
+      <el-table :data="filteredTableData" style="width: 100%">
+        <el-table-column prop="product_name" label="产品种类" />
+        <el-table-column prop="quantity" label="采购量(kg)" />
+        <el-table-column prop="buyerName" label="采购方" />
+        <el-table-column prop="address" label="收货地" />
+        <el-table-column prop="updated_at" label="更新时间" />
+        <el-table-column label="操作">
+          <template #default="scope">
+            <el-button @click="handleQuote(scope.row)" type="text" v-if="!isQuoted(scope.row)">[去报价]</el-button>
+            <el-button @click="handleModify(scope.row)" type="text" v-else>[修改]</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { useQuoteStore } from '../../stores/quote'; // 导入报价 Store
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
+import { useDemandStore } from '../../stores/demand';
+import { useQuoteStore } from '../../stores/quote';
 import { useRouter } from 'vue-router';
+import { useUserStore } from '../../stores/user'; // 假设在这里获取用户信息
 
 const searchProduct = ref('');
 const searchaddress = ref('');
 const searchQuantity = ref(null);
 const filterOption = ref('all'); // 选择筛选的状态
 const router = useRouter();
-const quoteStore = useQuoteStore(); // 使用报价 Store
+const demandStore = useDemandStore();
+const quoteStore = useQuoteStore();
+const userStore = useUserStore();
 
-// 模拟的采购需求数据
-const tableData = ref([
-  { id: 1, product: '白米', quantity: 100, buyer: 'A老板', address: '北京', updateTime: '1小时前' },
-  { id: 2, product: '西瓜', quantity: 200, buyer: '老王', address: '河北', updateTime: '3小时前' },
-  { id: 3, product: '红薯', quantity: 50, buyer: '孙经理', address: '广东', updateTime: '1天前' },
-]);
+// 用于存储采购需求数据和已报价数据
+const motableData = ref([]);
+const moquotedIds = ref([]);
 
-// 模拟已报价的记录ID
-const quotedIds = ref([1, 3]); // 假设农户已在这两个记录中报价
+// 模拟数据
+const simulatedMotableData = [
+  { demand_id: 21, product_name: '番茄', quantity: 100, buyerName: 'A老板', buyer_id: 7, address: '北京市', updated_at: '2025-07-01 12:30:45.123' },
+  { demand_id: 22, product_name: '黄瓜', quantity: 200, buyerName: '老王', buyer_id: 7, address: '河北省', updated_at: '2025-06-02 12:30:45.123' },
+  { demand_id: 23, product_name: '萝卜', quantity: 50, buyerName: '孙经理', buyer_id: 7, address: '广东省', updated_at: '202-07-02 12:30:45.123' },
+];
+
+const simulatedMoquotedIds = [
+  { application_id: 1, demand_id: 21, record_id: 56, quantity: 70, price: 15, province: '河北省' },
+  { application_id: 2, demand_id: 23, record_id: 57, quantity: 45, price: 20, province: '陕西省' },
+];
 
 // 用于存储过滤后的表格数据
-const filteredTableData = ref(tableData.value); // 初始化为全部
+const filteredTableData = ref([]); // 初始化为空
+
+const fetchData = async () => {
+  const token = userStore.token; // 从用户存储中获取 token
+  try {
+    const productResponse = await axios.get('http://localhost:3000/api/demands/all', {
+      headers: {
+        'Authorization': `Bearer ${token}` // 设置 Authorization 头
+      }
+    });
+    motableData.value = productResponse.data; // 假设 API 返回的数据就是我们需要的格式
+  } catch (error) {
+    console.error('获取采购需求数据失败，使用模拟数据', error);
+    motableData.value = simulatedMotableData; // 使用模拟数据
+  }
+
+  try {
+    const quotedResponse = await axios.get('http://localhost:3000/api/quotes', {
+      headers: {
+        'Authorization': `Bearer ${token}` // 设置 Authorization 头
+      }
+    });
+    moquotedIds.value = quotedResponse.data; // 假设 API 返回的数据就是我们需要的格式
+  } catch (error) {
+    console.error('获取已报价数据失败，使用模拟数据', error);
+    moquotedIds.value = simulatedMoquotedIds; // 使用模拟数据
+  }
+
+  // 初始化过滤后的数据
+  filteredTableData.value = motableData.value;
+};
 
 // 确认搜索的处理函数
 const performSearch = () => {
-  filteredTableData.value = tableData.value.filter(item => {
-    const matchesProduct = item.product.includes(searchProduct.value);
+  filteredTableData.value = motableData.value.filter(item => {
+    const matchesProduct = item.product_name.includes(searchProduct.value);
     const matchesaddress = item.address.includes(searchaddress.value);
     const matchesQuantity = searchQuantity.value ? item.quantity >= searchQuantity.value : true;
     const matchesFilterOption =
         filterOption.value === 'all' ||
-        (filterOption.value === 'quoted' && quotedIds.value.includes(item.id)) ||
-        (filterOption.value === 'notQuoted' && !quotedIds.value.includes(item.id));
+        (filterOption.value === 'quoted' && moquotedIds.value.some(quoted => quoted.demand_id === item.demand_id)) ||
+        (filterOption.value === 'notQuoted' && !moquotedIds.value.some(quoted => quoted.demand_id === item.demand_id));
 
     return matchesProduct && matchesaddress && matchesQuantity && matchesFilterOption;
   });
@@ -84,20 +126,30 @@ const performSearch = () => {
 
 // 判断是否已报价
 const isQuoted = (row) => {
-  return quotedIds.value.includes(row.id);
+  return moquotedIds.value.some(quoted => quoted.demand_id === row.demand_id);
 };
 
 // 跳转到报价页面
 const handleQuote = (row) => {
-  quoteStore.currentQuote = row; // 保存当前行的表格信息到 Store
+  demandStore.currentDemand = row; // 保存当前行的表格信息到 Store
   router.push('/farmer/purchases/quote'); // 跳转到报价页面
 };
 
 // 跳转到修改页面
 const handleModify = (row) => {
-  quoteStore.currentQuote = row; // 保存当前行的表格信息到 Store
+  demandStore.currentDemand = row; // 保存当前行的表格信息到 Store
+  // 查找对应的报价信息
+  const currentQuote = moquotedIds.value.find(quoted => quoted.demand_id === row.demand_id);
+  if (currentQuote) {
+    quoteStore.currentQuote = currentQuote;
+  } else {
+    quoteStore.currentQuote = null;
+  }
   router.push('/farmer/purchases/quotemodify'); // 跳转到修改页面
 };
+
+// 组件挂载后获取数据
+onMounted(fetchData);
 </script>
 
 <style scoped>

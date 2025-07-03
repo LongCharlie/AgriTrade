@@ -6,7 +6,7 @@ export const useUserStore = defineStore('user', {
         token: '',
         username: '',
         role: '',
-        userId: null,
+        userId: '',
         phone: '',         // 用户电话
         avatar_url: '',    // 用户头像 URL
         province: '',      // 用户省份
