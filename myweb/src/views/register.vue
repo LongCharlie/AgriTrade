@@ -18,6 +18,7 @@
             <option value="farmer">农户</option>
             <option value="expert">专家</option>
             <option value="buyer">买家</option>
+            <option value="admin">管理员</option>
           </select>
         </div>
         <div class="input-group">

@@ -82,7 +82,7 @@
       <el-input
           type="textarea"
           v-model="logisticsInfo"
-          placeholder="描述物流信息，如订单号等"
+          placeholder="描述物流信息，如运输工具和方式等相关信息"
           class="logistics-input"
           :rows="4"
       ></el-input>
