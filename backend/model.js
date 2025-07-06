@@ -3,6 +3,34 @@ const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+//上传头像 更新用户信息
+const updateUserAvatar = async (userId, avatarUrl) => {
+  try {
+    // 删除旧头像
+    const oldAvatarResult = await pool.query(
+      'SELECT avatar_url FROM users WHERE user_id = $1',
+      [userId]
+    );
+    if (oldAvatarResult.rows[0]?.avatar_url) {
+      const oldFilePath = path.join(__dirname, 'uploads', 'avatars', oldAvatarResult.rows[0].avatar_url);
+      if (fs.existsSync(oldFilePath)) {
+        fs.unlinkSync(oldFilePath);
+      }
+    }
+    // 更新数据库
+    const result = await pool.query(
+      'UPDATE users SET avatar_url = $1 WHERE user_id = $2 RETURNING avatar_url',
+      [avatarUrl, userId]
+    );
+    if (!result.rows.length) {
+      throw new Error('用户不存在');
+    }
+    return `/uploads/avatars/${result.rows[0].avatar_url}`;
+  } catch (error) {
+    throw new Error(`更新头像失败: ${error.message}`);
+  }
+};
+
 // 数据库连接配置
 const pool = new Pool({
   user: 'postgres',
@@ -286,6 +314,7 @@ module.exports = {
   getExpertDetails,
   getExpertById,
   getUserById,
+  updateUserAvatar,
   // 也可以导出原始的query方法以便特殊查询使用
   query: (text, params) => pool.query(text, params),
 };
