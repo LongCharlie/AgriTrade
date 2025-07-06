@@ -1,6 +1,8 @@
 //Create an instance of the router
 import {createWebHistory, createRouter } from 'vue-router'
 
+import visitorPurchase from '@/views/visitorPurchase.vue';
+
 import expertHome from '@/views/expert/expertHome.vue'
 import expertRank from '@/views/expert/expertRank.vue'
 import expertMain from '@/views/expert/expertMain.vue'
@@ -23,6 +25,8 @@ import MerchantMessage from '@/views/merchant/merchantMessage.vue'
 
 const routes = [
     { path: '', component: () => import("../views/welcom.vue")},
+
+    { path: '/visitorPurchase', component: visitorPurchase},
 
     { path: '/login', component: () => import("../views/login.vue")},
 

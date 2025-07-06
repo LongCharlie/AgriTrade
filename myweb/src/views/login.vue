@@ -1,5 +1,11 @@
 <template>
-  <div class="login-container">
+  <div ref="vantaBg" class="vanta-container">
+    <div class="logo-container">
+      <img src="@/assets/platform_logo2.png" alt="Logo" class="logo" />
+    </div>
+    <div class="content-overlay">
+<!--      <h1>耘联农产品平台</h1>-->
+    </div>
     <div class="form-content">
       <h1>登录</h1>
       <form @submit.prevent="handleLogin" id="loginForm">
@@ -19,111 +25,118 @@
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-import axios from 'axios';
-import { useUserStore } from '../stores/user'; // 导入用户状态 Store
+<script>
+import * as THREE from 'three'
+import GLOBE from 'vanta/dist/vanta.globe.min'
 
-const username = ref('');
-const password = ref('');
-const error = ref('');
-const router = useRouter();
-
-const userStore = useUserStore(); // 使用用户 Store
-
-// 处理用户登录
-const handleLogin = async () => {
-  try {
-    const response = await axios.post('http://localhost:3000/api/login', {
-      username: username.value,
-      password: password.value,
-    });
-
-    // 更新用户 Store 的状态
-    userStore.token = response.data.token;
-    userStore.username = response.data.user.username;
-    userStore.role = response.data.user.role;
-    userStore.userId = response.data.user.id;
-
-    // 路由跳转
-    switch (userStore.role) {
-      case 'admin':
-        router.push('/admin');
-        break;
-      case 'farmer':
-        router.push('/farmer');
-        break;
-      case 'expert':
-        router.push('/expert');
-        break;
-      case 'buyer':
-        router.push('/merchant');
-        break;
-      default:
-        router.push('/welcome');
+export default {
+  data() {
+    return {
+      vantaEffect: null
     }
-  } catch (err) {
-    error.value = err.response ? err.response.data.error : '请求失败';
+  },
+  mounted() {
+    this.vantaEffect = GLOBE({
+      el: this.$refs.vantaBg,
+      THREE: THREE,
+      mouseControls: true,
+      touchControls: true,
+      gyroControls: false,
+      minHeight: 200.00,
+      minWidth: 200.00,
+      scale: 1.00,
+      scaleMobile: 1.00,
+      color: 0x41743b,  // 绿色主题
+      backgroundColor: 0xd1e8dc  // 浅绿背景
+    })
+  },
+  beforeUnmount() {
+    if (this.vantaEffect) {
+      this.vantaEffect.destroy()
+    }
   }
-};
+}
 </script>
 
-<style scoped>
-.login-container {
-  font-family: Arial, sans-serif;
-  min-height: 97vh; /* 填满整个视口 */
-  display: flex;
-  justify-content: center; /* 水平居中 */
-  align-items: center; /* 垂直居中 */
-  background-color: #e6f9e6; /* 浅绿背景色 */
+<style>
+.vanta-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.content-overlay {
+  position: relative;
+  z-index: 1;
+  color: white;
+  padding: 20px;
 }
 
 .form-content {
-  max-width: 400px; /* 最大宽度 */
-  width: 100%; /* 适应宽度 */
+  max-width: 400px;
+  width: 100%;
   padding: 40px;
-  background-color: #ffffff; /* 白色背景 */
+  background-color: rgba(255, 255, 255, 0.5);
   border-radius: 20px; /* 圆角 */
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* 阴影效果 */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  position: absolute;
+  top: 50%;
+  left: 220px;
+  transform: translateY(-50%);
+  z-index: 2;
 }
 
 h1 {
-  text-align: center; /* 标题居中 */
-  margin-bottom: 50px; /* 增加标题与下方内容的距离 */
+  text-align: center;
+  margin-bottom: 50px;
 }
 
 .input-group {
   display: flex;
-  align-items: center; /* 使标签和输入框在同一行居中 */
-  margin-bottom: 15px; /* 输入组之间的间距 */
+  align-items: center;
+  margin-bottom: 15px;
 }
 
 label {
-  flex: 0 0 70px; /* 固定标签宽度 */
-  margin-right: 0px; /* 标签和输入框之间的间距 */
+  flex: 0 0 70px;
+  margin-right: 0px;
 }
 
 input {
-  padding: 10px; /* 输入框内边距 */
+  padding: 10px;
   font-size: 16px;
-  border: 1px solid #ccc; /* 边框 */
-  border-radius: 5px; /* 圆角 */
-  flex: 1; /* 输入框自适应宽度 */
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  flex: 1;
 }
 
 .login-button {
-  width: 100%; /* 按钮宽度填充 */
+  width: 100%;
   padding: 10px;
-  background: #4CAF50; /* 按钮颜色 */
-  color: white; /* 按钮文字颜色 */
-  border: none; /* 去掉边框 */
-  border-radius: 5px; /* 圆角 */
-  cursor: pointer; /* 指针样式 */
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 }
 
 .error {
   color: red;
-  text-align: center; /* 错误信息居中 */
+  text-align: center;
 }
+
+.logo-container {
+  position: absolute;
+  top: 12px;
+  left: 62px;
+  z-index: 3;
+}
+
+.logo {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+}
+
 </style>

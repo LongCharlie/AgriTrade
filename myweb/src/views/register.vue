@@ -43,7 +43,7 @@
         <button type="submit">注册</button>
         <div v-if="error" class="error">{{ error }}</div>
       </form>
-      <p>已有账号? <router-link to="/login">登录</router-link></p>
+      <p>已有账号? <router-link to="/myweb/src/views/login2">登录</router-link></p>
     </div>
   </div>
 </template>
