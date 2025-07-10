@@ -34,7 +34,7 @@
         </el-card>
       </el-col>
 
-      <el-col :span="8" v-for="(record, index) in filteredGrowthRecords" :key="index" @click="goToAdd(record)">
+      <el-col :span="8" v-for="(record, index) in paginatedRecords" :key="record.record_id" @click="goToAdd(record)">
         <el-card class="crop-card">
           <div class="card-header">
             <span class="crop-name">{{ record.product_name }}</span>
@@ -46,19 +46,30 @@
         </el-card>
       </el-col>
     </el-row>
+
+    <el-pagination
+        @current-change="handlePageChange"
+        :current-page="currentPage"
+        :page-size="pageSize"
+        :total="filteredGrowthRecords.length"
+        layout="total, prev, pager, next, jumper"
+        style=" display: flex;
+                justify-content: center;
+                margin-top: 20px;"
+    />
   </div>
 </template>
 
 <script setup>
-import {ref, computed, onMounted} from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { useUserStore } from '../../stores/user'; // 导入用户存储
-import { usePlantingStore } from '../../stores/planting'; // 导入种植存储
+import { useUserStore } from '../../stores/user';
+import { usePlantingStore } from '../../stores/planting';
 import axios from "axios";
 
 const router = useRouter();
-const userStore = useUserStore(); // 使用用户存储
-const plantingStore = usePlantingStore(); // 使用种植存储
+const userStore = useUserStore();
+const plantingStore = usePlantingStore();
 
 const mockGrowthRecords = [
   { record_id: 51, product_name: '萝卜', province: '陕西省', growth_status: 'harvested', created_at: '2024-01-03' },
@@ -70,14 +81,17 @@ const mockGrowthRecords = [
   { record_id: 55, product_name: '辣椒', province: '陕西省', growth_status: 'harvested', created_at: '2025-03-22' },
 ];
 const growthRecords = ref(mockGrowthRecords);
+const filter = ref('all');
 
+const pageSize = ref(5); // 每页显示的条目数
+const currentPage = ref(1); // 当前页
 
 onMounted(async () => {
-  const token = userStore.token; // 从用户存储中获取 token
+  const token = userStore.token;
   try {
     const growthRecordsResponse = await axios.get('http://localhost:3000/api/growth-records', {
       headers: {
-        'Authorization': `Bearer ${token}` // 设置 Authorization 头
+        'Authorization': `Bearer ${token}`
       }
     });
     growthRecords.value = growthRecordsResponse.data;
@@ -86,9 +100,6 @@ onMounted(async () => {
     growthRecords.value = mockGrowthRecords;
   }
 });
-
-
-const filter = ref('all');
 
 const filteredGrowthRecords = computed(() => {
   if (filter.value === 'growing') {
@@ -99,31 +110,29 @@ const filteredGrowthRecords = computed(() => {
   return growthRecords.value; // 默认返回所有记录
 });
 
-// 跳转到种植建议页面
-const goToAdvice = () => {
-  router.push('/farmer/planting/advice');
+// 计算分页后的列表
+const paginatedRecords = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  return filteredGrowthRecords.value.slice(start, start + pageSize.value);
+});
+
+// 手动更新页码
+const handlePageChange = (page) => {
+  currentPage.value = page;
 };
 
-// 跳转到问问AI页面
-const goToAskAI = () => {
-  router.push('/farmer/planting/ai');
-};
-
-// 跳转到新建新的种植记录页面
-const goToAddNewCrop = () => {
-  router.push('/farmer/planting/new');
-};
-
-// 跳转到添加种植记录页面
+// 跳转函数保持不变
+const goToAdvice = () => { router.push('/farmer/planting/advice'); };
+const goToAskAI = () => { router.push('/farmer/planting/ai'); };
+const goToAddNewCrop = () => { router.push('/farmer/planting/new'); };
 const goToAdd = (record) => {
   plantingStore.setCurrentRecord(record);
-  console.log(record);
   router.push('/farmer/planting/add');
 };
 
-// Update the filter based on button click
 const filterRecords = (status) => {
   filter.value = status;
+  currentPage.value = 1; // 重置为第一页
 };
 </script>
 

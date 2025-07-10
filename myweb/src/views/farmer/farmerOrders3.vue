@@ -19,6 +19,7 @@
           placeholder="搜索收货地"
           style="width: 200px; margin-bottom: 20px;"
       ></el-input>
+      <!-- 年、月、日筛选 -->
       <el-input
           v-model="filterYear"
           placeholder="年份"
@@ -34,6 +35,7 @@
           placeholder="日期"
           style="width: 120px; margin-bottom: 20px;"
       ></el-input>
+
       <el-select v-model="filterOption" placeholder="选择筛选" style="width: 200px; margin-bottom: 20px;">
         <el-option label="全部" value="all"></el-option>
         <el-option label="待发货" value="pendingDelivery"></el-option>
@@ -43,10 +45,10 @@
         <el-option label="已售后" value="afterSaleResolved"></el-option>
       </el-select>
 
-      <el-button type="primary" @click="performSearch">确认搜索</el-button>
+      <el-button type="primary" @click="performSearch">确认搜索</el-button> <!-- 确认搜索按钮 -->
     </div>
 
-    <el-table :data="paginatedData" style="width: 100%">
+    <el-table :data="filteredTableData" style="width: 100%">
       <el-table-column prop="id" label="编号" />
       <el-table-column prop="product" label="产品种类" />
       <el-table-column prop="quantity" label="数量(kg)" />
@@ -74,19 +76,9 @@
       </el-table-column>
     </el-table>
 
-    <el-pagination
-        @current-change="handlePageChange"
-        :current-page="currentPage"
-        :page-size="pageSize"
-        :total="filteredTableData.length"
-        layout="total, prev, pager, next, jumper"
-        style=" display: flex;
-                justify-content: center;
-                margin-top: 20px;"
-    />
-
     <!-- 物流信息弹窗 -->
     <el-dialog v-model="dialogVisible" title="确认发货">
+      <!-- 给输入框添加底部间距 -->
       <el-input
           type="textarea"
           v-model="logisticsInfo"
@@ -135,8 +127,7 @@ const successReasonDialogVisible = ref(false); // 控制售后通过理由弹窗
 const reason = ref(''); // 售后原因
 const successReason = ref(''); // 售后通过理由
 
-const pageSize = ref(5); // 每页显示的订单数
-const currentPage = ref(1); // 当前页码
+const router = useRouter();
 
 // 模拟订单数据
 const tableData = ref([
@@ -150,7 +141,8 @@ const tableData = ref([
   { id: 8, product: '黄豆', quantity: 80, price: 20, address: '江苏', buyer: '老张', contact: '246813579', updateTime: '2024-11-05', status: '已完成' },
   { id: 9, product: '玉米', quantity: 150, price: 12, address: '四川', buyer: '小李', contact: '159753864', updateTime: '2024-11-04', status: '已完成' },
   { id: 10, product: '黄豆', quantity: 80, price: 20, address: '江苏', buyer: '老张', contact: '246813579', updateTime: '2024-11-05', status: '已完成' },
-  { id: 11, product: '玉米', quantity: 150, price: 12, address: '四川', buyer: '小李', contact: '159753864', updateTime: '2024-11-04', status: '已完成' },
+
+  // 其他订单数据
 ]);
 
 // 计算总收入
@@ -161,11 +153,6 @@ const totalRevenue = computed(() => {
 
 // 过滤表格数据
 const filteredTableData = ref(tableData.value); // Initial state is the same as tableData
-const paginatedData = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value;
-  const end = start + pageSize.value;
-  return filteredTableData.value.slice(start, end);
-});
 
 const performSearch = () => {
   filteredTableData.value = tableData.value.filter(item => {
@@ -192,12 +179,6 @@ const performSearch = () => {
 
     return matchesId && matchesProduct && matchesaddress && matchesUpdateTime && matchesFilterOption;
   });
-  currentPage.value = 1; // 重置为第1页
-};
-
-// 分页处理
-const handlePageChange = (page) => {
-  currentPage.value = page;
 };
 
 // 操作处理函数

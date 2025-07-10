@@ -23,10 +23,10 @@
         <el-option label="已报价" value="quoted"></el-option>
         <el-option label="未报价" value="notQuoted"></el-option>
       </el-select>
-      <el-button type="primary" @click="performSearch">确认搜索</el-button> <!-- 确认搜索按钮 -->
+      <el-button type="primary" @click="performSearch">确认搜索</el-button>
     </div>
     <div class="table-container">
-      <el-table :data="filteredTableData" style="width: 100%">
+      <el-table :data="paginatedData" style="width: 100%">
         <el-table-column prop="product_name" label="产品种类" />
         <el-table-column prop="quantity" label="采购量(kg)" />
         <el-table-column prop="buyerName" label="采购方" />
@@ -40,11 +40,24 @@
         </el-table-column>
       </el-table>
     </div>
+
+    <div class="pagination-container">
+      <el-pagination
+          @current-change="handlePageChange"
+          :current-page="currentPage"
+          :page-size="pageSize"
+          :total="filteredTableData.length"
+          layout="total, prev, pager, next, jumper"
+          style=" display: flex;
+                justify-content: center;
+                margin-top: 20px;"
+      />
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
 import { useDemandStore } from '../../stores/demand';
 import { useQuoteStore } from '../../stores/quote';
@@ -63,6 +76,9 @@ const userStore = useUserStore();
 // 用于存储采购需求数据和已报价数据
 const motableData = ref([]);
 const moquotedIds = ref([]);
+const filteredTableData = ref([]);
+const pageSize = ref(5); // 每页显示的项目数
+const currentPage = ref(1); // 当前页码
 
 // 模拟数据
 const simulatedMotableData = [
@@ -75,9 +91,6 @@ const simulatedMoquotedIds = [
   { application_id: 1, demand_id: 21, record_id: 56, quantity: 70, price: 15, province: '河北省' },
   { application_id: 2, demand_id: 23, record_id: 57, quantity: 45, price: 20, province: '陕西省' },
 ];
-
-// 用于存储过滤后的表格数据
-const filteredTableData = ref([]); // 初始化为空
 
 const fetchData = async () => {
   const token = userStore.token; // 从用户存储中获取 token
@@ -122,6 +135,18 @@ const performSearch = () => {
 
     return matchesProduct && matchesaddress && matchesQuantity && matchesFilterOption;
   });
+  currentPage.value = 1; // 重置为第一页
+};
+
+const paginatedData = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return filteredTableData.value.slice(start, end);
+});
+
+// 分页处理
+const handlePageChange = (page) => {
+  currentPage.value = page; // 更新当前页
 };
 
 // 判断是否已报价
