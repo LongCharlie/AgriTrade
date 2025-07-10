@@ -38,7 +38,6 @@
         <el-card class="crop-card">
           <div class="card-header">
             <span class="crop-name">{{ record.product_name }}</span>
-            <el-button type="text" class="delete-button" @click.stop="deleteRecord(record.record_id)">删除</el-button>
           </div>
           <div class="card-footer">
             <span class="start-time">创建于 {{ record.created_at }}</span>
@@ -54,7 +53,9 @@
         :page-size="pageSize"
         :total="filteredGrowthRecords.length"
         layout="total, prev, pager, next, jumper"
-        style="display: flex; justify-content: center; margin-top: 20px;"
+        style=" display: flex;
+                justify-content: center;
+                margin-top: 20px;"
     />
   </div>
 </template>
@@ -120,24 +121,7 @@ const handlePageChange = (page) => {
   currentPage.value = page;
 };
 
-// 删除记录
-const deleteRecord = async (recordId) => {
-  const token = userStore.token;
-  try {
-    await axios.delete(`http://localhost:3000/api/growth-records/${recordId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    // 更新本地状态，删除该记录
-    growthRecords.value = growthRecords.value.filter(record => record.record_id !== recordId);
-  } catch (error) {
-    console.error('删除记录失败:', error);
-    alert('删除记录失败，请重试');
-  }
-};
-
-// 跳转函数
+// 跳转函数保持不变
 const goToAdvice = () => { router.push('/farmer/planting/advice'); };
 const goToAskAI = () => { router.push('/farmer/planting/ai'); };
 const goToAddNewCrop = () => { router.push('/farmer/planting/new'); };
@@ -151,6 +135,7 @@ const filterRecords = (status) => {
   currentPage.value = 1; // 重置为第一页
 };
 </script>
+
 
 <style scoped>
 .info-cards .info-card {
@@ -239,10 +224,5 @@ const filterRecords = (status) => {
   margin-top: 20px; /* 上边距 */
   display: flex;
   justify-content: flex-end; /* 靠右对齐按钮 */
-}
-
-.delete-button {
-  color: #f56c6c;
-  font-size: 14px; /* 字体大小 */
 }
 </style>

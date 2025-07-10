@@ -7,7 +7,7 @@
 
       <!-- 头像显示 -->
       <div class="avatar-container">
-        <img v-if="user.avatar_url" :src="user.avatar_url" class="avatar" alt="用户头像" />
+        <img v-if="tempAvatarUrl" :src="tempAvatarUrl" class="avatar" alt="用户头像" />
         <el-upload
             class="avatar-uploader"
             :action="uploadUrl"
@@ -16,7 +16,7 @@
             :before-upload="beforeAvatarUpload"
             :data="{ token }"
         >
-          <el-button type="primary">上传头像</el-button>
+        <el-button type="primary">上传头像</el-button>
         </el-upload>
       </div>
 
@@ -77,17 +77,29 @@ import profile from '../../assets/logo.png'; // 引入默认头像
 
 const userStore = useUserStore();
 const user = ref({
-  id: null,
-  nickname: '',
-  province: '',
-  city: '',
-  district: '',
+  id: null,  // 备用 ID
+  nickname: '',  // 备用昵称
+  province: '',  // 备用省份
+  city: '',      // 备用城市
+  district: '',  // 备用区县
   phone: '',
-  address_detail: '',
-  avatar_url: profile  // 使用默认头像
+  address_detail: '', // 备用详细地址
+  avatar_url: ''        // 备用头像
+});
+
+const mockuser = ref({
+  id: '0000',
+  nickname: '默认用户',
+  province: '北京市',
+  city: '市辖区',
+  district: '朝阳区',
+  phone: '12345678900',
+  address_detail: '默认详细地址',
+  avatar_url: profile
 });
 
 const selectedLocation = ref([]);
+const tempAvatarUrl = ref(user.value.avatar_url || profile); // 使用默认头像
 const token = userStore.token;
 const uploadUrl = 'http://localhost:3000/api/upload'; // 上传头像的接口 URL
 
@@ -101,14 +113,19 @@ onMounted(async () => {
   user.value.address_detail = userStore.address_detail;
   user.value.avatar_url = userStore.avatar_url;
 
-  selectedLocation.value = user.value.id ? [user.value.province, user.value.city, user.value.district] : [];
+  if (user.value.id) {
+    selectedLocation.value = [user.value.province, user.value.city, user.value.district];
+  } else {
+    user.value = mockuser.value;
+    selectedLocation.value = [mockuser.value.province, mockuser.value.city, mockuser.value.district];
+  }
 });
 
 // 处理头像上传
 const handleAvatarChange = async (file) => {
-  // 上传成功直接更新头像 URL
-  if (file.status === 'success' && file.response && file.response.avatarUrl) {
+  if (file.status === 'success') {
     const avatarUrl = file.response.avatarUrl; // 从响应中获取头像 URL
+    tempAvatarUrl.value = avatarUrl; // 更新临时头像 URL
     user.value.avatar_url = avatarUrl; // 更新用户信息中的头像 URL
     // 更新 Pinia 中的用户信息
     userStore.avatar_url = avatarUrl;
@@ -150,10 +167,10 @@ const saveProfile = async () => {
       city: user.value.city,
       district: user.value.district,
       address_detail: user.value.address_detail,
-      avatar_url: user.value.avatar_url // 直接保存头像 URL
+      avatar_url: user.value.avatar_url // 在保存时包含头像 URL
     }, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${token}` // 发送 token
       }
     });
     ElMessage.success('保存成功');

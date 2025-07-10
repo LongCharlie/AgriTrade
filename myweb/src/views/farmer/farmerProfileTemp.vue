@@ -7,14 +7,13 @@
 
       <!-- 头像显示 -->
       <div class="avatar-container">
-        <img v-if="user.avatar_url" :src="user.avatar_url" class="avatar" alt="用户头像" />
+        <img v-if="tempAvatarUrl" :src="tempAvatarUrl" class="avatar" alt="用户头像" />
         <el-upload
             class="avatar-uploader"
-            :action="uploadUrl"
+            action="/api/upload"
             :show-file-list="false"
             :on-change="handleAvatarChange"
             :before-upload="beforeAvatarUpload"
-            :data="{ token }"
         >
           <el-button type="primary">上传头像</el-button>
         </el-upload>
@@ -77,20 +76,34 @@ import profile from '../../assets/logo.png'; // 引入默认头像
 
 const userStore = useUserStore();
 const user = ref({
-  id: null,
-  nickname: '',
-  province: '',
-  city: '',
-  district: '',
+  id: null,  // 备用 ID
+  nickname: '',  // 备用昵称
+  province: '',  // 备用省份
+  city: '',      // 备用城市
+  district: '',  // 备用区县
   phone: '',
-  address_detail: '',
-  avatar_url: profile  // 使用默认头像
+  address_detail: '', // 备用详细地址
+  avatar_url: ''        // 备用头像
 });
 
-const selectedLocation = ref([]);
-const token = userStore.token;
-const uploadUrl = 'http://localhost:3000/api/upload'; // 上传头像的接口 URL
+const mockuser = ref({
+  id: '0000',  // 备用 ID
+  nickname: '默认用户',  // 备用昵称
+  province: '北京市',  // 备用省份
+  city: '市辖区',      // 备用城市
+  district: '朝阳区',   // 备用区县
+  phone: '12345678900', // 备用电话
+  address_detail: '默认详细地址', // 备用详细地址
+  avatar_url: profile        // 备用头像
+}); // 设置备用值
 
+// 定义选择的省市区
+const selectedLocation = ref([]); // 初始化为空数组以便后续设置
+
+const tempAvatarUrl = ref(user.value.avatar_url); // 使用头像 URL
+const token = userStore.token; // 从用户存储中获取 token
+
+// 获取用户信息
 onMounted(async () => {
   user.value.id = userStore.userId;
   user.value.nickname = userStore.username;
@@ -101,17 +114,23 @@ onMounted(async () => {
   user.value.address_detail = userStore.address_detail;
   user.value.avatar_url = userStore.avatar_url;
 
-  selectedLocation.value = user.value.id ? [user.value.province, user.value.city, user.value.district] : [];
+  console.log('用户主页//user.value');
+  console.log(user.value);
+  if (user.value.id) {
+    // 依据用户信息设置省市区选择的默认值
+    selectedLocation.value = [user.value.province, user.value.city, user.value.district];
+    console.log('用户主页//拿到数据');
+  } else {
+    console.error('没有用户信息，使用默认值');
+    user.value = mockuser.value;
+    selectedLocation.value = [mockuser.value.province, mockuser.value.city, mockuser.value.district];
+  }
 });
 
 // 处理头像上传
-const handleAvatarChange = async (file) => {
-  // 上传成功直接更新头像 URL
-  if (file.status === 'success' && file.response && file.response.avatarUrl) {
-    const avatarUrl = file.response.avatarUrl; // 从响应中获取头像 URL
-    user.value.avatar_url = avatarUrl; // 更新用户信息中的头像 URL
-    // 更新 Pinia 中的用户信息
-    userStore.avatar_url = avatarUrl;
+const handleAvatarChange = (file) => {
+  if (file.status === 'success') {
+    tempAvatarUrl.value = file.response.url;
     ElMessage.success('头像上传成功');
   } else if (file.status === 'fail') {
     ElMessage.error('头像上传失败');
@@ -150,12 +169,20 @@ const saveProfile = async () => {
       city: user.value.city,
       district: user.value.district,
       address_detail: user.value.address_detail,
-      avatar_url: user.value.avatar_url // 直接保存头像 URL
+      // avatar_url: tempAvatarUrl.value
     }, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${token}` // 发送 token
       }
     });
+    user.value.avatar_url = tempAvatarUrl.value;
+    // 更新 Pinia 中的用户信息
+    userStore.phone = user.value.phone,
+    userStore.province = user.value.province,
+    userStore.city = user.value.city,
+    userStore.district = user.value.district,
+    userStore.address_detail = user.value.address_detail,
+    userStore.avatar_url = user.value.avatar_url;
     ElMessage.success('保存成功');
   } catch (error) {
     console.error('保存失败:', error);

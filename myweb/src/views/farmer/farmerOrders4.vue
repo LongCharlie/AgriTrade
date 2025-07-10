@@ -111,6 +111,7 @@ const reasonDialogVisible = ref(false);
 const successReasonDialogVisible = ref(false);
 const reason = ref('');
 const successReason = ref('');
+const currentOrder = ref(null); // 新增，用于存储当前确认发货的订单
 
 const pageSize = ref(5);
 const currentPage = ref(1);
@@ -208,14 +209,38 @@ const handlePageChange = (page) => {
 
 // 操作处理函数
 const confirmDelivery = (order) => {
-  console.log('确认发货', order);
-  dialogVisible.value = true;
+  currentOrder.value = order; // 保存当前订单
+  dialogVisible.value = true; // 显示对话框
 };
 
-const submitDelivery = () => {
-  console.log('发货信息', logisticsInfo.value);
-  dialogVisible.value = false;
-  logisticsInfo.value = '';
+const submitDelivery = async () => {
+  const token = userStore.token; // 获取 token
+  const orderId = currentOrder.value.order_id; // 获取订单 ID
+
+  try {
+    // 调用接口1: 更新订单状态为 shipped
+    await axios.post(`http://localhost:3000/api/orders/${orderId}/status`, {
+      status: 'shipped'
+    }, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    // 调用接口2: 上传物流信息
+    await axios.post('http://localhost:3000/api/orders/${orderId}/logistics', {
+      logisticsInfo: logisticsInfo.value
+    }, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    // 更新本地订单状态
+    currentOrder.value.status = 'shipped';
+    dialogVisible.value = false; // 关闭对话框
+    logisticsInfo.value = ''; // 清空物流信息输入框
+    console.log('发货成功');
+  } catch (error) {
+    console.error('发货失败', error);
+    alert('发货失败，请重试');
+  }
 };
 
 const viewReason = (order) => {
@@ -230,6 +255,7 @@ const viewSuccessReason = (order) => {
   successReason.value = order.reason;
   successReasonDialogVisible.value = true;
 };
+
 </script>
 
 <style scoped>

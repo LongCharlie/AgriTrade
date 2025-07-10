@@ -252,11 +252,11 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
 app.patch('/api/user/profile', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { phone, province, city, district, address_detail } = req.body;
+    const { phone, province, city, district, address_detail, avatar_url } = req.body;
 
     // 构建更新字段
     const updates = {};
-    const fields = ['phone', 'province', 'city', 'district', 'address_detail'];
+    const fields = ['phone', 'province', 'city', 'district', 'address_detail', 'avatar_url'];
     
     fields.forEach(field => {
       if (req.body[field] !== undefined) {
@@ -560,7 +560,7 @@ app.post('/api/planting-records', authenticateToken, checkRole([ROLES.FARMER]), 
 app.patch('/api/orders/:id/logistics', checkRole([ROLES.FARMER]), async (req, res) => {
   const { tracking_number, carrier } = req.body;
   await db.query(
-    'UPDATE orders SET tracking_number = $1, carrier = $2 WHERE order_id = $3',
+    'UPDATE orders SET tracking_number = $1, pu = $2 WHERE order_id = $3',
     [tracking_number, carrier, req.params.id]
   );
   res.json({ message: '物流信息更新成功' });
