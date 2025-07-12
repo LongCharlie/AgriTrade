@@ -2,65 +2,43 @@
   <div>
     <h1>种植建议</h1>
     <p>表格列出上一年该地区所有订单的产品总数和均价 + 点击产品可以查看近几年的总数和均价趋势图</p>
-    <div class="container">
-      <div class="chart-container">
-        <canvas ref="pieChartRef"></canvas>
-      </div>
-
-      <div class="table-container">
-        <el-table :data="currentPageData" style="width: 100%">
-          <el-table-column prop="name" label="产品种类" />
-          <el-table-column prop="total" label="年平均总数(kg/年)" sortable :formatter="formatAverageTotal" />
-          <el-table-column prop="averagePrice" label="平均单价(元/kg)" sortable :formatter="formatAveragePrice" />
-        </el-table>
-
-        <!-- 添加分页组件 -->
-        <el-pagination
-            @current-change="handlePageChange"
-            :current-page="currentPage"
-            :page-size="pageSize"
-            :total="sortedProductSummary.length"
-            layout="total, prev, pager, next, jumper"
-            style="display: flex; justify-content: center; margin-top: 20px;"
-        />
-      </div>
-    </div>
-
-    <br>
     <!-- 下拉选择 -->
     <div class="select-container">
       <label for="productSelect">选择产品：</label>
-      <el-select
-          v-model="selectedProduct"
-          @change="updateTrendChart"
-          placeholder="请选择产品"
-          clearable
-          filterable
-          :style="{ width: '200px' }"
-      >
-        <el-option
-            v-for="product in sortedProductSummary"
-            :key="product.name"
-            :label="product.name"
-            :value="product.name"
-        />
-      </el-select>
+      <select v-model="selectedProduct" @change="updateTrendChart">
+        <option value="" selected>未选择产品</option>
+        <option v-for="product in sortedProductSummary" :key="product.name" :value="product.name">
+          {{ product.name }}
+        </option>
+      </select>
+    </div>
+  </div>
+  <div class="container">
+    <div class="chart-container">
+      <canvas ref="pieChartRef"></canvas>
     </div>
 
-    <!-- 显示趋势图 -->
-    <div class="trend-chart-container">
-      <canvas ref="trendChartRef"></canvas>
-      <div v-if="!selectedProduct" class="trend-placeholder">
-        请选择产品查看趋势图
-      </div>
+    <div class="table-container">
+      <el-table :data="sortedProductSummary" style="width: 100%">
+        <el-table-column prop="name" label="产品种类"></el-table-column>
+        <el-table-column prop="total" label="年平均总数(kg/年)" sortable :formatter="formatAverageTotal"></el-table-column>
+        <el-table-column prop="averagePrice" label="平均单价(元/kg)" sortable :formatter="formatAveragePrice"></el-table-column>
+      </el-table>
+    </div>
+  </div>
+
+  <!-- 显示趋势图 -->
+  <div class="trend-chart-container">
+    <canvas ref="trendChartRef"></canvas>
+    <div v-if="!selectedProduct" class="trend-placeholder">
+      请选择产品查看趋势图
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import { Chart, registerables } from 'chart.js';
-import { ElSelect, ElOption, ElTable, ElTableColumn, ElPagination } from 'element-plus';
 
 Chart.register(...registerables);
 
@@ -78,19 +56,6 @@ const orders = [
   { order_id: 10, product_name: '胡萝卜', quantity: 20, price: 5, created_at: '2024-08-20', status: 'shipped' },
   { order_id: 11, product_name: '胡萝卜', quantity: 15, price: 6, created_at: '2023-08-20', status: 'completed' },
   { order_id: 12, product_name: '黄豆', quantity: 120, price: 25, created_at: '2022-08-20', status: 'after_sale_resolved' },
-  { order_id: 1, product_name: '黄豆2', quantity: 80, price: 20, created_at: '2024-11-05', status: 'completed' },
-  { order_id: 2, product_name: '黄豆2', quantity: 60, price: 19, created_at: '2023-11-05', status: 'completed' },
-  { order_id: 3, product_name: '黄豆2', quantity: 100, price: 22, created_at: '2022-11-05', status: 'completed' },
-  { order_id: 4, product_name: '番茄2', quantity: 50, price: 15, created_at: '2024-10-01', status: 'completed' },
-  { order_id: 5, product_name: '番茄2', quantity: 30, price: 12, created_at: '2023-10-01', status: 'pending_shipment' },
-  { order_id: 6, product_name: '番茄2', quantity: 40, price: 14, created_at: '2022-10-01', status: 'completed' },
-  { order_id: 7, product_name: '青椒2', quantity: 30, price: 10, created_at: '2024-09-15', status: 'completed' },
-  { order_id: 8, product_name: '青椒2', quantity: 15, price: 8, created_at: '2023-09-15', status: 'shipped' },
-  { order_id: 9, product_name: '青椒2', quantity: 25, price: 11, created_at: '2022-09-15', status: 'completed' },
-  { order_id: 10, product_name: '胡萝卜2', quantity: 20, price: 5, created_at: '2024-08-20', status: 'shipped' },
-  { order_id: 11, product_name: '胡萝卜2', quantity: 15, price: 6, created_at: '2023-08-20', status: 'completed' },
-  { order_id: 12, product_name: '黄豆2', quantity: 120, price: 25, created_at: '2022-08-20', status: 'after_sale_resolved' },
-
 ];
 
 // 定义图表引用
@@ -111,22 +76,6 @@ const sorting = ref({
   field: 'total', // 默认排序字段
   order: 'desc' // 默认排序顺序
 });
-
-// 添加分页相关变量
-const currentPage = ref(1);
-const pageSize = ref(6); // 每页显示记录的数量
-
-// 计算当前页显示的数据
-const currentPageData = computed(() => {
-  const startIndex = (currentPage.value - 1) * pageSize.value;
-  const endIndex = startIndex + pageSize.value;
-  return sortedProductSummary.value.slice(startIndex, endIndex);
-});
-
-// 处理页码变化事件
-const handlePageChange = (page) => {
-  currentPage.value = page;
-};
 
 // 计算总数和平均价格
 const calculateTotal = () => {
@@ -161,7 +110,7 @@ const calculateTotal = () => {
     const averagePrice = summaryMap[key].totalPrice / totalQuantity;
 
     productSummary.value.push({
-      name: summaryMap[key].name,
+      name: summaryMap[key].name, // 使用 summaryMap 而不是 summary
       total: totalQuantity / 3, // 计算年平均总数
       averagePrice: averagePrice // 计算平均单价
     });
@@ -277,8 +226,10 @@ const updateTrendChart = () => {
 
 // 新增清除趋势图的方法
 const clearTrendChart = () => {
+  // 清除趋势图数据
   trendData.value = { labels: [], quantities: [], prices: [] };
 
+  // 如果有图表实例，销毁它
   if (trendChartInstance) {
     trendChartInstance.destroy();
     trendChartInstance = null;
@@ -290,8 +241,10 @@ const renderTrendChart = () => {
 
   const ctx = trendChartRef.value.getContext('2d');
 
+  // 清除之前的图表
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
+  // 销毁旧的图表实例
   if (trendChartInstance) {
     trendChartInstance.destroy();
   }
@@ -322,7 +275,9 @@ const renderTrendChart = () => {
       plugins: {
         title: {
           display: true,
-          text: selectedProduct.value ? `${selectedProduct.value} 产品趋势图` : '产品趋势图'
+          text: selectedProduct.value
+              ? `${selectedProduct.value} 产品趋势图`
+              : '产品趋势图'
         },
         tooltip: {
           mode: 'index'
@@ -349,8 +304,12 @@ const formatAveragePrice = (row, column, cellValue) => {
 
 onMounted(() => {
   calculateTotal();
-  sort('total'); // 默认按照总数降序排列
+  // 默认按照总数降序排列
+  sort('total'); // 确保在加载时按照总数降序排列
   renderChart();
+
+  // 初始化时设置默认状态
+  selectedProduct.value = '';
 });
 </script>
 
