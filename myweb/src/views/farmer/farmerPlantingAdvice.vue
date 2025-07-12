@@ -60,11 +60,14 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { Chart, registerables } from 'chart.js';
+import axios from 'axios';
 import { ElSelect, ElOption, ElTable, ElTableColumn, ElPagination } from 'element-plus';
+import { useUserStore } from '../../stores/user';
+const userStore = useUserStore();
 
 Chart.register(...registerables);
 
-// 更新的订单数据结构
+// 模拟的订单数据结构
 const orders = [
   { order_id: 1, product_name: '黄豆', quantity: 80, price: 20, created_at: '2024-11-05', status: 'completed' },
   { order_id: 2, product_name: '黄豆', quantity: 60, price: 19, created_at: '2023-11-05', status: 'completed' },
@@ -347,7 +350,23 @@ const formatAveragePrice = (row, column, cellValue) => {
   return cellValue ? cellValue.toFixed(2) : '0.00';
 };
 
+const fetchData = async () => {
+  const token = userStore.token; // 从用户存储中获取 token
+  try {
+    const response = await axios.get('http://localhost:3000/api/orders/province', {
+      headers: {
+        'Authorization': `Bearer ${token}` // 设置 Authorization 头
+      }
+    });
+    orders.value = response.data || []; // 假设 API 返回的数据就是我们需要的格式
+  } catch (error) {
+    console.error('获取农户地区订单数据失败，使用模拟数据', error);
+    // tableData.value = simulatedTableData; // 使用模拟数据
+  }
+};
+
 onMounted(() => {
+  fetchData();
   calculateTotal();
   sort('total'); // 默认按照总数降序排列
   renderChart();
@@ -380,7 +399,6 @@ onMounted(() => {
 }
 
 .trend-chart-container {
-  margin-top: 20px;
   position: relative;
   width: 80%;
   height: 80%;

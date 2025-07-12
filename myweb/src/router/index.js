@@ -78,6 +78,19 @@ const routes = [
             { path: 'profile', component: () => import("../views/farmer/farmerProfile.vue") }
         ]
 },
+    {
+        path: "/admin",
+        component: () => import("../views/admin/admin.vue"),
+        children: [ // 子路由
+            { path: '',  component: () => import("../views/admin/adminHome.vue") },
+            { path: 'user', component: () => import("../views/admin/adminUser.vue") },
+            { path: 'data', component: () => import("../views/admin/adminData.vue") },
+            { path: 'orders', component: () => import("../views/admin/adminOrders.vue") },
+            { path: 'cert', component: () => import("../views/admin/adminCert.vue") },
+            { path: 'ques', component: () => import("../views/admin/adminQues.vue") },
+            { path: 'share', component: () => import("../views/admin/adminShare.vue") },
+        ]
+    },
       {
       path: '/',
       component: MainLayout,

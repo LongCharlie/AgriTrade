@@ -2,16 +2,17 @@
   <div class="full-height-container">
     <!-- 右上角用户信息 -->
     <el-dropdown>
-      <div class="user-info" @click="navigateToProfile">
-        <img :src="user.avatar" alt="User Avatar" class="user-avatar"/>
-        <span class="user-name">{{ user.name }}</span>
+      <div class="user-info" @click="logout">
+<!--        <img :src="user.avatar" alt="User Avatar" class="user-avatar"/>-->
+<!--        <span class="user-name">{{ user.name }}</span>-->
+        <span class="user-name">退出</span>
       </div>
-      <template #dropdown>
-        <el-dropdown-menu>
-          <el-dropdown-item @click="navigateToProfile">个人中心</el-dropdown-item>
-          <el-dropdown-item @click="logout">退出</el-dropdown-item>
-        </el-dropdown-menu>
-      </template>
+<!--      <template #dropdown>-->
+<!--        <el-dropdown-menu>-->
+<!--          <el-dropdown-item @click="navigateToProfile">个人中心</el-dropdown-item>-->
+<!--          <el-dropdown-item @click="logout">退出</el-dropdown-item>-->
+<!--        </el-dropdown-menu>-->
+<!--      </template>-->
     </el-dropdown>
 
     <!-- 加载状态 -->
