@@ -45,7 +45,7 @@
     </el-row>
 
     <!-- 弹窗 - 编辑证书 -->
-    <el-dialog title="编辑证书" :visible.sync="dialogVisible" width="50%">
+    <el-dialog :modal="false" :close-on-click-modal="false" title="编辑证书" v-model="dialogVisible" width="50%">
       <el-form @submit.prevent="updateCertificate" label-width="120px">
         <el-form-item label="获得时间">
           <el-date-picker v-model="editingCert.obtainTime" type="date" placeholder="选择日期" />
@@ -75,7 +75,7 @@ import { getMyCertificates, uploadCertificate, deleteCertificate, updateCertific
 export default {
   data() {
     return {
-      certifications: [], // 存储证书列表
+      certifications: [],
       newCert: {
         obtainTime: '',
         level: 1,
@@ -85,7 +85,7 @@ export default {
       },
       editingCert: null,
       dialogVisible: false,
-      filter: 'all' // 默认显示全部证书
+      filter: 'all'
     };
   },
   computed: {
@@ -183,45 +183,45 @@ export default {
     viewCertificateDetail(certificateId) {
       this.$router.push(`/expert/cert/detail/${certificateId}`);
     },
-    async uploadCertificate() {
-      try {
-        const expertId = this.$store.getters.userId;
-
-        const payload = {
-          expert_id: expertId,
-          obtain_time: this.newCert.obtainTime,
-          level: this.newCert.level,
-          valid_period: this.newCert.validPeriod,
-          authorizing_unit: this.newCert.authorizingUnit || '中国农业协会',
-          description: this.newCert.description
-        };
-
-        const res = await uploadCertificate(payload);
-
-        this.certifications.unshift({
-          certificateId: res.certificate_id,
-          obtainTime: payload.obtain_time,
-          level: payload.level,
-          validPeriod: payload.valid_period,
-          authorizingUnit: payload.authorizing_unit,
-          description: payload.description,
-          status: 'valid'
-        });
-
-        this.newCert = {
-          obtainTime: '',
-          level: 1,
-          validPeriod: 5,
-          authorizingUnit: '中国农业协会',
-          description: ''
-        };
-
-        this.$message.success('证书上传成功');
-      } catch (error) {
-        this.$message.error('证书上传失败');
-        console.error('上传证书失败:', error);
-      }
-    },
+    // async uploadCertificate() {
+    //   try {
+    //     const expertId = this.$store.getters.userId;
+    //
+    //     const payload = {
+    //       expert_id: expertId,
+    //       obtain_time: this.newCert.obtainTime,
+    //       level: this.newCert.level,
+    //       valid_period: this.newCert.validPeriod,
+    //       authorizing_unit: this.newCert.authorizingUnit || '中国农业协会',
+    //       description: this.newCert.description
+    //     };
+    //
+    //     const res = await uploadCertificate(payload);
+    //
+    //     this.certifications.unshift({
+    //       certificateId: res.certificate_id,
+    //       obtainTime: payload.obtain_time,
+    //       level: payload.level,
+    //       validPeriod: payload.valid_period,
+    //       authorizingUnit: payload.authorizing_unit,
+    //       description: payload.description,
+    //       status: 'valid'
+    //     });
+    //
+    //     this.newCert = {
+    //       obtainTime: '',
+    //       level: 1,
+    //       validPeriod: 5,
+    //       authorizingUnit: '中国农业协会',
+    //       description: ''
+    //     };
+    //
+    //     this.$message.success('证书上传成功');
+    //   } catch (error) {
+    //     this.$message.error('证书上传失败');
+    //     console.error('上传证书失败:', error);
+    //   }
+    // },
     async updateCertificate() {
       try {
         const payload = {
@@ -257,7 +257,15 @@ export default {
       }
     },
     editCertificate(cert) {
-      this.editingCert = { ...cert };
+      this.editingCert = {
+        certificateId: cert.certificateId,
+        obtainTime: cert.obtainTime || '',
+        level: cert.level || 1,
+        validPeriod: cert.validPeriod || 1,
+        authorizingUnit: cert.authorizingUnit || '',
+        description: cert.description || '',
+        status: cert.status || 'valid'
+      };
       this.dialogVisible = true;
     },
     filterCertificates(status) {
@@ -268,17 +276,25 @@ export default {
 </script>
 
 <style scoped>
+.certifications-container {
+  padding: 20px;
+}
+
 .crop-cards {
   margin-top: 20px;
 }
 
 .crop-card {
   width: 100%;
+  height: 260px;
   margin: 20px 0;
   cursor: pointer;
 }
 
 .add-card {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   text-align: center;
   background-color: #f5f5f5;
   border: 1px dashed #ccc;

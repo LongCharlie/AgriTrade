@@ -1,6 +1,6 @@
 <template>
   <div class="cert-detail-container">
-    <el-button @click="$router.back()" icon="el-icon-arrow-left">返回</el-button>
+    <el-button @click="$router.back()" icon="ArrowLeftBold" style="background-color: #4C9148; color: #eeeeee">返回</el-button>
 
     <h2>证书详情</h2>
 

@@ -38,7 +38,7 @@
       <el-col :span="6">
         <el-card class="info-card unanswered-questions">
           <div slot="header">
-            <strong>待回答问题</strong>
+            <strong>未回答问题</strong>
           </div>
           <div class="card-content">
             <p>{{ stats.unansweredCount || 0 }} 条</p>
@@ -50,11 +50,10 @@
       <el-col :span="6">
         <el-card class="info-card latest-activity">
           <div slot="header">
-            <strong>最新活动</strong>
+            <strong>证书数量</strong>
           </div>
           <div class="card-content">
-            <p v-if="latestAnswer">{{ latestAnswer.content.substring(0, 30) }}...</p>
-            <p v-else>暂无最近回答</p>
+            <p>{{ stats.certCount || 0 }} 个</p>
           </div>
         </el-card>
       </el-col>
@@ -93,6 +92,8 @@
 </template>
 
 <script>
+import { useUserStore } from '@/stores/user';
+
 import {
   getExpertById,
   getMyCertificates,
@@ -105,7 +106,8 @@ export default {
     return {
       expert: {},
       stats: {
-        unansweredCount: 0
+        unansweredCount: 0,
+        certCount: 0
       },
       recentAnswers: [],
       latestAnswer: null
@@ -117,7 +119,9 @@ export default {
   methods: {
     async initData() {
       try {
-        const userId = this.$store.getters.userId;
+        const userStore = useUserStore();
+        const userId = userStore.userId;
+        //const userId = this.$store.getters.userId;
 
         // 获取专家信息
         const expert = await getExpertById(userId);
@@ -127,11 +131,13 @@ export default {
           title: expert.title || '暂无职称',
           institution: expert.institution || '暂无机构',
           expertise: expert.expertise || '暂无领域',
-          answerCount: expert.answer_count || 0
+          answerCount: expert.answer_count || 0,
+          expertRank: expert.expert_rank || '暂无排名',
+          bio: expert.bio || '暂无简介'
         };
 
         // 获取证书数量
-        const certificates = await getMyCertificates();
+        const certificates = await getMyCertificates(userId);//接口没改
         this.stats.certCount = certificates.length;
 
         // 获取未回答问题数量
@@ -140,7 +146,7 @@ export default {
 
         // 获取最近回答
         const answers = await getRecentAnswers(userId);
-        this.recentAnswers = answers.slice(0, 5); // 取前5条
+        this.recentAnswers = answers.slice(0, 5);
         this.latestAnswer = answers[0] || null;
       } catch (error) {
         console.error('加载专家首页数据失败:', error);
@@ -169,14 +175,20 @@ export default {
   font-weight: bold;
   color: #333;
 }
-.quick-actions {
-  margin: 20px 0;
-}
 .quick-actions .el-button {
   padding: 30px 70px;
   font-size: 16px;
   margin-bottom: 20px;
+  transition: all 0.3s ease;
+  transform: scale(1);
 }
+
+.quick-actions .el-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+}
+
 .recent-answers ul {
   list-style-type: none;
   padding-left: 0;

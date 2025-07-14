@@ -1,7 +1,7 @@
 <template>
   <div class="expert-detail-container">
     <!-- 返回按钮 -->
-    <el-button @click="$router.back()" icon="el-icon-arrow-left" plain>返回</el-button>
+    <el-button @click="$router.back()" icon="ArrowLeftBold" plain style="background-color: #4C9148; color: #eeeeee">返回</el-button>
 
     <!-- 加载状态 -->
     <div v-if="loading" class="loading">加载中...</div>
@@ -12,7 +12,7 @@
 
       <el-card shadow="hover" class="expert-card">
         <div class="expert-avatar">
-          <el-avatar :src="getDefaultAvatar(expert.expert_id)" :size="100" />
+          <el-avatar :src="getAvatarUrl()" :size="100" />
         </div>
 
         <div class="expert-details">
@@ -21,6 +21,7 @@
           <p><strong>所属机构：</strong>{{ expert.institution || '暂无' }}</p>
           <p><strong>专业领域：</strong>{{ expert.expertise || '暂无' }}</p>
           <p><strong>回答数：</strong>{{ expert.answer_count || 0 }}</p>
+          <p><strong>专家排名：</strong>{{ expert.expert_rank || '暂无' }}</p>
           <p><strong>个人简介：</strong></p>
           <p class="bio">{{ expert.bio || '暂无简介' }}</p>
         </div>
@@ -33,6 +34,7 @@
 </template>
 
 <script>
+import { useUserStore } from '@/stores/user';
 import { getExpertById } from '../../views/expert/expertApi';
 
 export default {
@@ -41,6 +43,10 @@ export default {
       expert: null,
       loading: true
     };
+  },
+  setup() {
+    const userStore = useUserStore();
+    return { userStore };
   },
   created() {
     this.fetchExpert();
@@ -113,6 +119,7 @@ export default {
         //   institution: res.institution || '暂无机构',
         //   expertise: res.expertise || '暂无领域',
         //   answerCount: res.answer_count || 0,
+        //   expertRank: res.expert_rank || '暂无排名',
         //   bio: res.bio || ''
         // };
       } catch (error) {
@@ -121,6 +128,10 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+    getAvatarUrl() {
+      // 从store获取头像URL，如果没有则使用默认头像
+      return this.userStore.avatar_url || this.getDefaultAvatar(this.expert?.expert_id);
     },
     getDefaultAvatar(expertId) {
       return `https://avatars.dicebear.com/api/avataaars/${expertId}.svg?background=%23fff`;
