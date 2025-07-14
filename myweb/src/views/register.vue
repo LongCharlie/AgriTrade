@@ -1,5 +1,8 @@
 <template>
-  <div class="register-container">
+  <div ref="vantaBg" class="vanta-container">
+    <div class="logo-container">
+      <img src="@/assets/platform_logo2.png" alt="Logo" class="logo" />
+    </div>
     <div class="form-content">
       <h1>注册</h1>
       <form @submit.prevent="handleRegister" id="registerForm">
@@ -40,134 +43,184 @@
           <label for="address_detail">详细地址:</label>
           <input type="text" v-model="registerStore.address_detail" required />
         </div>
-        <button type="submit">注册</button>
+        <button type="submit" class="login-button">注册</button>
         <div v-if="error" class="error">{{ error }}</div>
       </form>
-      <p>已有账号? <router-link to="/myweb/src/views/login2">登录</router-link></p>
+      <p>已有账号? <router-link to="/login">登录</router-link></p>
     </div>
   </div>
 </template>
 
-<script setup>
+<script>
+import * as THREE from 'three'
+import GLOBE from 'vanta/dist/vanta.globe.min'
 import { ref } from 'vue';
 import { useRouter, onBeforeRouteLeave } from 'vue-router';
 import { useRegisterStore } from '../stores/register';
 import axios from 'axios';
 import { pcaTextArr } from 'element-china-area-data';
 
-const registerStore = useRegisterStore();
-const error = ref('');
-const router = useRouter();
-const selectedOptions = ref([]);
-const addressSelected = ref(false); // 记录地址选择状态
+export default {
+  setup() {
+    const registerStore = useRegisterStore();
+    const error = ref('');
+    const router = useRouter();
+    const selectedOptions = ref([]);
+    const addressSelected = ref(false);
 
-const handleAddressChange = (value) => {
-  // 确保 value 是定义的，并且是一个数组
-  if (Array.isArray(value) && value.length === 3) {
-    registerStore.province = value[0];
-    registerStore.city = value[1];
-    registerStore.district = value[2];
-    addressSelected.value = true; // 地址已选择
-  } else {
-    // When address is cleared or invalid
-    registerStore.province = ''; // Reset these values to empty
-    registerStore.city = '';
-    registerStore.district = '';
-    addressSelected.value = false; // 地址未选择状态
-  }
-};
+    const handleAddressChange = (value) => {
+      if (Array.isArray(value) && value.length === 3) {
+        registerStore.province = value[0];
+        registerStore.city = value[1];
+        registerStore.district = value[2];
+        addressSelected.value = true;
+      } else {
+        registerStore.province = '';
+        registerStore.city = '';
+        registerStore.district = '';
+        addressSelected.value = false;
+      }
+    };
 
-const handleRegister = async () => {
-  console.log("注册函数被调用"); // 调试信息
+    const handleRegister = async () => {
+      if (!addressSelected.value) {
+        error.value = '地址是必选项，请选择地址';
+        return;
+      }
 
-  // 检查地址是否被选择
-  if (!addressSelected.value) {
-    error.value = '地址是必选项，请选择地址';
-    return;
-  }
+      try {
+        const response = await axios.post('http://localhost:3000/api/register', {
+          username: registerStore.username,
+          password: registerStore.password,
+          role: registerStore.role,
+          phone: registerStore.phone,
+          province: registerStore.province,
+          city: registerStore.city,
+          district: registerStore.district,
+          address_detail: registerStore.address_detail
+        });
+        alert('注册成功，请登录');
+        router.push('/login');
+      } catch (err) {
+        error.value = err.response?.data || '注册失败';
+      }
+    };
 
-  try {
-    const response = await axios.post('http://localhost:3000/api/register', {
-      username: registerStore.username,
-      password: registerStore.password,
-      role: registerStore.role,
-      phone: registerStore.phone,
-      province: registerStore.province,
-      city: registerStore.city,
-      district: registerStore.district,
-      address_detail: registerStore.address_detail
+    onBeforeRouteLeave((to, from, next) => {
+      registerStore.$reset();
+      next();
     });
-    if (!response.ok) {
-      const errorData = await response.text();
-      throw new Error(errorData || '注册失败');
-    }
-    alert('注册成功，请登录');
-    router.push('/login');
-  } catch (err) {
-    console.log('报错' + `err`); // 打印错误以便调试
-    error.value = err.response.data;
-  }
-};
 
-onBeforeRouteLeave((to, from, next) => {
-  registerStore.$reset();
-  next();
-});
+    return {
+      registerStore,
+      error,
+      selectedOptions,
+      addressSelected,
+      handleAddressChange,
+      handleRegister,
+      pcaTextArr
+    };
+  },
+  data() {
+    return {
+      vantaEffect: null
+    }
+  },
+  mounted() {
+    this.vantaEffect = GLOBE({
+      el: this.$refs.vantaBg,
+      THREE: THREE,
+      mouseControls: true,
+      touchControls: true,
+      gyroControls: false,
+      minHeight: 200.00,
+      minWidth: 200.00,
+      scale: 1.00,
+      scaleMobile: 1.00,
+      color: 0x41743b,
+      backgroundColor: 0xd1e8dc
+    })
+  },
+  beforeUnmount() {
+    if (this.vantaEffect) {
+      this.vantaEffect.destroy()
+    }
+  }
+}
 </script>
 
-<style scoped>
-.register-container {
-  font-family: Arial, sans-serif;
-  min-height: 97vh; /* 填满整个视口 */
-  display: flex;
-  justify-content: center; /* 水平居中 */
-  align-items: center; /* 垂直居中 */
-  background-color: #e6f9e6; /* 浅绿背景色 */
+<style>
+.vanta-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .form-content {
-  max-width: 600px; /* 最大宽度 */
-  width: 100%; /* 适应宽度 */
+  max-width: 400px;
+  width: 100%;
   padding: 40px;
-  background-color: #ffffff; /* 白色背景 */
-  border-radius: 20px; /* 圆角 */
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* 阴影效果 */
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  position: absolute;
+  top: 50%;
+  left: 220px;
+  transform: translateY(-50%);
+  z-index: 2;
 }
 
 h1 {
-  text-align: center; /* 标题居中 */
-  margin-bottom: 10px; /* 增加标题与下方内容的距离 */
-}
-
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  text-align: center;
+  margin-bottom: 50px;
 }
 
 .input-group {
   display: flex;
-  flex-direction: column; /* 垂直排列标签和输入框 */
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+label {
+  flex: 0 0 70px;
+  margin-right: 0px;
 }
 
 input, select {
-  padding: 8px;
+  padding: 10px;
   font-size: 16px;
-  border: 1px solid #ccc; /* 边框 */
-  border-radius: 5px; /* 圆角 */
-  flex: 1; /* 输入框自适应宽度 */
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  flex: 1;
 }
 
-button {
+.login-button {
+  width: 100%;
   padding: 10px;
-  background: #4CAF50; /* 按钮颜色 */
-  color: white; /* 按钮文字颜色 */
-  border: none; /* 去掉边框 */
-  border-radius: 5px; /* 圆角 */
-  cursor: pointer; /* 指针样式 */
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
 }
 
 .error {
   color: red;
+  text-align: center;
+}
+
+.logo-container {
+  position: absolute;
+  top: 12px;
+  left: 62px;
+  z-index: 3;
+}
+
+.logo {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
 }
 </style>
