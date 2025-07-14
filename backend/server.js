@@ -9,6 +9,49 @@ app.use(cors()); // 允许所有来源的请求
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
+const multer = require('multer');
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
+const fs = require('fs');
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, 'uploads', 'avatars');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const cleanedName = file.originalname.replace(/[/\\?%*:|"<>]/g, '');
+    cb(null, `${uuidv4()}-${cleanedName}`);
+  }
+});
+
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('仅支持图片格式'));
+  }
+});
+
+app.post('/api/upload', 
+  authenticateToken, 
+  upload.single('avatar'), 
+  async (req, res) => {
+    try {
+      const userId = req.user.userId;
+      const avatarUrl = req.file.filename; 
+      const newAvatarUrl = await db.updateUserAvatar(userId, avatarUrl); 
+      res.json({ avatarUrl: newAvatarUrl });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+);
+
 // 用户注册接口
 app.post('/api/register', async (req, res) => {
 
@@ -209,11 +252,11 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
 app.patch('/api/user/profile', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { phone, province, city, district, address_detail } = req.body;
+    const { phone, province, city, district, address_detail, avatar_url } = req.body;
 
     // 构建更新字段
     const updates = {};
-    const fields = ['phone', 'province', 'city', 'district', 'address_detail'];
+    const fields = ['phone', 'province', 'city', 'district', 'address_detail', 'avatar_url'];
     
     fields.forEach(field => {
       if (req.body[field] !== undefined) {
@@ -517,7 +560,7 @@ app.post('/api/planting-records', authenticateToken, checkRole([ROLES.FARMER]), 
 app.patch('/api/orders/:id/logistics', checkRole([ROLES.FARMER]), async (req, res) => {
   const { tracking_number, carrier } = req.body;
   await db.query(
-    'UPDATE orders SET tracking_number = $1, carrier = $2 WHERE order_id = $3',
+    'UPDATE orders SET tracking_number = $1, pu = $2 WHERE order_id = $3',
     [tracking_number, carrier, req.params.id]
   );
   res.json({ message: '物流信息更新成功' });

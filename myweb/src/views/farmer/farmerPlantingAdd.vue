@@ -150,16 +150,32 @@ const mockHistoricalRecords = [
   { activity_id: 4, activity_date: '2023-05-15', activity_type: 'harvest', description: '首次收获', images: cropPhoto },
 ];
 
-// 获取历史记录
+// // 获取历史记录
+// const fetchHistoricalRecords = async () => {
+//   const recordId = formData.value.record_id; // 从表单数据中获取 record_id
+//   try {
+//     const response = await axios.get(`http://localhost:3000/api/historical-activity`, {
+//       headers: {
+//         'Authorization': `Bearer ${token}`, // 设置 Authorization 头
+//       },
+//       params: {
+//         record_id: recordId // 将 record_id 作为查询参数传递
+//       }
+//     });
+//     historicalRecords.value = response.data; // 假设接口返回的数据符合预期
+//   } catch (error) {
+//     console.error('获取历史活动失败，使用模拟数据:', error);
+//     // 使用模拟数据
+//     historicalRecords.value = mockHistoricalRecords;
+//   }
+// };
+
 const fetchHistoricalRecords = async () => {
   const recordId = formData.value.record_id; // 从表单数据中获取 record_id
   try {
-    const response = await axios.get(`http://localhost:3000/api/historical-activity`, {
+    const response = await axios.get(`http://localhost:3000/api/historical-activity/${recordId}`, {
       headers: {
         'Authorization': `Bearer ${token}`, // 设置 Authorization 头
-      },
-      params: {
-        record_id: recordId // 将 record_id 作为查询参数传递
       }
     });
     historicalRecords.value = response.data; // 假设接口返回的数据符合预期
