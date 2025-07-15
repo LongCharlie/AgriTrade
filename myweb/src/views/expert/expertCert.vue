@@ -13,7 +13,7 @@
     <el-row :gutter="40" class="crop-cards">
       <!-- 添加新证书卡片 -->
       <el-col :span="8" @click="goToAddNewCert">
-        <el-card class="crop-card add-card">
+        <el-card class="crop-card add-card" shadow="hover">
           <div class="card-content">
             <p>+</p>
             <p>上传新证书</p>
@@ -23,7 +23,7 @@
 
       <!-- 已有证书卡片 -->
       <el-col :span="8" v-for="(cert, index) in filteredCertificates" :key="index">
-        <el-card class="crop-card" @click="viewCertificateDetail(cert.certificateId)">
+        <el-card class="crop-card" shadow="hover" @click="viewCertificateDetail(cert.certificateId)">
           <div class="card-header">
             <span class="cert-name">{{ cert.authorizingUnit }}</span>
             <el-tag :type="cert.status === 'valid' ? 'success' : 'danger'">
@@ -289,6 +289,11 @@ export default {
   height: 260px;
   margin: 20px 0;
   cursor: pointer;
+}
+
+.crop-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .add-card {

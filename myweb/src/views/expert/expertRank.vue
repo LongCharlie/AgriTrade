@@ -9,7 +9,7 @@
       <!-- 第二名 -->
       <div class="podium-item second" v-if="topExperts[1]">
         <div class="podium-rank">2</div>
-        <el-avatar @click="viewDetails(2)" :src="getDefaultAvatar(topExperts[1].expert_id)" size="large" />
+        <el-avatar class="avatar" shadow="hover" @click="viewDetails(2)" :src="getDefaultAvatar(topExperts[1].expert_id)" size="large" />
         <div class="podium-name">{{ topExperts[1].real_name }}</div>
         <div class="podium-score">{{ topExperts[1].answer_count }} 回答</div>
       </div>
@@ -17,7 +17,7 @@
       <!-- 第一名 -->
       <div class="podium-item first" v-if="topExperts[0]">
         <div class="podium-rank">1</div>
-        <el-avatar @click="viewDetails(1)" :src="getDefaultAvatar(topExperts[0].expert_id)" size="large" />
+        <el-avatar class="avatar" shadow="hover" @click="viewDetails(1)" :src="getDefaultAvatar(topExperts[0].expert_id)" size="large" />
         <div class="podium-name">{{ topExperts[0].real_name }}</div>
         <div class="podium-score">{{ topExperts[0].answer_count }} 回答</div>
       </div>
@@ -25,7 +25,7 @@
       <!-- 第三名 -->
       <div class="podium-item third" v-if="topExperts[2]">
         <div class="podium-rank">3</div>
-        <el-avatar @click="viewDetails(3)" :src="getDefaultAvatar(topExperts[2].expert_id)" size="large" />
+        <el-avatar class="avatar" shadow="hover" @click="viewDetails(3)" :src="getDefaultAvatar(topExperts[2].expert_id)" size="large" />
         <div class="podium-name">{{ topExperts[2].real_name }}</div>
         <div class="podium-score">{{ topExperts[2].answer_count }} 回答</div>
       </div>
@@ -211,6 +211,11 @@ export default {
 </script>
 
 <style scoped>
+.avatar:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
 .expert-rank-container {
   padding: 20px;
 }

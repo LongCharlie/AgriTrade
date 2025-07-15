@@ -35,6 +35,16 @@ export async function getAllQuestions() {
   return await get('/api/questions/all')
 }
 
+// 获取单个问题
+export async function getQuestionById(id) {
+  return await get(`/api/questions/${id}`)
+}
+
+// 获取某问题的所有回答，接口未写
+export async function getAnswersByQuestionId(id) {
+  return await get(`/api/answers/${id}`)
+}
+
 // 提交回答
 export async function submitAnswer(data) {
   return await post('/api/answers', data)
@@ -48,4 +58,9 @@ export async function getRecentAnswers(expertId) {
 // 更新专家信息
 export async function updateExpertProfile(expertId, updates) {
   return await patch('/api/expert/profile', updates);
+}
+
+// getAnswerDetail，接口未写
+export async function getAnswerById(id) {
+  return await get(`/api/answer/${id}`);
 }

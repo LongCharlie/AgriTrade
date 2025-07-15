@@ -13,6 +13,7 @@ import expertProfile from "@/views/expert/expertProfile.vue";
 import expertAnswer from "@/views/expert/expertAnswer.vue";
 import expertCertAdd from "@/views/expert/expertCertAdd.vue";
 import expertCertDetail from "@/views/expert/expertCertDetail.vue";
+import expertAnswerDetail from "@/views/expert/expertAnswerDetail.vue"
 
 import MainLayout from '@/views/merchant/MainLayout.vue'
 import MerchantOrder from '@/views/merchant/merchantOrder.vue'
@@ -46,6 +47,7 @@ const routes = [
             { path: '/expert/detail/:id', component: expertDetail },
             { path: '/expert/cert/new', component: expertCertAdd },
             { path: '/expert/cert/detail/:id', component: expertCertDetail },
+            { path: '/expert/answer/:id', component: expertAnswerDetail },
         ]
     },
     {
