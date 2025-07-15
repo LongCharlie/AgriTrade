@@ -86,6 +86,8 @@ const routes = [
         children: [ // 子路由
             { path: '',  component: () => import("../views/admin/adminHome.vue") },
             { path: 'user', component: () => import("../views/admin/adminUser.vue") },
+            { path: 'user/edit', component: () => import("../views/admin/adminUserEdit.vue") },
+            { path: 'user/new', component: () => import("../views/admin/adminUserNew.vue") },
             { path: 'data', component: () => import("../views/admin/adminData.vue") },
             { path: 'orders', component: () => import("../views/admin/adminOrders.vue") },
             { path: 'cert', component: () => import("../views/admin/adminCert.vue") },
