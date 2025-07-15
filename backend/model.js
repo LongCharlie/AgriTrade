@@ -295,6 +295,137 @@ const updatePlantingRecordStatus = async (recordId, status) => {
   return result.rows[0];
 };
 
+const getAgricultureCount = async () => {
+  const { rows } = await pool.query(`
+    SELECT COUNT(DISTINCT product_name) AS count 
+    FROM planting_records
+  `);
+  return parseInt(rows[0].count);
+};
+
+const getFarmerCount = async () => {
+  const { rows } = await pool.query(`
+    SELECT COUNT(*) AS count 
+    FROM users 
+    WHERE role = 'farmer'
+  `);
+  return parseInt(rows[0].count);
+};
+
+const getExpertCount = async () => {
+  const { rows } = await pool.query(`
+    SELECT COUNT(*) AS count 
+    FROM experts
+  `);
+  return parseInt(rows[0].count);
+};
+
+const getPlantingRecordsByFarmerId = async (farmerId) => {
+  const { rows } = await pool.query(`
+    SELECT 
+      record_id,
+      product_name,
+      province,
+      growth_status,
+      TO_CHAR(created_at, 'YYYY/MM/DD') AS created_at
+    FROM planting_records
+    WHERE farmer_id = $1
+    ORDER BY created_at DESC
+  `, [farmerId]);
+  return rows;
+};
+
+const getProvinceOrders = async (province) => {
+  const { rows } = await pool.query(`
+    SELECT 
+      o.order_id,
+      d.product_name,
+      o.quantity,
+      o.price,
+      TO_CHAR(o.created_at, 'YYYY-MM-DD') AS created_at,
+      o.status
+    FROM purchase_applications o
+    JOIN purchase_demands d ON o.demand_id = d.demand_id
+    WHERE o.province = $1
+    ORDER BY o.created_at DESC
+  `, [province]);
+  return rows;
+};
+
+const deletePlantingRecord = async (recordId, farmerId) => {
+  const { rowCount } = await pool.query(`
+    DELETE FROM planting_records 
+    WHERE record_id = $1 AND farmer_id = $2
+    RETURNING record_id
+  `, [recordId, farmerId]);
+  
+  if (rowCount === 0) {
+    throw new Error('记录不存在或无权删除');
+  }
+};
+
+const getPurchaseDemands = async () => {
+  const { rows } = await pool.query(`
+    SELECT 
+      d.demand_id,
+      d.product_name,
+      d.quantity,
+      d.buyer_id,
+      u.username AS buyerName,
+      d.delivery_city AS address,
+      TO_CHAR(d.updated_at, 'YYYY-MM-DD HH24:MI:SS') AS updated_at
+    FROM purchase_demands d
+    JOIN users u ON d.buyer_id = u.user_id
+    ORDER BY d.updated_at DESC
+  `);
+  return rows;
+};
+
+const getFarmerApplications = async (farmerId) => {
+  const { rows } = await pool.query(`
+    SELECT 
+      application_id,
+      demand_id,
+      record_id,
+      quantity,
+      price,
+      province
+    FROM purchase_applications
+    WHERE farmer_id = $1
+    ORDER BY created_at DESC
+  `, [farmerId]);
+  return rows;
+};
+
+const updateApplication = async (applicationId, farmerId, data) => {
+  const { record_id, quantity, price, province } = data;
+  
+  const recordCheck = await pool.query(`
+    SELECT 1 FROM planting_records 
+    WHERE record_id = $1 AND farmer_id = $2
+  `, [record_id, farmerId]);
+  
+  if (recordCheck.rows.length === 0) {
+    throw new Error('无效的种植记录ID');
+  }
+
+  const { rows } = await pool.query(`
+    UPDATE purchase_applications
+    SET 
+      record_id = $1,
+      quantity = $2,
+      price = $3,
+      province = $4
+    WHERE application_id = $5 AND farmer_id = $6
+    RETURNING *
+  `, [record_id, quantity, price, province, applicationId, farmerId]);
+
+  if (rows.length === 0) {
+    throw new Error('申请不存在或无权修改');
+  }
+  return rows[0];
+};
+
 // 导出所有数据库操作方法
 module.exports = {
   checkUserExists,
@@ -315,6 +446,15 @@ module.exports = {
   getExpertById,
   getUserById,
   updateUserAvatar,
+  getAgricultureCount,
+  getFarmerCount,
+  getExpertCount,
+  getPlantingRecordsByFarmerId,
+  getProvinceOrders,
+  deletePlantingRecord,
+  getPurchaseDemands,
+  getFarmerApplications,
+  updateApplication,
   // 也可以导出原始的query方法以便特殊查询使用
   query: (text, params) => pool.query(text, params),
 };

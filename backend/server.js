@@ -761,3 +761,119 @@ app.patch('/api/planting-records/:id/status', authenticateToken, checkRole([ROLE
   }
 });
 
+// 获取农产品种类数
+app.get('/api/agriculture-count', async (req, res) => {
+  try {
+    const count = await db.getAgricultureCount();
+    res.json({ count });
+  } catch (error) {
+    res.status(500).json({ error: '获取数据失败' });
+  }
+});
+
+// 获取农户数量
+app.get('/api/farmer-count', async (req, res) => {
+  try {
+    const count = await db.getFarmerCount();
+    res.json({ count });
+  } catch (error) {
+    res.status(500).json({ error: '获取数据失败' });
+  }
+});
+
+// 获取专家数量
+app.get('/api/expert-count', async (req, res) => {
+  try {
+    const count = await db.getExpertCount();
+    res.json({ count });
+  } catch (error) {
+    res.status(500).json({ error: '获取数据失败' });
+  }
+});
+
+// 获取农户种植记录
+app.get('/api/growth-records', authenticateToken, checkRole([ROLES.FARMER]), async (req, res) => {
+  try {
+    const farmerId = req.user.userId;
+    const records = await db.getPlantingRecordsByFarmerId(farmerId);
+    res.json(records);
+  } catch (error) {
+    console.error('获取种植记录失败:', error);
+    res.status(500).json({ error: '获取种植记录失败' });
+  }
+});
+
+//获取地区订单
+app.get('/api/orders/province', 
+  authenticateToken,
+  checkRole([ROLES.FARMER]),
+  async (req, res) => {
+    try {
+      // 从用户信息中获取所在省份
+      const farmer = await db.getUserById(req.user.userId);
+      const province = farmer.province;
+      
+      if (!province) {
+        return res.status(400).json({ error: '用户省份信息未完善' });
+      }
+      
+      const orders = await db.getProvinceOrders(province);
+      res.json(orders);
+    } catch (error) {
+      res.status(500).json({ error: '获取订单数据失败' });
+    }
+  }
+);
+
+//删除种植记录
+app.delete('/api/growth-records/:record_id', 
+  authenticateToken,
+  checkRole([ROLES.FARMER]),
+  async (req, res) => {
+    try {
+      const recordId = parseInt(req.params.record_id);
+      await db.deletePlantingRecord(recordId, req.user.userId);
+      res.status(204).json({ message: '种植记录删除成功' });
+    } catch (error) {
+      res.status(403).json({ error: error.message });
+    }
+  }
+);
+
+//获取所有采购需求
+app.get('/api/demands/all', authenticateToken, async (req, res) => {
+  try {
+    const demands = await db.getPurchaseDemands();
+    res.json(demands);
+  } catch (error) {
+    res.status(500).json({ error: '获取采购需求失败' });
+  }
+});
+
+// 获取农户报价信息
+app.get('/api/quotes', authenticateToken, checkRole([ROLES.FARMER]), async (req, res) => {
+  try {
+    const applications = await db.getFarmerApplications(req.user.userId);
+    res.json(applications);
+  } catch (error) {
+    res.status(500).json({ error: '获取报价信息失败' });
+  }
+});
+
+//修改报价
+app.post('/api/applications-modify', authenticateToken, checkRole([ROLES.FARMER]), async (req, res) => {
+  try {
+    const { application_id, record_id, quantity, price, province } = req.body;
+    const updatedApp = await db.updateApplication(
+      application_id,
+      req.user.userId,
+      { record_id, quantity, price, province }
+    );
+    res.json({
+      message: '报价修改成功',
+      application: updatedApp
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
