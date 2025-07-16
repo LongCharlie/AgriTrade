@@ -37,7 +37,7 @@ export default {
         { path: "/data", name: "数据统计"},
         { path: "/orders", name: "售后审核" },
         { path: "/cert", name: "证书审核" },
-        { path: "/ques", name: "提问审核"},
+        { path: "/ques", name: "提问/回答删除"},
         { path: "/share", name: "经验分享审核"}
       ],
       menuHeight: 0 // 初始化菜单高度

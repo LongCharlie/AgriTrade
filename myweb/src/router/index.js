@@ -93,6 +93,7 @@ const routes = [
             { path: 'cert', component: () => import("../views/admin/adminCert.vue") },
             { path: 'ques', component: () => import("../views/admin/adminQues.vue") },
             { path: 'share', component: () => import("../views/admin/adminShare.vue") },
+            { path: 'ques/:id', component: () => import("../views/admin/adminAnswers.vue") },
         ]
     },
       {

@@ -1,6 +1,6 @@
 <template>
   <div class="cert-audit-container">
-    <h2>证书审核管理</h2>
+    <h1>证书审核管理</h1>
 
     <!-- 筛选区域 -->
     <div class="filter-section">
@@ -23,7 +23,7 @@
     </div>
 
     <!-- 证书列表 -->
-    <el-table :data="certificates" style="width: 100%" border>
+    <el-table :data="certificates" style="width: 100%">
       <el-table-column prop="certificateId" label="证书ID" width="100"></el-table-column>
       <el-table-column prop="expertId" label="专家ID" width="100"></el-table-column>
       <el-table-column prop="authorizingUnit" label="授权单位"></el-table-column>
@@ -53,6 +53,7 @@
     </el-table>
 
     <!-- 分页 -->
+    <div class="pagination">
     <el-pagination
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
@@ -62,6 +63,7 @@
         layout="total, sizes, prev, pager, next, jumper"
         :total="pagination.total"
     ></el-pagination>
+    </div>
 
     <!-- 审核对话框 -->
     <el-dialog title="证书审核" v-model="auditDialogVisible" width="50%">
@@ -233,11 +235,17 @@ export default {
 </script>
 
 <style scoped>
+.pagination {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
 .cert-audit-container {
-  padding: 20px;
+
 }
 .filter-section {
-  margin-bottom: 20px;
+  //margin-bottom: 20px;
 }
 .el-pagination {
   margin-top: 20px;

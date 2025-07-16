@@ -79,35 +79,41 @@ export default {
 </script>
 
 <style lang="less" scoped>
+/* 修改容器样式 */
 .full-height-container {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 0;
+  position: fixed;  /* 添加固定定位 */
+  left: 0;
+  top: 0;       /* 顶栏高度(与header高度一致) */
+  bottom: 0;
+  width: 220px;     /* 侧栏宽度 */
+  z-index: 100;     /* 确保在内容之上 */
+  background-color: #D9EEDD;
+  //overflow-y: auto; /* 允许侧栏内容滚动 */
 }
 
+/* 移除原有高度设置 */
 .tac {
-  flex: 1;
-  overflow: hidden;
+  /* 移除 flex: 1 和 overflow: hidden */
+  width: 100%;
 }
 
-.full-height {
-  height: 100%;
-}
-
+/* 菜单高度调整 */
 .el-menu-vertical-demo {
+  height: calc(100vh - 70px); /* 视口高度减去顶栏高度 */
   border-right: none;
 }
 
+/* 头部logo样式调整 */
 .header {
-   //position: fixed;
-   display: flex;
-   align-items: center;
-   justify-content: flex-start;
-   padding: 10px 20px;
-   background-color: #D9EEDD;
- }
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 10px 20px;
+  background-color: #D9EEDD;
+  position: sticky; /* 使logo在侧栏滚动时保持可见 */
+  top: 0;
+  z-index: 110;     /* 高于菜单项 */
+}
 
 .logo {
   width: 100px;

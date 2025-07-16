@@ -2,37 +2,59 @@
   <div class="questions-container">
     <h2>问题列表</h2>
 
-    <!-- 状态筛选按钮 -->
-    <div class="filter-buttons">
-      <el-button :type="filter === 'all' ? 'primary' : 'default'" @click="filterQuestions('all')">全部</el-button>
-      <el-button :type="filter === 'open' ? 'primary' : 'default'" @click="filterQuestions('open')">未关闭</el-button>
-      <el-button :type="filter === 'closed' ? 'primary' : 'default'" @click="filterQuestions('closed')">已关闭</el-button>
-      <el-button :type="filter === 'unanswered' ? 'primary' : 'default'" @click="filterQuestions('unanswered')">未回答</el-button>
-      <el-button :type="filter === 'answered' ? 'primary' : 'default'" @click="filterQuestions('answered')">已回答</el-button>
+    <!-- 搜索和筛选区域 -->
+    <div class="search-filter-container">
+      <el-input
+          v-model="searchQuery"
+          placeholder="输入问题标题或内容搜索"
+          class="search-input"
+          clearable
+          @clear="handleSearchClear"
+          @keyup.enter="handleSearch"
+      >
+<!--        <template #append>-->
+<!--          <el-button type="primary" @click="handleSearch" icon="el-icon-search">搜索</el-button>-->
+<!--        </template>-->
+      </el-input>
+
+      <!-- 状态筛选按钮 -->
+      <div class="filter-buttons">
+        <el-button :type="filter === 'all' ? 'primary' : 'default'" @click="filterQuestions('all')">全部</el-button>
+        <el-button :type="filter === 'open' ? 'primary' : 'default'" @click="filterQuestions('open')">未关闭</el-button>
+        <el-button :type="filter === 'closed' ? 'primary' : 'default'" @click="filterQuestions('closed')">已关闭</el-button>
+        <el-button :type="filter === 'unanswered' ? 'primary' : 'default'" @click="filterQuestions('unanswered')">未回答</el-button>
+        <el-button :type="filter === 'answered' ? 'primary' : 'default'" @click="filterQuestions('answered')">已回答</el-button>
+      </div>
     </div>
 
     <!-- 问题列表展示区域 -->
     <div class="question-list">
+      <!-- 搜索结果提示 -->
+      <div v-if="searchQuery" class="search-result-tip">
+        共找到 {{ filteredQuestions.length }} 条关于"{{ searchQuery }}"的结果
+        <el-button type="text" @click="clearSearch" v-if="searchQuery">清除搜索</el-button>
+      </div>
+
       <!-- 问题卡片 -->
       <el-card
           class="question-card"
-          v-for="(question, index) in filteredQuestions"
+          v-for="(question, index) in paginatedQuestions"
           :key="index"
           shadow="hover"
       >
         <div class="card-header">
-          <span class="question-title">{{ question.title }}</span>
+          <span class="question-title" v-html="highlightSearchText(question.title, true)"></span>
           <div class="tag">
-          <el-tag :type="question.status === 'open' ? 'warning' : 'info'">
-            {{ question.status === 'open' ? '未关闭' : '已关闭' }}
-          </el-tag>
-          <el-tag :type="question.status === 'unanswered' ? 'warning' : 'info'">
-            {{ question.status === 'unanswered' ? '未回答' : '已回答' }}
-          </el-tag>
+            <el-tag :type="question.status === 'open' ? 'warning' : 'info'">
+              {{ question.status === 'open' ? '未关闭' : '已关闭' }}
+            </el-tag>
+            <el-tag :type="question.answerCount === 0 ? 'warning' : 'info'">
+              {{ question.answerCount === 0 ? '未回答' : '已回答' }}
+            </el-tag>
           </div>
         </div>
         <div class="card-body">
-          <p class="question-content">{{ truncateText(question.content, 150) }}</p>
+          <p class="question-content" v-html="highlightSearchText(truncateText(question.content, 150), true)"></p>
           <div class="question-meta">
             <span><i class="el-icon-user"></i> {{ question.farmerName }}</span>
             <span><i class="el-icon-time"></i> {{ question.createdAt }}</span>
@@ -41,21 +63,27 @@
         </div>
         <div class="card-footer">
           <el-button type="primary" size="small" @click="viewQuestionDetail(question.questionId)">去回答</el-button>
-<!--          <el-button-->
-<!--              v-if="question.status === 'open' && $store.getters.userRole === 'farmer'"-->
-<!--              type="danger"-->
-<!--              size="small"-->
-<!--              @click="closeQuestion(question.questionId)"-->
-<!--          >-->
-<!--            关闭问题-->
-<!--          </el-button>-->
         </div>
       </el-card>
+
+      <!-- 分页组件 -->
+      <div class="pagination-container">
+        <el-pagination
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+            :current-page="pagination.currentPage"
+            :page-sizes="[5, 10, 20, 50]"
+            :page-size="pagination.pageSize"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="filteredQuestions.length">
+        </el-pagination>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
+import DOMPurify from 'dompurify';
 import { getAllQuestions } from '../../views/expert/expertApi';
 //import { getQuestions, closeQuestion } from '../../views/expert/expertApi';
 
@@ -63,22 +91,46 @@ export default {
   data() {
     return {
       questions: [],
-      filter: 'all'
+      filter: 'all',
+      searchQuery: '', // 搜索关键词
+      pagination: {
+        currentPage: 1,
+        pageSize: 10
+      }
     };
   },
   computed: {
-    // 根据状态过滤问题
+    // 根据状态和搜索词过滤问题
     filteredQuestions() {
+      let filtered = this.questions;
+
+      // 状态筛选
       if (this.filter === 'open') {
-        return this.questions.filter(q => q.status === 'open');
+        filtered = filtered.filter(q => q.status === 'open');
       } else if (this.filter === 'closed') {
-        return this.questions.filter(q => q.status === 'closed');
+        filtered = filtered.filter(q => q.status === 'closed');
       } else if (this.filter === 'answered') {
-        return this.questions.filter(q => q.answerCount > 0);
+        filtered = filtered.filter(q => q.answerCount > 0);
       } else if (this.filter === 'unanswered') {
-        return this.questions.filter(q => q.answerCount === 0);
+        filtered = filtered.filter(q => q.answerCount === 0);
       }
-      return this.questions;
+
+      // 搜索筛选
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        filtered = filtered.filter(q =>
+            q.title.toLowerCase().includes(query) ||
+            q.content.toLowerCase().includes(query)
+        );
+      }
+
+      return filtered;
+    },
+    // 分页后的数据
+    paginatedQuestions() {
+      const start = (this.pagination.currentPage - 1) * this.pagination.pageSize;
+      const end = start + this.pagination.pageSize;
+      return this.filteredQuestions.slice(start, end);
     }
   },
   created() {
@@ -143,6 +195,48 @@ export default {
         this.$message.error('获取问题列表失败');
       }
     },
+    // 搜索处理
+    handleSearch() {
+      this.pagination.currentPage = 1; // 搜索时重置到第一页
+    },
+    // 清除搜索
+    clearSearch() {
+      this.searchQuery = '';
+      this.pagination.currentPage = 1;
+    },
+    // 搜索框清空时处理
+    handleSearchClear() {
+      this.pagination.currentPage = 1;
+    },
+    // 高亮搜索文本
+    highlightSearchText(text, isHtml = false) {
+      if (!this.searchQuery || !text) return text;
+
+      const query = this.searchQuery.toLowerCase();
+      const regex = new RegExp(query, 'gi');
+
+      if (isHtml) {
+        // 用于v-html的情况
+        const highlighted = text.toString().replace(regex, match =>
+            `<span class="highlight-text">${match}</span>`
+        );
+        return DOMPurify.sanitize(highlighted);
+      } else {
+        // 用于普通文本插值的情况
+        return text.toString().replace(regex, match =>
+            `{{${match}}}`
+        );
+      }
+    },
+    // 每页条数改变
+    handleSizeChange(val) {
+      this.pagination.pageSize = val;
+      this.pagination.currentPage = 1; // 重置到第一页
+    },
+    // 当前页改变
+    handleCurrentChange(val) {
+      this.pagination.currentPage = val;
+    },
     truncateText(text, length) {
       if (!text) return '';
       if (text.length <= length) return text;
@@ -185,6 +279,53 @@ export default {
 </script>
 
 <style scoped>
+.search-filter-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 0;
+  gap: 20px;
+}
+
+.search-input {
+  width: 300px;
+}
+
+.search-result-tip {
+  margin-bottom: 15px;
+  color: #666;
+  font-size: 14px;
+}
+
+/* 高亮文本样式 */
+.question-title ::v-deep .highlight-text,
+.question-content ::v-deep .highlight-text {
+  background-color: #FFEB3B;
+  color: #000;
+  padding: 0 2px;
+  border-radius: 2px;
+  font-weight: bold;
+  display: inline; /* 确保是行内显示 */
+}
+
+.pagination-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+/* 问题卡片样式微调 */
+.question-card {
+  margin-bottom: 20px;
+  background-color: #F7FFF9;
+}
+
+/* 确保内容区域有足够空间 */
+.questions-container {
+  padding: 20px;
+  min-height: calc(100vh - 120px); /* 根据实际布局调整 */
+}
+
 .questions-container {
   padding: 20px;
 }

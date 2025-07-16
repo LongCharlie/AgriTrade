@@ -49,14 +49,20 @@ export default {
 </script>
 
 <style lang="less" scoped>
-
 .header-container{
+  position: fixed; /* 添加固定定位 */
+  top: 0;
+  left: 220px;
+  right: 0;
   padding: 0 20px;
   background-color: #C8DBCC;
   height: 70px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  z-index: 200; /* 确保在侧栏上方 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 添加阴影效果 */
+
   .l-content{
     .text{
       margin-left: 20px;
@@ -73,6 +79,5 @@ export default {
     }
   }
 }
-
 </style>
 
