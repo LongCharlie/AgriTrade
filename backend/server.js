@@ -539,7 +539,7 @@ app.post('/api/applications', authenticateToken, checkRole([ROLES.FARMER]), asyn
   const farmerId = req.user.userId;
   
   const result = await db.query(
-    'INSERT INTO purchase_applications (demand_id, farmer_id, quantity, price, record_id, province) VALUES ($1, $2, $3, $4) RETURNING *',
+    'INSERT INTO purchase_applications (demand_id, farmer_id, quantity, price, record_id, province) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
     [demand_id, farmerId, quantity, price, record_id, province]
   );
   res.status(201).json(result.rows[0]);
@@ -550,7 +550,7 @@ app.post('/api/planting-records', authenticateToken, checkRole([ROLES.FARMER]), 
   const { product_name, province} = req.body;
   const farmerId = req.user.userId;
   const record = await db.query(
-    'INSERT INTO planting_records (farmer_id, product_name, province) VALUES ($1,$2,$3,$4) RETURNING *',
+    'INSERT INTO planting_records (farmer_id, product_name, province) VALUES ($1,$2,$3) RETURNING *',
     [farmerId, product_name, province]
   );
   res.status(201).json(record.rows[0]);
@@ -774,7 +774,7 @@ app.get('/api/agriculture-count', async (req, res) => {
 // 获取农户数量
 app.get('/api/farmer-count', async (req, res) => {
   try {
-    const count = await db.getFarmerCount();
+    const clount = await db.getFarmerCount();
     res.json({ count });
   } catch (error) {
     res.status(500).json({ error: '获取数据失败' });
