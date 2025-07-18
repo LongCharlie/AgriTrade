@@ -110,8 +110,7 @@ import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
 import { useUserStore } from '../../stores/user';
 const userStore = useUserStore();
-import Photo from '../../assets/platform_logo2.png';
-import cropPhoto from "@/assets/platform_logo2.png";
+import Photo from "@/assets/platform_logo2.png";
 
 const statusMap = {
   pending_shipment: '待发货',
@@ -143,7 +142,7 @@ const currentPage = ref(1);
 
 // 模拟订单数据
 const simulatedTableData = [
-  { order_id: 1, product_name: '白米', quantity: 100, price: 15, farmer_id: '1', farmer_name: '农户1', delivery_location: '北京', buyer_id: '1', buyer_name: 'A老板', phone: '123456789', created_at: '2023-10-01', status: 'after_sale_requested', after_sale_reason: '玉米变质（附图）', after_sale_reason_images: `${cropPhoto},${cropPhoto},${cropPhoto},${cropPhoto}` },
+  { order_id: 1, product_name: '白米', quantity: 100, price: 15, farmer_id: '1', farmer_name: '农户1', delivery_location: '北京', buyer_id: '1', buyer_name: 'A老板', phone: '123456789', created_at: '2023-10-01', status: 'after_sale_requested', after_sale_reason: '玉米变质（附图）', after_sale_reason_images: `${Photo},${Photo},${Photo},${Photo}` },
   { order_id: 2, product_name: '西瓜', quantity: 200, price: 10, farmer_id: '1', farmer_name: '农户1', delivery_location: '河北', buyer_id: '2', buyer_name: '老王', phone: '987654321', created_at: '2023-10-02', status: 'after_sale_requested' , after_sale_reason: '玉米变质（附图）', after_sale_reason_images: Photo},
   { order_id: 3, product_name: '白米', quantity: 50, price: 8, farmer_id: '1', farmer_name: '农户1', delivery_location: '广东', buyer_id: '3', buyer_name: '孙经理', phone: '135792468', created_at: '2024-10-03', status: 'after_sale_requested' , after_sale_reason: '玉米变质（附图）', after_sale_reason_images: Photo},
   { order_id: 4, product_name: '玉米', quantity: 150, price: 12, farmer_id: '2', farmer_name: '农户2', delivery_location: '四川', buyer_id: '4', buyer_name: '小李', phone: '159753864', created_at: '2024-10-04', status: 'after_sale_requested', after_sale_reason: '玉米变质（附图）', after_sale_reason_images: Photo},

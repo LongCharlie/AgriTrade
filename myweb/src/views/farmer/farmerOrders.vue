@@ -71,12 +71,12 @@
 
     <!-- 退货原因弹窗 -->
     <el-dialog v-model="reasonDialogVisible" title="售后原因">
-      <div>
-        <div>{{ reason }}</div>
-        <div v-if="afterSaleReasonImages.length > 0" style="margin-top: 10px;">
-          <h3>相关图片:</h3>
+      <p><strong>售后原因:</strong></p>
+      <div>{{ after_sale_reason }}</div>
+      <div v-if="afterSaleReasonImages.length > 0" style="margin-top: 10px;">
+        <div class="image-container">
           <div v-for="(image, index) in afterSaleReasonImages" :key="index">
-            <img :src="image" alt="售后理由图片" style="max-width: 100px; margin-right: 10px;"/>
+            <img :src="image" alt="售后理由图片" class="responsive-image"/>
           </div>
         </div>
       </div>
@@ -85,14 +85,17 @@
     <!-- 售后通过理由弹窗 -->
     <el-dialog v-model="successReasonDialogVisible" title="售后通过理由">
       <div>
-        <p>售后原因: {{ reason }}</p>
-        <p>通过理由: {{ successReason }}</p>
+        <p><strong>售后原因:</strong></p>
+        <div>{{ after_sale_reason }}</div>
         <div v-if="afterSaleReasonImages.length > 0" style="margin-top: 10px;">
-          <h3>相关图片:</h3>
-          <div v-for="(image, index) in afterSaleReasonImages" :key="index">
-            <img :src="image" alt="售后理由图片" style="max-width: 100px; margin-right: 10px;"/>
+          <div class="image-container">
+            <div v-for="(image, index) in afterSaleReasonImages" :key="index">
+              <img :src="image" alt="售后理由图片" class="responsive-image"/>
+            </div>
           </div>
         </div>
+        <p><strong>通过理由:</strong></p>
+        <p>{{ successReason }}</p>
       </div>
     </el-dialog>
   </div>
@@ -103,6 +106,7 @@ import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
 import { useUserStore } from '../../stores/user';
 const userStore = useUserStore();
+import Photo from "@/assets/platform_logo2.png";
 
 const statusMap = {
   pending_shipment: '待发货',
@@ -124,6 +128,7 @@ const logisticsInfo = ref('');
 const reasonDialogVisible = ref(false);
 const successReasonDialogVisible = ref(false);
 const reason = ref('');
+const after_sale_reason = ref('');
 const successReason = ref('');
 const currentOrder = ref(null); // 用于存储当前确认发货的订单
 const afterSaleReasonImages = ref([]); // 用于存储售后原因图片
@@ -136,8 +141,8 @@ const simulatedTableData = [
   { order_id: 1, product_name: '白米', quantity: 100, price: 15, delivery_location: '北京', buyer_id: '1', buyer_name: 'A老板', phone: '123456789', created_at: '2023-10-01', status: 'pending_shipment' },
   { order_id: 2, product_name: '西瓜', quantity: 200, price: 10, delivery_location: '河北', buyer_id: '2', buyer_name: '老王', phone: '987654321', created_at: '2023-10-02', status: 'completed' },
   { order_id: 3, product_name: '白米', quantity: 50, price: 8, delivery_location: '广东', buyer_id: '3', buyer_name: '孙经理', phone: '135792468', created_at: '2024-10-03', status: 'shipped' },
-  { order_id: 4, product_name: '玉米', quantity: 150, price: 12, delivery_location: '四川', buyer_id: '4', buyer_name: '小李', phone: '159753864', created_at: '2024-10-04', status: 'after_sale_requested', after_sale_reason: '玉米变质（附图）', after_sale_reason_images: 'http://example.com/image3.jpg' },
-  { order_id: 5, product_name: '黄豆', quantity: 80, price: 20, delivery_location: '江苏', buyer_id: '5', buyer_name: '老张', phone: '246813579', created_at: '2024-11-05', status: 'after_sale_resolved', after_sale_reason: '变质（附图）', after_sale_reason_images: 'http://example.com/image4.jpg,http://example.com/image5.jpg', reason: '同意'},
+  { order_id: 4, product_name: '玉米', quantity: 150, price: 12, delivery_location: '四川', buyer_id: '4', buyer_name: '小李', phone: '159753864', created_at: '2024-10-04', status: 'after_sale_requested', after_sale_reason: '玉米变质（附图）', after_sale_reason_images: `${Photo},${Photo},${Photo},${Photo}` },
+  { order_id: 5, product_name: '黄豆', quantity: 80, price: 20, delivery_location: '江苏', buyer_id: '5', buyer_name: '老张', phone: '246813579', created_at: '2024-11-05', status: 'after_sale_resolved', after_sale_reason: '变质（附图）', after_sale_reason_images: `${Photo},${Photo}`, reason: '同意'},
   { order_id: 6, product_name: '白米', quantity: 100, price: 8, delivery_location: '广东', buyer_id: '3', buyer_name: '孙经理', phone: '135792468', created_at: '2024-11-03', status: 'completed' },
   { order_id: 7, product_name: '玉米', quantity: 150, price: 12, delivery_location: '四川', buyer_id: '4', buyer_name: '小李', phone: '159753864', created_at: '2024-11-04', status: 'completed' },
   { order_id: 8, product_name: '黄豆', quantity: 80, price: 20, delivery_location: '江苏', buyer_id:'5', buyer_name: '老张', phone: '246813579', created_at: '2024-11-05', status: 'shipped' },
@@ -260,7 +265,7 @@ const submitDelivery = async () => {
 
 const viewReason = (order) => {
   console.log('查看原因', order);
-  reason.value = order.after_sale_reason;
+  after_sale_reason.value = order.after_sale_reason;
   reasonDialogVisible.value = true;
 
   // 处理图片显示
@@ -273,7 +278,7 @@ const viewReason = (order) => {
 
 const viewSuccessReason = (order) => {
   console.log('查看通过理由', order);
-  reason.value = order.after_sale_reason;
+  after_sale_reason.value = order.after_sale_reason;
   successReason.value = order.reason;
   successReasonDialogVisible.value = true;
 
@@ -312,9 +317,18 @@ h1 {
   margin: 0 !important;
 }
 
-/* 图片显示样式 */
-img {
-  max-width: 100px;
-  margin-right: 10px;
+
+.image-container {
+  display: flex;              /* 使用flex布局 */
+  flex-wrap: wrap;           /* 能够换行 */
+  margin-top: 10px;          /* 上方的margin */
+  max-height: 300px;         /* 限制最大高度可选 */
+  overflow-y: auto;          /* 允许竖向滚动 */
+}
+
+.responsive-image {
+  max-width: 200px;          /* 最大宽度 */
+  height: auto;              /* 高度自适应 */
+  margin-right: 10px;        /* 图片之间的间距 */
 }
 </style>
