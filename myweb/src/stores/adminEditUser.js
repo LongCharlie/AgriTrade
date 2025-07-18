@@ -11,7 +11,8 @@ export const useAdminEditUserStore = defineStore('adminEditUser', {
             city: '',
             district: '',
             address_detail: '',
-            join_date: ''
+            join_date: '',
+            avatar_url: '',
         }
     }),
     actions: {
@@ -28,7 +29,8 @@ export const useAdminEditUserStore = defineStore('adminEditUser', {
                 city: '',
                 district: '',
                 address_detail: '',
-                join_date: ''
+                join_date: '',
+                avatar_url: '',
             };
         }
     }

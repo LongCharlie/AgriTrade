@@ -98,8 +98,7 @@ onMounted(async () => {
   user.value.district = storedUserData.district;
   user.value.phone = storedUserData.phone;
   user.value.address_detail = storedUserData.address_detail;
-  // user.value.avatar_url = storedUserData.avatar_url;
-
+  user.value.avatar_url = storedUserData.avatar_url;
   selectedLocation.value = user.value.user_id ? [user.value.province, user.value.city, user.value.district] : [];
 });
 
