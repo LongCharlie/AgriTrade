@@ -9,12 +9,12 @@
       <el-form :model="user" label-width="80px" style="margin-top: 20px;">
         <!-- ID（不可编辑） -->
         <el-form-item label="ID">
-          <el-input v-model="user.id" disabled></el-input>
+          <el-input v-model="user.user_id" disabled></el-input>
         </el-form-item>
 
         <!-- 昵称 -->
         <el-form-item label="昵称">
-          <el-input v-model="user.nickname" disabled></el-input>
+          <el-input v-model="user.username" disabled></el-input>
         </el-form-item>
 
         <!-- 角色 -->
@@ -64,16 +64,16 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useUserStore } from '@/stores/user'; // 引入 Pinia 用户存储
+import { useAdminEditUserStore } from '@/stores/adminEditUser'; // 引入 Pinia adminEditUser 存储
 import { ElMessage } from 'element-plus';
 import axios from 'axios';
 import { pcaTextArr } from 'element-china-area-data'; // 引入省市区数据
 import profile from '../../assets/logo.png'; // 引入默认头像
 
-const userStore = useUserStore();
+const adminEditUserStore = useAdminEditUserStore();
 const user = ref({
-  id: null,
-  nickname: '',
+  user_id: null,
+  username: '',
   province: '',
   city: '',
   district: '',
@@ -83,22 +83,25 @@ const user = ref({
 });
 
 const selectedLocation = ref([]);
-const token = userStore.token;
-const uploadUrl = 'http://localhost:3000/api/upload'; // 上传头像的接口 URL
+const token = adminEditUserStore.token; // 获取 token
+// const uploadUrl = 'http://localhost:3000/api/upload'; // 上传头像的接口 URL
 
 onMounted(async () => {
-  user.value.id = userStore.userId;
-  user.value.nickname = userStore.username;
-  user.value.province = userStore.province;
-  user.value.city = userStore.city;
-  user.value.district = userStore.district;
-  user.value.phone = userStore.phone;
-  user.value.address_detail = userStore.address_detail;
-  user.value.avatar_url = userStore.avatar_url;
+  // 从 adminEditUserStore 中获取用户数据
+  const storedUserData = adminEditUserStore.userData;
+  user.value.user_id = storedUserData.user_id;
+  user.value.username = storedUserData.username;
+  user.value.role = storedUserData.role;
+  user.value.join_date = storedUserData.join_date;
+  user.value.province = storedUserData.province;
+  user.value.city = storedUserData.city;
+  user.value.district = storedUserData.district;
+  user.value.phone = storedUserData.phone;
+  user.value.address_detail = storedUserData.address_detail;
+  // user.value.avatar_url = storedUserData.avatar_url;
 
-  selectedLocation.value = user.value.id ? [user.value.province, user.value.city, user.value.district] : [];
+  selectedLocation.value = user.value.user_id ? [user.value.province, user.value.city, user.value.district] : [];
 });
-
 
 // 处理位置变化
 const handleLocationChange = (value) => {

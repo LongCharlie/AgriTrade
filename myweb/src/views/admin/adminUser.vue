@@ -65,7 +65,7 @@
         <el-table-column label="操作">
           <template #default="scope">
             <el-button @click="handleEdit(scope.row)" type="text">[编辑]</el-button>
-            <el-button @click="handleDelete(scope.row)" type="text" style="color: red;">[删除]</el-button>
+            <el-button @click="() => handleDelete(scope.row.user_id)" type="text" style="color: red;">[删除]</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -89,6 +89,8 @@ import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
 import { useUserStore } from '../../stores/user'; // 假设在这里获取用户信息
 import { useRouter } from 'vue-router';
+import { useAdminEditUserStore } from '../../stores/adminEditUser';
+import {ElMessage} from "element-plus"; // 导入 Pinia store
 
 const searchUserId = ref('');
 const searchUsername = ref('');
@@ -100,6 +102,7 @@ const searchDistrict = ref(''); // 新增区县搜索
 const searchJoinDate = ref(null); // 注册时间选择
 const router = useRouter();
 const userStore = useUserStore();
+const adminEditUserStore = useAdminEditUserStore(); // 创建 store 实例
 
 // 用于存储用户数据
 const userData = ref([]);
@@ -111,12 +114,11 @@ const simulatedUserData = [
   {
     user_id: 1,
     username: 'zhangsan',
-    password: 'hashed_password_1',
     role: 'farmer',
     phone: '13800000001',
     province: '河南省',
     city: '郑州市',
-    district: '管城区',
+    district: '二七区',
     address_detail: '某某街道1号',
     avatar_url: 'http://example.com/avatar1.png',
     join_date: '2023-01-15 10:30:00',
@@ -124,7 +126,6 @@ const simulatedUserData = [
   {
     user_id: 2,
     username: 'lisi',
-    password: 'hashed_password_2',
     role: 'buyer',
     phone: '13800000002',
     province: '江苏省',
@@ -137,7 +138,6 @@ const simulatedUserData = [
   {
     user_id: 3,
     username: 'wangwu',
-    password: 'hashed_password_3',
     role: 'expert',
     phone: '13800000003',
     province: '浙江省',
@@ -150,7 +150,6 @@ const simulatedUserData = [
   {
     user_id: 4,
     username: 'zhaoliu',
-    password: 'hashed_password_4',
     role: 'admin',
     phone: '13800000004',
     province: '广东省',
@@ -163,7 +162,6 @@ const simulatedUserData = [
   {
     user_id: 5,
     username: 'sunqi',
-    password: 'hashed_password_5',
     role: 'farmer',
     phone: '13800000005',
     province: '山东省',
@@ -176,7 +174,6 @@ const simulatedUserData = [
   {
     user_id: 6,
     username: 'liangba',
-    password: 'hashed_password_6',
     role: 'buyer',
     phone: '13800000006',
     province: '湖北省',
@@ -189,7 +186,6 @@ const simulatedUserData = [
   {
     user_id: 7,
     username: 'yangqi',
-    password: 'hashed_password_7',
     role: 'expert',
     phone: '13800000007',
     province: '陕西省',
@@ -274,15 +270,27 @@ const handleCreateUser = () => {
 // 编辑用户信息
 const handleEdit = (row) => {
   console.log('编辑用户', row);
-  // 可能需要将用户信息传递到编辑页面
+  adminEditUserStore.setUserData(row); // 将用户数据保存到 store
   router.push('/admin/user/edit'); // 跳转到报价页面
-  // router.push({ name: 'EditUser', params: { userId: row.user_id } });
 };
 
-// 删除用户
-const handleDelete = (row) => {
-  console.log('删除用户', row);
-  // 在这里实现删除逻辑
+const handleDelete = async (userId) => {
+  const token = userStore.token; // 获取用户的 Token
+  try {
+    await axios.delete(`http://localhost:3000/api/user/delete`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      data: {
+        user_id: userId, // 发送需要删除的用户ID
+      }
+    });
+    ElMessage.success('用户删除成功'); // 删除成功的提示
+    await fetchData(); // 重新获取用户列表以更新显示
+  } catch (error) {
+    console.error('删除用户失败:', error);
+    ElMessage.error('删除用户失败，请重试'); // 删除失败的提示
+  }
 };
 
 // 组件挂载后获取数据

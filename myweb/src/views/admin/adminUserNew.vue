@@ -18,6 +18,7 @@
             <option value="farmer">农户</option>
             <option value="expert">专家</option>
             <option value="buyer">买家</option>
+            <option value="admin">管理员</option>
           </select>
         </div>
         <div class="input-group">
@@ -93,8 +94,8 @@ export default {
           district: registerStore.district,
           address_detail: registerStore.address_detail
         });
-        alert('注册成功，请登录');
-        router.push('/login');
+        alert('注册成功');
+        router.push('/admin/user');
       } catch (err) {
         error.value = err.response?.data || '注册失败';
       }
