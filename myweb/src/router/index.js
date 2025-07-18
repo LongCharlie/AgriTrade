@@ -62,9 +62,10 @@ const routes = [
     },
     {
         path: "/farmer",
+        redirect: '/farmer/home',
         component: () => import("../views/farmer.vue"),
         children: [ // 子路由
-            { path: '', name: 'FarmerHome', component: () => import("../views/farmer/farmerMain.vue") },  // 默认子路由
+            { path: 'home', component: () => import("../views/farmer/farmerMain.vue") },  // 默认子路由
             { path: 'purchases', component: () => import("../views/farmer/farmerPurchases.vue") },
             { path: 'purchases/quote', component: () => import("../views/farmer/farmerPurchasesQuote.vue") },
             { path: 'purchases/quotemodify', component: () => import("../views/farmer/farmerPurchasesQuoteModify.vue") },
@@ -82,9 +83,10 @@ const routes = [
 },
     {
         path: "/admin",
+        redirect: '/admin/home',
         component: () => import("../views/admin/admin.vue"),
         children: [ // 子路由
-            { path: '',  component: () => import("../views/admin/adminHome.vue") },
+            { path: 'home',  component: () => import("../views/admin/adminHome.vue") },
             { path: 'user', component: () => import("../views/admin/adminUser.vue") },
             { path: 'user/edit', component: () => import("../views/admin/adminUserEdit.vue") },
             { path: 'user/new', component: () => import("../views/admin/adminUserNew.vue") },
@@ -97,7 +99,7 @@ const routes = [
         ]
     },
       {
-      path: '/',
+      path: '/buyer',
       component: MainLayout,
       children: [
         {

@@ -5,12 +5,12 @@
     <div class="search-bar">
       <el-input v-model="searchId" placeholder="搜索编号" style="width: 200px; margin-bottom: 20px;"></el-input>
       <el-input v-model="searchProduct" placeholder="搜索产品种类" style="width: 200px; margin-bottom: 20px;"></el-input>
-      <el-input v-model="searchAddress" placeholder="搜索收货地" style="width: 200px; margin-bottom: 20px;"></el-input>
+<!--      <el-input v-model="searchAddress" placeholder="搜索收货地" style="width: 200px; margin-bottom: 20px;"></el-input>-->
       <el-input v-model="filterYear" placeholder="年份" style="width: 120px; margin-bottom: 20px;"></el-input>
       <el-input v-model="filterMonth" placeholder="月份" style="width: 120px; margin-bottom: 20px;"></el-input>
       <el-input v-model="filterDay" placeholder="日期" style="width: 120px; margin-bottom: 20px;"></el-input>
       <el-select v-model="filterOption" placeholder="选择筛选" style="width: 200px; margin-bottom: 20px;">
-        <el-option label="全部" value="all"></el-option>
+        <el-option label="全部状态" value="all"></el-option>
         <el-option label="待审核" value="after_sale_requested"></el-option>
         <el-option label="同意" value="after_sale_resolved"></el-option>
         <el-option label="拒绝" value="completed"></el-option>
@@ -30,9 +30,9 @@
       <el-table-column prop="formatted_status" label="状态"></el-table-column>
       <el-table-column label="操作">
         <template v-slot="scope">
-          <el-button v-if="scope.row.status === 'completed'"  @click="viewFailReason(scope.row)" type="text">[查看理由]</el-button>
+          <el-button v-if="scope.row.status === 'completed'"  @click="viewFailReason(scope.row)" type="text" style="color: indianred;">[查看理由]</el-button>
           <el-button v-else-if="scope.row.status === 'after_sale_requested'" @click="viewReason(scope.row)" type="text">[审核]</el-button>
-          <el-button v-else-if="scope.row.status === 'after_sale_resolved'" @click="viewSuccessReason(scope.row)" type="text">[查看理由]</el-button>
+          <el-button v-else-if="scope.row.status === 'after_sale_resolved'" @click="viewSuccessReason(scope.row)" type="text" style="color: green;">[查看理由]</el-button>
         </template>
       </el-table-column>
     </el-table>
