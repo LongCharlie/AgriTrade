@@ -24,14 +24,13 @@
       <el-table-column prop="product_name" label="产品种类"></el-table-column>
       <el-table-column prop="quantity" label="数量(kg)"></el-table-column>
       <el-table-column prop="price" label="价格(元/kg)"></el-table-column>
-      <el-table-column prop="delivery_location" label="收货地"></el-table-column>
+      <el-table-column prop="farmer_name" label="农户"></el-table-column>
       <el-table-column prop="buyer_name" label="采购方"></el-table-column>
-      <el-table-column prop="phone" label="联系方式"></el-table-column>
       <el-table-column prop="created_at" label="时间"></el-table-column>
       <el-table-column prop="formatted_status" label="状态"></el-table-column>
       <el-table-column label="操作">
         <template v-slot="scope">
-          <el-button v-if="scope.row.status === 'completed'"  @click="viewSuccessReason(scope.row)" type="text">[查看理由]</el-button>
+          <el-button v-if="scope.row.status === 'completed'"  @click="viewFailReason(scope.row)" type="text">[查看理由]</el-button>
           <el-button v-else-if="scope.row.status === 'after_sale_requested'" @click="viewReason(scope.row)" type="text">[审核]</el-button>
           <el-button v-else-if="scope.row.status === 'after_sale_resolved'" @click="viewSuccessReason(scope.row)" type="text">[查看理由]</el-button>
         </template>
@@ -47,30 +46,60 @@
         style=" display: flex; justify-content: center; margin-top: 20px;"
     ></el-pagination>
 
-    <!-- 退货原因弹窗 -->
-    <el-dialog v-model="reasonDialogVisible" title="售后原因">
+    <!-- 审核弹窗 -->
+    <el-dialog v-model="reasonDialogVisible" title="售后审核">
       <div>
-        <div>{{ reason }}</div>
+        <p><strong>售后原因:</strong></p>
+        <div>{{ after_sale_reason }}</div>
         <div v-if="afterSaleReasonImages.length > 0" style="margin-top: 10px;">
-          <h3>相关图片:</h3>
-          <div v-for="(image, index) in afterSaleReasonImages" :key="index">
-            <img :src="image" alt="售后理由图片" style="max-width: 100px; margin-right: 10px;"/>
+          <div class="image-container">
+            <div v-for="(image, index) in afterSaleReasonImages" :key="index">
+              <img :src="image" alt="售后理由图片" class="responsive-image"/>
+            </div>
           </div>
         </div>
+
+        <p><strong>审核理由:</strong></p>
+        <el-input v-model="reviewReason" type="textarea" placeholder="填写审核理由" rows="3" style="margin-top: 0px;"></el-input>
+        <div style="margin-top: 10px;">
+          <el-button type="success" @click="handleApproval">同意</el-button>
+          <el-button type="danger" @click="handleRejection">拒绝</el-button>
+        </div>
+
       </div>
     </el-dialog>
 
-    <!-- 售后理由弹窗 -->
-    <el-dialog v-model="successReasonDialogVisible" title="售后审核理由">
+    <!-- 售后通过理由弹窗 -->
+    <el-dialog v-model="successReasonDialogVisible" title="售后通过理由">
       <div>
-        <p>售后原因: {{ reason }}</p>
-        <p>理由: {{ successReason }}</p>
+        <p><strong>售后原因:</strong></p>
+        <div>{{ after_sale_reason }}</div>
         <div v-if="afterSaleReasonImages.length > 0" style="margin-top: 10px;">
-          <h3>相关图片:</h3>
-          <div v-for="(image, index) in afterSaleReasonImages" :key="index">
-            <img :src="image" alt="售后理由图片" style="max-width: 100px; margin-right: 10px;"/>
+          <div class="image-container">
+            <div v-for="(image, index) in afterSaleReasonImages" :key="index">
+              <img :src="image" alt="售后理由图片" class="responsive-image"/>
+            </div>
           </div>
         </div>
+        <p><strong>审核理由:</strong></p>
+        <p>{{ successReason }}</p>
+      </div>
+    </el-dialog>
+
+    <!-- 售后拒绝理由弹窗 -->
+    <el-dialog v-model="failReasonDialogVisible" title="售后拒绝理由">
+      <div>
+        <p><strong>售后原因:</strong></p>
+        <div>{{ after_sale_reason }}</div>
+        <div v-if="afterSaleReasonImages.length > 0" style="margin-top: 10px;">
+          <div class="image-container">
+            <div v-for="(image, index) in afterSaleReasonImages" :key="index">
+              <img :src="image" alt="售后理由图片" class="responsive-image"/>
+            </div>
+          </div>
+        </div>
+        <p><strong>审核理由:</strong></p>
+        <p>{{ failReason }}</p>
       </div>
     </el-dialog>
   </div>
@@ -81,13 +110,15 @@ import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
 import { useUserStore } from '../../stores/user';
 const userStore = useUserStore();
+import Photo from '../../assets/platform_logo2.png';
+import cropPhoto from "@/assets/platform_logo2.png";
 
 const statusMap = {
   pending_shipment: '待发货',
   shipped: '已发货',
-  completed: '同意',
+  completed: '拒绝',
   after_sale_requested: '待审核',
-  after_sale_resolved: '拒绝',
+  after_sale_resolved: '同意',
 };
 
 const searchId = ref('');
@@ -97,31 +128,32 @@ const filterYear = ref('');
 const filterMonth = ref('');
 const filterDay = ref('');
 const filterOption = ref('all');
-const dialogVisible = ref(false);
-const logisticsInfo = ref('');
 const reasonDialogVisible = ref(false);
 const successReasonDialogVisible = ref(false);
-const reason = ref('');
+const failReasonDialogVisible = ref(false);
+const after_sale_reason = ref('');
 const successReason = ref('');
-const currentOrder = ref(null); // 用于存储当前确认发货的订单
+const failReason = ref(''); // 存储拒绝理由的状态
+const reviewReason = ref(''); // 用于填写审核理由
+const currentOrder = ref(null); // 用于存储当前审核的订单
 const afterSaleReasonImages = ref([]); // 用于存储售后原因图片
 
-const pageSize = ref(5);
+const pageSize = ref(7);
 const currentPage = ref(1);
 
 // 模拟订单数据
 const simulatedTableData = [
-  { order_id: 1, product_name: '白米', quantity: 100, price: 15, delivery_location: '北京', buyer_id: '1', buyer_name: 'A老板', phone: '123456789', created_at: '2023-10-01', status: 'after_sale_requested' },
-  { order_id: 2, product_name: '西瓜', quantity: 200, price: 10, delivery_location: '河北', buyer_id: '2', buyer_name: '老王', phone: '987654321', created_at: '2023-10-02', status: 'after_sale_requested' },
-  { order_id: 3, product_name: '白米', quantity: 50, price: 8, delivery_location: '广东', buyer_id: '3', buyer_name: '孙经理', phone: '135792468', created_at: '2024-10-03', status: 'after_sale_requested' },
-  { order_id: 4, product_name: '玉米', quantity: 150, price: 12, delivery_location: '四川', buyer_id: '4', buyer_name: '小李', phone: '159753864', created_at: '2024-10-04', status: 'after_sale_requested', after_sale_reason: '玉米变质（附图）', after_sale_reason_images: 'http://example.com/image3.jpg' },
-  { order_id: 5, product_name: '黄豆', quantity: 80, price: 20, delivery_location: '江苏', buyer_id: '5', buyer_name: '老张', phone: '246813579', created_at: '2024-11-05', status: 'after_sale_resolved', after_sale_reason: '变质（附图）', after_sale_reason_images: 'http://example.com/image4.jpg,http://example.com/image5.jpg', reason: '同意'},
-  { order_id: 6, product_name: '白米', quantity: 100, price: 8, delivery_location: '广东', buyer_id: '3', buyer_name: '孙经理', phone: '135792468', created_at: '2024-11-03', status: 'after_sale_requested' },
-  { order_id: 7, product_name: '玉米', quantity: 150, price: 12, delivery_location: '四川', buyer_id: '4', buyer_name: '小李', phone: '159753864', created_at: '2024-11-04', status: 'after_sale_resolved' },
-  { order_id: 8, product_name: '黄豆', quantity: 80, price: 20, delivery_location: '江苏', buyer_id:'5', buyer_name: '老张', phone: '246813579', created_at: '2024-11-05', status: 'after_sale_resolved' },
-  { order_id: 9, product_name: '玉米', quantity: 150, price: 12, delivery_location: '四川', buyer_id:'4', buyer_name: '小李', phone: '159753864', created_at: '2024-11-04', status: 'completed' },
-  { order_id: 10, product_name: '黄豆', quantity: 80, price: 20, delivery_location: '江苏', buyer_id:'5', buyer_name: '老张', phone: '246813579', created_at: '2024-11-05', status: 'completed' },
-  { order_id: 11, product_name: '玉米', quantity: 150, price: 12, delivery_location: '四川', buyer_id:'4', buyer_name: '小李', phone: '159753864', created_at: '2024-10-04', status: 'completed'},
+  { order_id: 1, product_name: '白米', quantity: 100, price: 15, farmer_id: '1', farmer_name: '农户1', delivery_location: '北京', buyer_id: '1', buyer_name: 'A老板', phone: '123456789', created_at: '2023-10-01', status: 'after_sale_requested', after_sale_reason: '玉米变质（附图）', after_sale_reason_images: `${cropPhoto},${cropPhoto},${cropPhoto},${cropPhoto}` },
+  { order_id: 2, product_name: '西瓜', quantity: 200, price: 10, farmer_id: '1', farmer_name: '农户1', delivery_location: '河北', buyer_id: '2', buyer_name: '老王', phone: '987654321', created_at: '2023-10-02', status: 'after_sale_requested' , after_sale_reason: '玉米变质（附图）', after_sale_reason_images: Photo},
+  { order_id: 3, product_name: '白米', quantity: 50, price: 8, farmer_id: '1', farmer_name: '农户1', delivery_location: '广东', buyer_id: '3', buyer_name: '孙经理', phone: '135792468', created_at: '2024-10-03', status: 'after_sale_requested' , after_sale_reason: '玉米变质（附图）', after_sale_reason_images: Photo},
+  { order_id: 4, product_name: '玉米', quantity: 150, price: 12, farmer_id: '2', farmer_name: '农户2', delivery_location: '四川', buyer_id: '4', buyer_name: '小李', phone: '159753864', created_at: '2024-10-04', status: 'after_sale_requested', after_sale_reason: '玉米变质（附图）', after_sale_reason_images: Photo},
+  { order_id: 5, product_name: '黄豆', quantity: 80, price: 20, farmer_id: '2', farmer_name: '农户2', delivery_location: '江苏', buyer_id: '5', buyer_name: '老张', phone: '246813579', created_at: '2024-11-05', status: 'after_sale_resolved', after_sale_reason: '变质（附图）', after_sale_reason_images: Photo, reason: '同意'},
+  { order_id: 6, product_name: '白米', quantity: 100, price: 8, farmer_id: '2', farmer_name: '农户2', delivery_location: '广东', buyer_id: '3', buyer_name: '孙经理', phone: '135792468', created_at: '2024-11-03', status: 'after_sale_requested', after_sale_reason: '玉米变质（附图）', after_sale_reason_images: Photo },
+  { order_id: 7, product_name: '玉米', quantity: 150, price: 12, farmer_id: '3', farmer_name: '农户3', delivery_location: '四川', buyer_id: '4', buyer_name: '小李', phone: '159753864', created_at: '2024-11-04', status: 'after_sale_resolved',after_sale_reason: '变质（附图）', after_sale_reason_images: Photo, reason: '同意' },
+  { order_id: 8, product_name: '黄豆', quantity: 80, price: 20, farmer_id: '3', farmer_name: '农户3', delivery_location: '江苏', buyer_id:'5', buyer_name: '老张', phone: '246813579', created_at: '2024-11-05', status: 'after_sale_resolved',after_sale_reason: '变质（附图）', after_sale_reason_images: Photo, reason: '同意' },
+  { order_id: 9, product_name: '玉米', quantity: 150, price: 12, farmer_id: '3', farmer_name: '农户3', delivery_location: '四川', buyer_id:'4', buyer_name: '小李', phone: '159753864', created_at: '2024-11-04', status: 'completed',after_sale_reason: '变质（附图）', after_sale_reason_images: Photo, reason: '拒绝' },
+  { order_id: 10, product_name: '黄豆', quantity: 80, price: 20, farmer_id: '4', farmer_name: '农户4', delivery_location: '江苏', buyer_id:'5', buyer_name: '老张', phone: '246813579', created_at: '2024-11-05', status: 'completed',after_sale_reason: '变质（附图）', after_sale_reason_images: Photo, reason: '拒绝'  },
+  { order_id: 11, product_name: '玉米', quantity: 150, price: 12, farmer_id: '4', farmer_name: '农户4', delivery_location: '四川', buyer_id:'4', buyer_name: '小李', phone: '159753864', created_at: '2024-10-04', status: 'completed',after_sale_reason: '变质（附图）', after_sale_reason_images: Photo, reason: '拒绝' },
 ];
 
 // 表格数据
@@ -131,7 +163,7 @@ const filteredTableData = ref([]); // 初始化过滤后的数据
 const fetchData = async () => {
   const token = userStore.token; // 从用户存储中获取 token
   try {
-    const response = await axios.get('http://localhost:3000/api/orders/all', {
+    const response = await axios.get('http://localhost:3000/api/orders/after-sale', {
       headers: {
         'Authorization': `Bearer ${token}` // 设置 Authorization 头
       }
@@ -194,45 +226,12 @@ const handlePageChange = (page) => {
   currentPage.value = page;
 };
 
-// 操作处理函数
-const confirmDelivery = (order) => {
-  currentOrder.value = order; // 保存当前订单
-  dialogVisible.value = true; // 显示对话框
-};
-
-const submitDelivery = async () => {
-  const token = userStore.token; // 获取 token
-  const orderId = currentOrder.value.order_id; // 获取订单 ID
-
-  try {
-    // 调用接口1: 更新订单状态为 shipped
-    await axios.post(`http://localhost:3000/api/orders/${orderId}/status`, {
-      status: 'shipped'
-    }, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-
-    // 调用接口2: 上传物流信息
-    await axios.post(`http://localhost:3000/api/orders/${orderId}/logistics`, {
-      logisticsInfo: logisticsInfo.value
-    }, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-
-    // 更新本地订单状态
-    currentOrder.value.status = 'shipped';
-    dialogVisible.value = false; // 关闭对话框
-    logisticsInfo.value = ''; // 清空物流信息输入框
-    console.log('发货成功');
-  } catch (error) {
-    console.error('发货失败', error);
-    alert('发货失败，请重试');
-  }
-};
-
+// 查看原因的处理函数
 const viewReason = (order) => {
   console.log('查看原因', order);
-  reason.value = order.after_sale_reason;
+  after_sale_reason.value = order.after_sale_reason;
+  reviewReason.value = ''; // 清空审核理由输入框
+  currentOrder.value = order; // 确保把当前订单赋值给 currentOrder
   reasonDialogVisible.value = true;
 
   // 处理图片显示
@@ -243,13 +242,88 @@ const viewReason = (order) => {
   }
 };
 
+// 同意审核逻辑
+const handleApproval = async () => {
+  if (!currentOrder.value) {
+    alert('未选择任何订单！');
+    return;
+  }
+
+  const token = userStore.token; // 获取 token
+  const orderId = currentOrder.value.order_id;
+
+  try {
+    // 1: 调用接口更新订单状态
+    await axios.post(`http://localhost:3000/api/orders/${orderId}/status`, {
+      status: 'after_sale_resolved'
+    }, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    // 2:提交审核成功理由
+    await axios.post(`http://localhost:3000/api/orders/${orderId}/resolved-reason`, {
+      decision: 'approve',
+      reason: reviewReason.value
+    }, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    // 更新状态
+    currentOrder.value.status = 'after_sale_resolved';
+    reasonDialogVisible.value = false; // 关闭对话框
+    reviewReason.value = ''; // 重置审核理由
+    alert('审核成功，已同意该售后请求');
+  } catch (error) {
+    console.error('审核失败', error);
+    alert('审核失败，请重试');
+  }
+};
+
+// 拒绝审核逻辑
+const handleRejection = async () => {
+  if (!currentOrder.value) {
+    alert('未选择任何订单！');
+    return;
+  }
+
+  const token = userStore.token; // 获取 token
+  const orderId = currentOrder.value.order_id;
+
+  try {
+    // 1: 调用接口更新订单状态
+    await axios.post(`http://localhost:3000/api/orders/${orderId}/status`, {
+      status: 'completed'
+    }, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    // 2: 提交审核拒绝理由
+    await axios.post(`http://localhost:3000/api/orders/${orderId}/resolved-reason`, {
+      decision: 'reject',
+      reason: reviewReason.value,
+    }, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    // 更新状态
+    currentOrder.value.status = 'completed';
+    reasonDialogVisible.value = false; // 关闭对话框
+    reviewReason.value = ''; // 重置审核理由
+    alert('审核成功，已拒绝该售后请求');
+  } catch (error) {
+    console.error('审核失败', error);
+    alert('审核失败，请重试');
+  }
+};
+
+// 查看成功理由的处理函数
 const viewSuccessReason = (order) => {
   console.log('查看通过理由', order);
-  reason.value = order.after_sale_reason;
+  after_sale_reason.value = order.after_sale_reason;
   successReason.value = order.reason;
   successReasonDialogVisible.value = true;
 
-  // 重用 after_sale_reason_images 来显示成功理由的图片
+  // 显示成功理由的图片
   if (order.after_sale_reason_images) {
     afterSaleReasonImages.value = order.after_sale_reason_images.split(','); // 按逗号分隔提取图片地址
   } else {
@@ -257,6 +331,20 @@ const viewSuccessReason = (order) => {
   }
 };
 
+// 查看拒绝理由的处理函数
+const viewFailReason = (order) => {
+  console.log('查看拒绝理由', order);
+  after_sale_reason.value = order.after_sale_reason; // 显示售后原因
+  failReason.value = order.reason; // 显示拒绝理由
+  failReasonDialogVisible.value = true; // 打开拒绝理由弹窗
+
+  // 处理图片显示
+  if (order.after_sale_reason_images) {
+    afterSaleReasonImages.value = order.after_sale_reason_images.split(','); // 按逗号分隔提取图片地址
+  } else {
+    afterSaleReasonImages.value = []; // 如果没有图片，清空
+  }
+};
 </script>
 
 <style scoped>
@@ -284,9 +372,17 @@ h1 {
   margin: 0 !important;
 }
 
-/* 图片显示样式 */
-img {
-  max-width: 100px;
-  margin-right: 10px;
+.image-container {
+  display: flex;              /* 使用flex布局 */
+  flex-wrap: wrap;           /* 能够换行 */
+  margin-top: 10px;          /* 上方的margin */
+  max-height: 300px;         /* 限制最大高度可选 */
+  overflow-y: auto;          /* 允许竖向滚动 */
+}
+
+.responsive-image {
+  max-width: 200px;          /* 最大宽度 */
+  height: auto;              /* 高度自适应 */
+  margin-right: 10px;        /* 图片之间的间距 */
 }
 </style>
