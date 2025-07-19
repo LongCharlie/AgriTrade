@@ -1,12 +1,5 @@
 <template>
-  <div class="home-page">
-    <!-- 背景装饰元素 -->
-    <div class="bg-decorations">
-      <div class="bg-circle circle-1"></div>
-      <div class="bg-circle circle-2"></div>
-      <div class="bg-circle circle-3"></div>
-    </div>
-
+  <div class="purchase-page">
     <!-- 导航栏 - 玻璃拟态效果 -->
     <header class="navbar">
       <div class="navbar-container">
@@ -16,290 +9,434 @@
           <span class="logo-dot"></span>
         </div>
         <!--        <div class="logo">-->
-<!--          <span class="logo-text">YunLink</span>-->
-<!--          <span class="logo-dot"></span>-->
-<!--        </div>-->
+        <!--          <span class="logo-text">YunLink</span>-->
+        <!--          <span class="logo-dot"></span>-->
+        <!--        </div>-->
         <nav class="nav-links">
-          <a @click="goToWelcom" class="nav-link active">首页</a>
-          <a @click="goToVisitor" class="nav-link">采购</a>
+          <a @click="goToWelcom" class="nav-link">首页</a>
+          <a @click="goToVisitor" class="nav-link active">采购</a>
           <a @click="goToNotice" class="nav-link">须知</a>
-<!--          <a href="#" class="nav-link">更多</a>-->
+          <!--          <a href="#" class="nav-link">更多</a>-->
         </nav>
         <div class="nav-actions">
           <el-button @click="goToLogin" type="text" class="login-btn">登录</el-button>
           <el-button @click="goToRegister" type="text" class="login-btn">注册</el-button>
-<!--          <el-button type="success" round class="signup-btn">-->
-<!--            <span>Get Started</span>-->
-<!--            <el-icon><ArrowRight /></el-icon>-->
-<!--          </el-button>-->
+          <!--          <el-button type="success" round class="signup-btn">-->
+          <!--            <span>Get Started</span>-->
+          <!--            <el-icon><ArrowRight /></el-icon>-->
+          <!--          </el-button>-->
         </div>
       </div>
     </header>
 
-    <!-- 主要内容 -->
-    <main class="main-content">
-      <!-- 英雄区域 -->
-      <section class="hero-section">
-        <div class="hero-content">
-<!--          <div class="hero-badge">-->
-<!--            <span>v2.0 Released</span>-->
-<!--            <el-icon><CaretRight /></el-icon>-->
-<!--          </div>-->
-          <h1 class="hero-title">
-            <span class="title-line">耘联</span>
-            <span class="title-line">农产品直销平台<span class="title-highlight"></span></span>
-          </h1>
-          <p class="hero-subtitle">
-            连接优质农户与消费者，去除中间商，
-            提供新鲜、健康、可溯源的当季农产品。我们严格筛选合作农户，确保每一份产品
-            都符合高标准品质要求，让您足不出户即可享受田间地头的自然美味。
-          </p>
-          <div class="hero-actions">
-            <el-button @click="goToVisitor" type="success" size="large" round class="primary-action">
-              预览采购信息
-              <template #icon>
-                <el-icon><Search /></el-icon>
+    <!-- 采购需求展示区 -->
+    <main class="purchase-main">
+      <div class="filter-section glassmorphism">
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <el-input v-model="filter.keyword" placeholder="搜索采购商品..." clearable>
+              <template #append>
+                <el-button :icon="Search" @click="fetchPurchases" />
               </template>
-            </el-button>
-<!--            <el-button type="text" size="large" class="secondary-action">-->
-<!--              视频介绍-->
-<!--              <el-icon><VideoPlay /></el-icon>-->
-<!--            </el-button>-->
-          </div>
-        </div>
-        <div class="hero-visual">
-          <div class="visual-container glassmorphism">
-            <div class="visual-content">
-              <div class="card-preview card-1">
-                <div class="card-header"></div>
-                <div class="card-body">
-                  <img src="../assets/welcome_card1.jpg" alt="Card 1 Image" class="card-image" />
-                </div>
-                <div class="card-footer"></div>
+            </el-input>
+          </el-col>
+          <el-col :span="8">
+            <el-select v-model="filter.region" placeholder="全部地区" clearable>
+              <el-option
+                  v-for="item in regions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+              />
+            </el-select>
+          </el-col>
+          <el-col :span="8">
+            <el-select v-model="filter.sort" placeholder="默认排序">
+              <el-option label="最新发布" value="newest" />
+              <el-option label="需求量大" value="quantity_desc" />
+            </el-select>
+          </el-col>
+        </el-row>
+      </div>
+
+      <div class="purchase-list">
+        <div
+            class="purchase-card glassmorphism"
+            v-for="purchase in purchases"
+            :key="purchase.demand_id"
+        >
+          <div class="purchase-header">
+            <h3 class="product-name">{{ purchase.product_name }}</h3>
+            <div class="purchase-meta">
+              <div class="buyer-info">
+                <el-icon><User /></el-icon>
+                <span>{{ purchase.buyerName }}</span>
               </div>
-              <div class="card-preview card-2">
-                <div class="card-header"></div>
-                <div class="card-body">
-                  <img src="../assets/welcome_card2.jpg" alt="Card 2 Image" class="card-image" />
-                </div>
-                <div class="card-footer"></div>
+              <div class="purchase-date">
+                <el-icon><Clock /></el-icon>
+                <span>{{ purchase.updated_at }}</span>
               </div>
-              <div class="floating-element el-1"></div>
-              <div class="floating-element el-2"></div>
             </div>
           </div>
-        </div>
-      </section>
 
-      <!-- 特性展示 -->
-      <section class="features-section">
-        <div class="section-header">
-          <div class="section-tag">平台特色</div>
-          <h2 class="section-title">为什么选择耘联？</h2>
-<!--          <p class="section-subtitle">Crafted with attention to detail for an unparalleled design experience</p>-->
-          <p class="section-subtitle">以细致入微的匠心打造，成就无与伦比的用户体验</p>
-        </div>
-
-        <div class="features-grid">
-          <div class="feature-card glassmorphism" v-for="(feature, index) in features" :key="index">
-            <div class="feature-icon" :style="{ backgroundColor: feature.color }">
-              <component :is="feature.icon" />
+          <div class="purchase-content">
+            <div class="purchase-detail">
+              <div class="detail-item">
+                <el-icon><Box /></el-icon>
+                <span>需求量: {{ purchase.quantity }} kg</span>
+              </div>
+              <div class="detail-item">
+                <el-icon><Location /></el-icon>
+                <span>配送至: {{ purchase.address }}</span>
+              </div>
             </div>
-            <h3 class="feature-title">{{ feature.title }}</h3>
-            <p class="feature-description">{{ feature.description }}</p>
-<!--            <div class="feature-link">-->
-<!--              <span>更多</span>-->
-<!--              <el-icon><ArrowRight /></el-icon>-->
-<!--            </div>-->
+
+            <div class="purchase-actions">
+              <el-button
+                  type="success"
+                  plain
+                  round
+                  @click="showLoginPrompt('查看详情')"
+              >
+                <el-icon><View /></el-icon>
+                查看详情
+              </el-button>
+              <el-button
+                  type="primary"
+                  plain
+                  round
+                  @click="showLoginPrompt('申请供货')"
+              >
+                <el-icon><EditPen /></el-icon>
+                申请供货
+              </el-button>
+            </div>
           </div>
-        </div>
-      </section>
-
-      <!-- 数据统计 -->
-      <section class="stats-section glassmorphism">
-        <div class="stat-item" v-for="stat in stats" :key="stat.value">
-          <div class="stat-value">{{ stat.value }}</div>
-          <div class="stat-label">{{ stat.label }}</div>
-        </div>
-      </section>
-    </main>
-
-    <!-- 页脚 -->
-    <footer class="footer">
-      <div class="footer-content">
-<!--        <div class="footer-main">-->
-<!--          <div class="footer-brand">-->
-<!--            <div class="logo">-->
-<!--              <span class="logo-text">耘联</span>-->
-<!--              <span class="logo-dot"></span>-->
-<!--            </div>-->
-<!--            <p class="footer-description">-->
-<!--              优质农产品直销平台-->
-<!--            </p>-->
-<!--            <div class="social-links">-->
-<!--              <a href="#" class="social-link"><el-icon><ChatDotRound /></el-icon></a>-->
-<!--              <a href="#" class="social-link"><el-icon><Share /></el-icon></a>-->
-<!--              <a href="#" class="social-link"><el-icon><Star /></el-icon></a>-->
-<!--            </div>-->
-<!--          </div>-->
-<!--          <div class="footer-links">-->
-<!--            <div class="link-group" v-for="group in footerLinks" :key="group.title">-->
-<!--              <h4 class="link-group-title">{{ group.title }}</h4>-->
-<!--              <a v-for="link in group.links" :key="link" href="#" class="link-item">{{ link }}</a>-->
-<!--            </div>-->
-<!--          </div>-->
-<!--        </div>-->
-        <div class="footer-bottom">
-          <div class="copyright">© 2025 上海大学 YunLink团队 | 让新鲜从田间直达您家</div>
-<!--          <div class="legal-links">-->
-<!--            <a href="#">隐私保护协议</a>-->
-<!--            <a href="#">用户服务协议</a>-->
-<!--            <a href="#">数据偏好设置</a>-->
-<!--          </div>-->
         </div>
       </div>
-    </footer>
+
+      <!-- 分页 -->
+      <div class="pagination-container">
+        <el-pagination
+            background
+            layout="prev, pager, next"
+            :total="totalPurchases"
+            :page-size="pageSize"
+            @current-change="handlePageChange"
+        />
+      </div>
+    </main>
+
+    <!-- 登录提示对话框 -->
+    <el-dialog
+        v-model="showLoginDialog"
+        title="温馨提示"
+        width="30%"
+        center
+    >
+      <span>{{ loginMessage }}</span>
+      <template #footer>
+        <el-button @click="showLoginDialog = false">稍后再说</el-button>
+        <el-button type="success" @click="goToLogin">立即登录</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-/*
-* ref 函数，用于创建响应式数据。
-* 内容变化时，页面上使用它的部分会自动重新渲染。
-* */
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '../stores/user';
 import axios from 'axios'
-import { useRouter } from 'vue-router';
 import {
-  ArrowRight,
   Search,
-  VideoPlay,
-  CaretRight,
-  ChatDotRound,
-  Share,
-  Star,
-  MagicStick,
-  TrendCharts,
-  Setting,
-  Brush,
-  Monitor,
-  CollectionTag
+  User,
+  Clock,
+  Box,
+  Location,
+  View,
+  EditPen
 } from '@element-plus/icons-vue'
 
-const router = useRouter();
+const router = useRouter()
+const userStore = useUserStore();
 
-const goToVisitor = () => {
-  router.push('/visitor');
-};
-
-const goToWelcom = () => {
-  router.push('/');
-};
-
-const goToNotice = () => {
-  router.push('/notice');
-};
-
-const goToLogin = () => {
-    router.push('/login');
-  };
-
-const goToRegister = () => {
-    router.push('/register');
-  };
-
-const features = ref([
-  {
-    icon: MagicStick,
-    title: "农户直供",
-    description: "直接对接全国优质农户，去除中间环节，确保产品从田间直达商家。",
-    color: "rgba(46, 125, 50, 0.1)"
-  },
-  {
-    icon: TrendCharts,
-    title: "新鲜溯源",
-    description: "每件农产品配备唯一溯源途径，可查询种植、采收全流程信息。",
-    color: "rgba(104, 159, 56, 0.1)"
-  },
-  {
-    icon: Setting,
-    title: "严选标准",
-    description: "合作农户经管理员严格筛选，保证高质量合作方。",
-    color: "rgba(27, 94, 32, 0.1)"
-  },
-  {
-    icon: Brush,
-    title: "当季鲜采",
-    description: "根据自然节气每日更新产品，所有商品坚持\"当季采摘、次日达\"原则。",
-    color: "rgba(67, 160, 71, 0.1)"
-  },
-  {
-    icon: Monitor,
-    title: "社区支持",
-    description: "首创\"社区集单\"模式，农业专家入驻平台，提供权威问答服务。",
-    color: "rgba(129, 199, 132, 0.1)"
-  },
-  {
-    icon: CollectionTag,
-    title: "无忧售后",
-    description: "坏果包赔、48小时极速退款。",
-    color: "rgba(76, 175, 80, 0.1)"
-  }
-])
-
-const stats = ref([])
-
-/*
-axios.get：发起 HTTP 请求获取数据
-Promise.all：同时请求多个接口，提升性能
-onMounted：在组件挂载后请求数据
-stats.value = [...]将接口数据赋值给响应式引用
-*/
-onMounted(async () => {
-  try {
-    const [agricultureRes, farmerRes, expertRes] = await Promise.all([
-      axios.get('/api/agriculture-count'),
-      axios.get('/api/farmer-count'),
-      axios.get('/api/expert-count')
-    ])
-
-    stats.value = [
-      { value: agricultureRes.data.count, label: "农产品" },
-      { value: farmerRes.data.count, label: "农户" },
-      { value: expertRes.data.count, label: "专家" }
-    ]
-  } catch (error) {
-    console.error('获取统计数据失败:', error)
-    // 设置默认数据或空数据
-    stats.value = [
-      { value: "0", label: "农产品" },
-      { value: "0", label: "农户" },
-      { value: "0", label: "专家" },
-    ]
-  }
+// 筛选条件
+const filter = ref({
+  keyword: '',
+  region: '',
+  sort: ''
 })
 
-const footerLinks = ref([
-  {
-    title: "农产品服务",
-    links: ["当季鲜品", "有机专区", "产地直发", "大宗采购"]
-  },
-  {
-    title: "农场资源",
-    links: ["合作农户", "种植标准", "溯源系统", "农业技术"]
-  },
-  {
-    title: "关于耘联",
-    links: ["平台理念", "品控流程", "联系我们", "招贤纳士"]
-  },
-  {
-    title: "消费者保障",
-    links: ["退换政策", "隐私保护", "配送须知", "会员权益"]
-  }
+// 地区选项
+const regions = ref([
+  { value: 'shanghai', label: '上海' },
+  { value: 'jiangsu', label: '江苏' },
+  { value: 'zhejiang', label: '浙江' },
+  { value: 'anhui', label: '安徽' }
 ])
+
+// 采购需求数据
+const originalPurchases = ref([]);
+const purchases = ref([])
+const totalPurchases = ref(0)
+const pageSize = ref(10)
+const currentPage = ref(1)
+
+// 登录提示相关
+const showLoginDialog = ref(false)
+const loginMessage = ref('')
+
+//mock
+const simulatedMotableData = {
+  data: [
+    { demand_id: 21, product_name: '番茄', quantity: 100, buyerName: 'A老板', buyer_id: 7, address: '北京市', updated_at: '2025-07-01 12:30:45.123' },
+    { demand_id: 22, product_name: '黄瓜', quantity: 200, buyerName: '老王', buyer_id: 7, address: '河北省', updated_at: '2025-06-02 12:30:45.123' },
+    { demand_id: 23, product_name: '萝卜', quantity: 50, buyerName: '孙经理', buyer_id: 7, address: '广东省', updated_at: '202-07-02 12:30:45.123' }
+  ]
+};
+
+/*
+      d.demand_id,
+      d.product_name,
+      d.quantity,
+      d.buyer_id,
+      u.username AS buyerName,
+      d.delivery_city AS address,
+      TO_CHAR(d.updated_at, 'YYYY-MM-DD HH24:MI:SS') AS updated_at
+*/
+// 获取采购需求数据
+const fetchPurchases = async () => {
+  const token = userStore.token;
+  try {
+    //mock
+    originalPurchases.value = simulatedMotableData.data;
+    // const response = await axios.get('http://localhost:3000/api/demands/all', {
+    //   headers: {
+    //     'Authorization': `Bearer ${token}`
+    //   }
+    // });
+    // originalPurchases.value = response.data;
+    applyFilters();
+    // response.headers['x-total-count'] 是用来获取 HTTP 响应头中名为 X-Total-Count 的字段值
+    //totalPurchases.value = response.headers['x-total-count'] || response.data.length
+    totalPurchases.value = originalPurchases.value.length
+  } catch (error) {
+    console.error('获取采购需求数据失败', error);
+    originalPurchases.value = [];
+    totalPurchases.value = 0
+  }
+}
+
+const applyFilters = () => {
+  let filtered = [...originalPurchases.value]; //浅拷贝
+
+  // 1. 关键字搜索（按商品名称）
+  if (filter.value.keyword) {
+    const keyword = filter.value.keyword.toLowerCase();
+    filtered = filtered.filter(purchase =>
+        purchase.product_name.toLowerCase().includes(keyword)
+    );
+  }
+
+  // 2. 地区筛选（按配送城市）
+  if (filter.value.region) {
+    const region = filter.value.region;
+    filtered = filtered.filter(purchase => purchase.address.includes(region));
+  }
+
+  // 3. 排序
+  if (filter.value.sort === 'quantity_desc') {
+    // 按需求量从高到低排序
+    filtered.sort((a, b) => b.quantity - a.quantity);
+  } else if (filter.value.sort === 'newest') {
+    // 按更新时间从新到旧排序
+    filtered.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+  }
+
+  // 分页
+  const start = (currentPage.value - 1) * pageSize.value;
+  purchases.value = filtered.slice(start, start + pageSize.value);
+  totalPurchases.value = filtered.length;
+};
+
+// 显示登录提示
+const showLoginPrompt = (action) => {
+  loginMessage.value = `登录后即可${action}`
+  showLoginDialog.value = true
+}
+
+// 分页变化
+const handlePageChange = (page) => {
+  currentPage.value = page
+  fetchPurchases()
+}
+
+// 导航
+const goToWelcom = () => {
+  router.push('/')
+}
+
+const goToVisitor = () => {
+  router.push('/visitor')
+}
+
+const goToNotice = () => {
+  router.push('/notice')
+}
+
+const goToLogin = () => {
+  router.push('/login')
+}
+
+const goToRegister = () => {
+  router.push('/register')
+}
+
+// 监听筛选条件变化
+watch(
+    () => [filter.value.keyword, filter.value.region, filter.value.sort],
+    () => {
+      currentPage.value = 1 // 重置为第一页
+      applyFilters()
+    }
+)
+
+// 监听页码变化
+watch(currentPage, () => {
+  applyFilters()
+})
+
+// 初始化加载数据
+onMounted(() => {
+  fetchPurchases()
+})
 </script>
 
 <style scoped>
+.purchase-page {
+  background-color: #d1e8dc;
+  min-height: 100vh;
+  padding-top: 80px;
+}
+
+/* 筛选区 */
+.filter-section {
+  width: 90%;
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+/* 采购列表 */
+.purchase-list {
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  gap: 20px;
+  padding: 20px 0;
+}
+
+/* 采购卡片 */
+.purchase-card {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s ease;
+}
+
+.purchase-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.purchase-header {
+  border-bottom: 1px solid #eee;
+  padding-bottom: 15px;
+  margin-bottom: 15px;
+}
+
+.product-name {
+  font-size: 1.2rem;
+  color: #333;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.purchase-meta {
+  display: flex;
+  justify-content: space-between;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.purchase-meta .el-icon {
+  margin-right: 5px;
+  color: #4caf50;
+}
+
+.purchase-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.purchase-detail {
+  flex: 1;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  color: #555;
+}
+
+.detail-item .el-icon {
+  margin-right: 8px;
+  color: #4caf50;
+}
+
+.purchase-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* 分页 */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  padding: 30px 0;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .purchase-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .purchase-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-section .el-col {
+    margin-bottom: 10px;
+    width: 100%;
+  }
+
+  .purchase-meta {
+    flex-direction: column;
+    gap: 5px;
+  }
+}
+
 /* 颜色变量 */
 :root {
   --primary-50: #e8f5e9;
@@ -1013,49 +1150,3 @@ const footerLinks = ref([
 }
 
 </style>
-
-
-<!--<template>-->
-<!--  <div class="welcome-container">-->
-<!--    <h1>欢迎</h1> <br>-->
-<!--    <button @click="goToLogin">登录</button> <br>-->
-<!--    <button @click="goToRegister">注册</button>-->
-<!--  </div>-->
-<!--</template>-->
-
-<!--<script setup>-->
-<!--import { useRouter } from 'vue-router'; // 引入 Vue Router-->
-
-<!--const router = useRouter(); // 使用 router 实例-->
-
-<!--// 函数用于跳转到登录页面-->
-<!--const goToLogin = () => {-->
-<!--  router.push('/login'); // 跳转到登录页面-->
-<!--};-->
-
-<!--// 函数用于跳转到注册页面-->
-<!--const goToRegister = () => {-->
-<!--  router.push('/register'); // 跳转到注册页面-->
-<!--};-->
-<!--</script>-->
-
-<!--<style scoped>-->
-<!--.welcome-container {-->
-<!--  text-align: center; /* 居中文本 */-->
-<!--  margin-top: 20px; /* 添加顶部间距 */-->
-<!--}-->
-
-<!--button {-->
-<!--  padding: 10px 15px; /* 按钮内边距 */-->
-<!--  margin: 5px; /* 按钮间距 */-->
-<!--  background: #4CAF50; /* 按钮背景颜色 */-->
-<!--  color: white; /* 按钮文字颜色 */-->
-<!--  border: none; /* 无边框 */-->
-<!--  border-radius: 4px; /* 圆角 */-->
-<!--  cursor: pointer; /* 鼠标指针形状 */-->
-<!--}-->
-
-<!--button:hover {-->
-<!--  background: #45a049; /* 悬停颜色 */-->
-<!--}-->
-<!--</style>-->

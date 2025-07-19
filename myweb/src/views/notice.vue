@@ -1,5 +1,5 @@
 <template>
-  <div class="home-page">
+  <div class="notice-page">
     <!-- 背景装饰元素 -->
     <div class="bg-decorations">
       <div class="bg-circle circle-1"></div>
@@ -16,315 +16,244 @@
           <span class="logo-dot"></span>
         </div>
         <!--        <div class="logo">-->
-<!--          <span class="logo-text">YunLink</span>-->
-<!--          <span class="logo-dot"></span>-->
-<!--        </div>-->
+        <!--          <span class="logo-text">YunLink</span>-->
+        <!--          <span class="logo-dot"></span>-->
+        <!--        </div>-->
         <nav class="nav-links">
-          <a @click="goToWelcom" class="nav-link active">首页</a>
+          <a @click="goToWelcom" class="nav-link">首页</a>
           <a @click="goToVisitor" class="nav-link">采购</a>
-          <a @click="goToNotice" class="nav-link">须知</a>
-<!--          <a href="#" class="nav-link">更多</a>-->
+          <a @click="goToNotice" class="nav-link active">须知</a>
+          <!--          <a href="#" class="nav-link">更多</a>-->
         </nav>
         <div class="nav-actions">
           <el-button @click="goToLogin" type="text" class="login-btn">登录</el-button>
           <el-button @click="goToRegister" type="text" class="login-btn">注册</el-button>
-<!--          <el-button type="success" round class="signup-btn">-->
-<!--            <span>Get Started</span>-->
-<!--            <el-icon><ArrowRight /></el-icon>-->
-<!--          </el-button>-->
+          <!--          <el-button type="success" round class="signup-btn">-->
+          <!--            <span>Get Started</span>-->
+          <!--            <el-icon><ArrowRight /></el-icon>-->
+          <!--          </el-button>-->
         </div>
       </div>
     </header>
 
     <!-- 主要内容 -->
     <main class="main-content">
-      <!-- 英雄区域 -->
-      <section class="hero-section">
-        <div class="hero-content">
-<!--          <div class="hero-badge">-->
-<!--            <span>v2.0 Released</span>-->
-<!--            <el-icon><CaretRight /></el-icon>-->
-<!--          </div>-->
-          <h1 class="hero-title">
-            <span class="title-line">耘联</span>
-            <span class="title-line">农产品直销平台<span class="title-highlight"></span></span>
-          </h1>
-          <p class="hero-subtitle">
-            连接优质农户与消费者，去除中间商，
-            提供新鲜、健康、可溯源的当季农产品。我们严格筛选合作农户，确保每一份产品
-            都符合高标准品质要求，让您足不出户即可享受田间地头的自然美味。
-          </p>
-          <div class="hero-actions">
-            <el-button @click="goToVisitor" type="success" size="large" round class="primary-action">
-              预览采购信息
-              <template #icon>
-                <el-icon><Search /></el-icon>
-              </template>
-            </el-button>
-<!--            <el-button type="text" size="large" class="secondary-action">-->
-<!--              视频介绍-->
-<!--              <el-icon><VideoPlay /></el-icon>-->
-<!--            </el-button>-->
-          </div>
-        </div>
-        <div class="hero-visual">
-          <div class="visual-container glassmorphism">
-            <div class="visual-content">
-              <div class="card-preview card-1">
-                <div class="card-header"></div>
-                <div class="card-body">
-                  <img src="../assets/welcome_card1.jpg" alt="Card 1 Image" class="card-image" />
-                </div>
-                <div class="card-footer"></div>
-              </div>
-              <div class="card-preview card-2">
-                <div class="card-header"></div>
-                <div class="card-body">
-                  <img src="../assets/welcome_card2.jpg" alt="Card 2 Image" class="card-image" />
-                </div>
-                <div class="card-footer"></div>
-              </div>
-              <div class="floating-element el-1"></div>
-              <div class="floating-element el-2"></div>
-            </div>
-          </div>
-        </div>
+      <!-- 标题区域 -->
+      <section class="title-section">
+        <h1 class="section-title">平台使用须知</h1>
+        <p class="section-subtitle">为确保您获得最佳体验，请仔细阅读以下内容</p>
       </section>
 
-      <!-- 特性展示 -->
-      <section class="features-section">
-        <div class="section-header">
-          <div class="section-tag">平台特色</div>
-          <h2 class="section-title">为什么选择耘联？</h2>
-<!--          <p class="section-subtitle">Crafted with attention to detail for an unparalleled design experience</p>-->
-          <p class="section-subtitle">以细致入微的匠心打造，成就无与伦比的用户体验</p>
-        </div>
-
-        <div class="features-grid">
-          <div class="feature-card glassmorphism" v-for="(feature, index) in features" :key="index">
-            <div class="feature-icon" :style="{ backgroundColor: feature.color }">
-              <component :is="feature.icon" />
+      <!-- 须知内容 -->
+      <section class="notice-content glassmorphism">
+        <div class="notice-item" v-for="(item, index) in notices" :key="index">
+          <div class="notice-header">
+            <div class="notice-icon" :style="{ backgroundColor: item.color }">
+              <component :is="item.icon" />
             </div>
-            <h3 class="feature-title">{{ feature.title }}</h3>
-            <p class="feature-description">{{ feature.description }}</p>
-<!--            <div class="feature-link">-->
-<!--              <span>更多</span>-->
-<!--              <el-icon><ArrowRight /></el-icon>-->
-<!--            </div>-->
+            <h3>{{ item.title }}</h3>
           </div>
-        </div>
-      </section>
-
-      <!-- 数据统计 -->
-      <section class="stats-section glassmorphism">
-        <div class="stat-item" v-for="stat in stats" :key="stat.value">
-          <div class="stat-value">{{ stat.value }}</div>
-          <div class="stat-label">{{ stat.label }}</div>
+          <div class="notice-body">
+            <p v-for="(text, i) in item.content" :key="i">{{ text }}</p>
+          </div>
         </div>
       </section>
     </main>
 
     <!-- 页脚 -->
     <footer class="footer">
-      <div class="footer-content">
-<!--        <div class="footer-main">-->
-<!--          <div class="footer-brand">-->
-<!--            <div class="logo">-->
-<!--              <span class="logo-text">耘联</span>-->
-<!--              <span class="logo-dot"></span>-->
-<!--            </div>-->
-<!--            <p class="footer-description">-->
-<!--              优质农产品直销平台-->
-<!--            </p>-->
-<!--            <div class="social-links">-->
-<!--              <a href="#" class="social-link"><el-icon><ChatDotRound /></el-icon></a>-->
-<!--              <a href="#" class="social-link"><el-icon><Share /></el-icon></a>-->
-<!--              <a href="#" class="social-link"><el-icon><Star /></el-icon></a>-->
-<!--            </div>-->
-<!--          </div>-->
-<!--          <div class="footer-links">-->
-<!--            <div class="link-group" v-for="group in footerLinks" :key="group.title">-->
-<!--              <h4 class="link-group-title">{{ group.title }}</h4>-->
-<!--              <a v-for="link in group.links" :key="link" href="#" class="link-item">{{ link }}</a>-->
-<!--            </div>-->
-<!--          </div>-->
-<!--        </div>-->
-        <div class="footer-bottom">
-          <div class="copyright">© 2025 上海大学 YunLink团队 | 让新鲜从田间直达您家</div>
-<!--          <div class="legal-links">-->
-<!--            <a href="#">隐私保护协议</a>-->
-<!--            <a href="#">用户服务协议</a>-->
-<!--            <a href="#">数据偏好设置</a>-->
-<!--          </div>-->
-        </div>
-      </div>
+      <!-- 保持与欢迎页相同的页脚结构 -->
     </footer>
   </div>
 </template>
 
 <script setup>
-/*
-* ref 函数，用于创建响应式数据。
-* 内容变化时，页面上使用它的部分会自动重新渲染。
-* */
-import { ref, onMounted } from 'vue'
-import axios from 'axios'
 import { useRouter } from 'vue-router';
+import { ref } from 'vue';
 import {
-  ArrowRight,
-  Search,
-  VideoPlay,
-  CaretRight,
-  ChatDotRound,
-  Share,
-  Star,
-  MagicStick,
-  TrendCharts,
-  Setting,
-  Brush,
-  Monitor,
-  CollectionTag
+  Document,
+  Warning,
+  Goods,
+  Money,
+  Timer,
+  User
 } from '@element-plus/icons-vue'
 
 const router = useRouter();
 
-const goToVisitor = () => {
-  router.push('/visitor');
+const goToWelcom = () => {
+  router.push('/'); // 跳转到登录页面
 };
 
-const goToWelcom = () => {
-  router.push('/');
+const goToVisitor = () => {
+  router.push('/visitor'); // 跳转到登录页面
 };
 
 const goToNotice = () => {
-  router.push('/notice');
+  router.push('/notice'); // 跳转到登录页面
 };
 
 const goToLogin = () => {
-    router.push('/login');
-  };
+  router.push('/login');
+};
 
 const goToRegister = () => {
-    router.push('/register');
-  };
+  router.push('/register');
+};
 
-const features = ref([
+const notices = ref([
   {
-    icon: MagicStick,
-    title: "农户直供",
-    description: "直接对接全国优质农户，去除中间环节，确保产品从田间直达商家。",
-    color: "rgba(46, 125, 50, 0.1)"
-  },
-  {
-    icon: TrendCharts,
-    title: "新鲜溯源",
-    description: "每件农产品配备唯一溯源途径，可查询种植、采收全流程信息。",
-    color: "rgba(104, 159, 56, 0.1)"
-  },
-  {
-    icon: Setting,
-    title: "严选标准",
-    description: "合作农户经管理员严格筛选，保证高质量合作方。",
-    color: "rgba(27, 94, 32, 0.1)"
-  },
-  {
-    icon: Brush,
-    title: "当季鲜采",
-    description: "根据自然节气每日更新产品，所有商品坚持\"当季采摘、次日达\"原则。",
-    color: "rgba(67, 160, 71, 0.1)"
-  },
-  {
-    icon: Monitor,
-    title: "社区支持",
-    description: "首创\"社区集单\"模式，农业专家入驻平台，提供权威问答服务。",
-    color: "rgba(129, 199, 132, 0.1)"
-  },
-  {
-    icon: CollectionTag,
-    title: "无忧售后",
-    description: "坏果包赔、48小时极速退款。",
-    color: "rgba(76, 175, 80, 0.1)"
-  }
-])
-
-const stats = ref([])
-
-/*
-axios.get：发起 HTTP 请求获取数据
-Promise.all：同时请求多个接口，提升性能
-onMounted：在组件挂载后请求数据
-stats.value = [...]将接口数据赋值给响应式引用
-*/
-onMounted(async () => {
-  try {
-    const [agricultureRes, farmerRes, expertRes] = await Promise.all([
-      axios.get('/api/agriculture-count'),
-      axios.get('/api/farmer-count'),
-      axios.get('/api/expert-count')
-    ])
-
-    stats.value = [
-      { value: agricultureRes.data.count, label: "农产品" },
-      { value: farmerRes.data.count, label: "农户" },
-      { value: expertRes.data.count, label: "专家" }
+    icon: Document,
+    title: "注册与使用",
+    color: "rgba(46, 125, 50, 0.1)",
+    content: [
+      "1. 请使用真实信息注册账号",
+      "2. 账号仅限本人使用，不得转让或借与他人",
+      "3. 请妥善保管账号密码，避免使用简单密码"
     ]
-  } catch (error) {
-    console.error('获取统计数据失败:', error)
-    // 设置默认数据或空数据
-    stats.value = [
-      { value: "0", label: "农产品" },
-      { value: "0", label: "农户" },
-      { value: "0", label: "专家" },
+  },
+  {
+    icon: Warning,
+    title: "交易安全",
+    color: "rgba(104, 159, 56, 0.1)",
+    content: [
+      "1. 所有交易请通过平台完成，私下交易不受保护",
+      "2. 警惕异常低价商品，谨防诈骗",
+      "3. 大额交易请仔细核验"
     ]
-  }
-})
-
-const footerLinks = ref([
-  {
-    title: "农产品服务",
-    links: ["当季鲜品", "有机专区", "产地直发", "大宗采购"]
   },
   {
-    title: "农场资源",
-    links: ["合作农户", "种植标准", "溯源系统", "农业技术"]
+    icon: Goods,
+    title: "商品说明",
+    color: "rgba(27, 94, 32, 0.1)",
+    content: [
+      "1. 农产品存在自然生长差异，图片仅供参考",
+      "2. 为确保农产品新鲜，不支持无理由退换",
+      "3. 收到商品请及时验收，有问题尽快反馈"
+    ]
   },
   {
-    title: "关于耘联",
-    links: ["平台理念", "品控流程", "联系我们", "招贤纳士"]
+    icon: Money,
+    title: "支付与退款",
+    color: "rgba(67, 160, 71, 0.1)",
+    content: [
+      "1. 支持微信支付、支付宝和银行卡支付",
+      "2. 退款处理时间为1-3个工作日",
+      "3. 退款即刻到账，原路返回"
+    ]
   },
   {
-    title: "消费者保障",
-    links: ["退换政策", "隐私保护", "配送须知", "会员权益"]
+    icon: Timer,
+    title: "配送说明",
+    color: "rgba(129, 199, 132, 0.1)",
+    content: [
+      "1. 默认冷链配送，请确保收货地址有人签收",
+      "2. 配送时间一般为下单后1-3天",
+      "3. 偏远地区配送可能延迟，请谅解"
+    ]
+  },
+  {
+    icon: User,
+    title: "售后服务",
+    color: "rgba(76, 175, 80, 0.1)",
+    content: [
+      "1. 质量问题可申请退换货，需提供有效凭证",
+      "2. 客服工作时间: 8:00-22:00",
+      "3. 投诉建议请通过官方渠道反馈"
+    ]
   }
 ])
 </script>
 
 <style scoped>
-/* 颜色变量 */
-:root {
-  --primary-50: #e8f5e9;
-  --primary-100: #c8e6c9;
-  --primary-200: #a5d6a7;
-  --primary-300: #81c784;
-  --primary-400: #66bb6a;
-  --primary-500: #4caf50;
-  --primary-600: #43a047;
-  --primary-700: #388e3c;
-  --primary-800: #2e7d32;
-  --primary-900: #1b5e20;
+.notice-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #d1e8dc;
+  color: var(--text-primary);
+  position: relative;
+  overflow: hidden;
+}
 
-  --dark-900: #121212;
-  --dark-800: #1e1e1e;
-  --dark-700: #2d2d2d;
+/* 标题区域 */
+.title-section {
+  width: 90%;
+  max-width: 1400px;
+  margin: 0px auto 40px;
+  text-align: center;
+}
 
-  --text-primary: rgba(0, 0, 0, 0.87);
-  --text-secondary: rgba(0, 0, 0, 0.6);
-  --text-disabled: rgba(0, 0, 0, 0.38);
+.section-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--dark-900);
+}
 
-  --white: #ffffff;
-  --white-95: rgba(255, 255, 255, 0.95);
-  --white-90: rgba(255, 255, 255, 0.9);
-  --white-80: rgba(255, 255, 255, 0.8);
+.section-subtitle {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+/* 须知内容 */
+.notice-content {
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto 80px;
+  padding: 40px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 30px;
+}
+
+.notice-item {
+  padding: 25px;
+  transition: all 0.3s ease;
+}
+
+.notice-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(76, 175, 80, 0.15);
+}
+
+.notice-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(200, 230, 190, 0.5);
+}
+
+.notice-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 15px;
+}
+
+.notice-icon .el-icon {
+  font-size: 1.2rem;
+  color: var(--primary-700);
+}
+
+.notice-header h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--dark-900);
+}
+
+.notice-body p {
+  font-size: 0.95rem;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
 }
 
 .home-page {
@@ -442,7 +371,7 @@ const footerLinks = ref([
   font-size: 0.95rem;
   position: relative;
   transition: all 0.3s ease;
-  transform: scale(1); /* 添加默认缩放 */
+  transform: scale(1);
 }
 
 .nav-link:hover {
@@ -1011,51 +940,4 @@ const footerLinks = ref([
     grid-template-columns: 1fr 1fr;
   }
 }
-
 </style>
-
-
-<!--<template>-->
-<!--  <div class="welcome-container">-->
-<!--    <h1>欢迎</h1> <br>-->
-<!--    <button @click="goToLogin">登录</button> <br>-->
-<!--    <button @click="goToRegister">注册</button>-->
-<!--  </div>-->
-<!--</template>-->
-
-<!--<script setup>-->
-<!--import { useRouter } from 'vue-router'; // 引入 Vue Router-->
-
-<!--const router = useRouter(); // 使用 router 实例-->
-
-<!--// 函数用于跳转到登录页面-->
-<!--const goToLogin = () => {-->
-<!--  router.push('/login'); // 跳转到登录页面-->
-<!--};-->
-
-<!--// 函数用于跳转到注册页面-->
-<!--const goToRegister = () => {-->
-<!--  router.push('/register'); // 跳转到注册页面-->
-<!--};-->
-<!--</script>-->
-
-<!--<style scoped>-->
-<!--.welcome-container {-->
-<!--  text-align: center; /* 居中文本 */-->
-<!--  margin-top: 20px; /* 添加顶部间距 */-->
-<!--}-->
-
-<!--button {-->
-<!--  padding: 10px 15px; /* 按钮内边距 */-->
-<!--  margin: 5px; /* 按钮间距 */-->
-<!--  background: #4CAF50; /* 按钮背景颜色 */-->
-<!--  color: white; /* 按钮文字颜色 */-->
-<!--  border: none; /* 无边框 */-->
-<!--  border-radius: 4px; /* 圆角 */-->
-<!--  cursor: pointer; /* 鼠标指针形状 */-->
-<!--}-->
-
-<!--button:hover {-->
-<!--  background: #45a049; /* 悬停颜色 */-->
-<!--}-->
-<!--</style>-->
