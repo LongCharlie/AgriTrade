@@ -14,7 +14,7 @@
             :show-file-list="false"
             :on-change="handleAvatarChange"
             :before-upload="beforeAvatarUpload"
-            :data="{ token }"
+            :headers="{ Authorization: `Bearer ${token}` }"
         >
           <el-button type="primary">上传头像</el-button>
         </el-upload>

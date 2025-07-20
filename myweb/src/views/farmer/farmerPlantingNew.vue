@@ -55,7 +55,7 @@ const formattedStartDate = computed(() => {
 // 提交表单的处理程序
 const submitQuote = async () => {
   try {
-    const response = await axios.post('/api/planting-records', {
+    const response = await axios.post('http://localhost:3000/api/planting-records', {
       product_name: formData.value.crop, // 作物种类
       province: formData.value.province // 省份
     }, {
@@ -64,7 +64,7 @@ const submitQuote = async () => {
       }
     });
     ElMessage.success('成功创建种植记录');
-    router.push('/farmer/activities');
+    router.push('/farmer/planting');
   } catch (error) {
     console.error('创建种植记录失败:', error);
     ElMessage.error('创建种植记录失败，请重试！');

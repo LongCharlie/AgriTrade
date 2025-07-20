@@ -57,6 +57,55 @@ export default {
   }
 }
 </script>
+<script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import axios from 'axios';
+import { useUserStore } from '../stores/user'; // 导入用户状态 Store
+
+const username = ref('');
+const password = ref('');
+const error = ref('');
+const router = useRouter();
+
+const userStore = useUserStore(); // 使用用户 Store
+
+// 处理用户登录
+const handleLogin = async () => {
+  try {
+    const response = await axios.post('http://localhost:3000/api/login', {
+      username: username.value,
+      password: password.value,
+    });
+
+    // 更新用户 Store 的状态
+    userStore.token = response.data.token;
+    userStore.username = response.data.user.username;
+    userStore.role = response.data.user.role;
+    userStore.userId = response.data.user.id;
+
+    // 路由跳转
+    switch (userStore.role) {
+      case 'admin':
+        router.push('/admin');
+        break;
+      case 'farmer':
+        router.push('/farmer');
+        break;
+      case 'expert':
+        router.push('/expert');
+        break;
+      case 'buyer':
+        router.push('/merchant');
+        break;
+      default:
+        router.push('/welcome');
+    }
+  } catch (err) {
+    error.value = err.response ? err.response.data.error : '请求失败';
+  }
+};
+</script>
 
 <style>
 .vanta-container {

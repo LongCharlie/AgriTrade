@@ -133,6 +133,7 @@ const initializeForm = () => {
     formData.value.province = plantingStore.currentRecord.province; // 从记录中获取省份
     formData.value.created_at = plantingStore.currentRecord.created_at; // 从记录中获取创建时间
     formData.value.growth_status = plantingStore.currentRecord.growth_status; // 从记录中获取生长状态
+    formData.value.record_id = plantingStore.currentRecord.record_id;
   }
 };
 
@@ -257,6 +258,7 @@ const submitActivity = async () => {
 
 const finishPlanting = async () => {
   const recordId = formData.value.record_id; // 获取记录 ID
+  console.log('ID:', recordId);
   try {
     const response = await axios.patch(`http://localhost:3000/api/planting-records/${recordId}/status`, null, {
       headers: {
