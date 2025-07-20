@@ -447,7 +447,7 @@ app.post('/api/certificates', authenticateToken, checkRole([ROLES.EXPERT]), asyn
         (expert_id, obtain_time, level, valid_period, authorizing_unit, description, status) 
        VALUES ($1, $2, $3, $4, $5, $6, $7) 
        RETURNING certificate_id`,
-        [expert_id, obtain_time, level, valid_period, defaultAuthorizingUnit, defaultDescription, defaultStatus]
+        [expert_id, obtain_time, level, valid_period, authorizing_unit, description, defaultStatus]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {

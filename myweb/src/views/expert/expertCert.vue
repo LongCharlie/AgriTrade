@@ -25,15 +25,15 @@
       <el-col :span="8" v-for="(cert, index) in filteredCertificates" :key="index">
         <el-card class="crop-card" shadow="hover" @click="viewCertificateDetail(cert.certificateId)">
           <div class="card-header">
-            <span class="cert-name">{{ cert.authorizingUnit }}</span>
+            <span class="cert-name">{{ cert.authorizing_unit }}</span>
             <el-tag :type="cert.status === 'valid' ? 'success' : 'danger'">
               {{ cert.status === 'valid' ? '有效' : '过期' }}
             </el-tag>
           </div>
           <div class="card-body">
-            <p><strong>获得时间：</strong>{{ cert.obtainTime }}</p>
+            <p><strong>获得时间：</strong>{{ cert.obtain_time }}</p>
             <p><strong>等级：</strong>{{ cert.level }}</p>
-            <p><strong>有效期：</strong>{{ cert.validPeriod }} 年</p>
+            <p><strong>有效期：</strong>{{ cert.valid_period }} 年</p>
             <p><strong>描述：</strong>{{ cert.description || '暂无描述' }}</p>
           </div>
           <div class="card-footer">
@@ -107,7 +107,7 @@ export default {
       return this.certifications;
     }
   },
-  created() {
+  mounted() {
     this.fetchCertificates();
   },
   methods: {

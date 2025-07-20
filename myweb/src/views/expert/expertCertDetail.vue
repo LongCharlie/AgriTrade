@@ -44,60 +44,58 @@ export default {
   },
   methods: {
     async fetchCertificate() {
-      const id = this.$route.params.id;
-
       try {
         // mock 数据
-        const mockData = [
-          {
-            certificate_id: 1,
-            obtain_time: '2020-05-15',
-            level: 3,
-            valid_period: 5,
-            authorizing_unit: '中国农业协会',
-            description: '高级农业技术专家认证',
-            status: 'valid'
-          },
-          {
-            certificate_id: 2,
-            obtain_time: '2018-10-20',
-            level: 4,
-            valid_period: 10,
-            authorizing_unit: '农业农村部',
-            description: '作物栽培与管理专家资格证',
-            status: 'expired'
-          },
-          {
-            certificate_id: 3,
-            obtain_time: '2021-03-12',
-            level: 2,
-            valid_period: 5,
-            authorizing_unit: '国家农科院',
-            description: '植物病虫害防治专业认证',
-            status: 'valid'
-          },
-          {
-            certificate_id: 4,
-            obtain_time: '2019-07-01',
-            level: 5,
-            valid_period: 3,
-            authorizing_unit: '国际农业合作组织',
-            description: '有机农业国际认证',
-            status: 'valid'
-          },
-          {
-            certificate_id: 5,
-            obtain_time: '2022-01-10',
-            level: 1,
-            valid_period: 2,
-            authorizing_unit: '中国农业大学',
-            description: '农业可持续发展研究认证',
-            status: 'valid'
-          }
-        ];
-
-        // const res = await getCertificateById(id);
-        const res = mockData.find(cert => cert.certificate_id === Number(id));
+        // const mockData = [
+        //   {
+        //     certificate_id: 1,
+        //     obtain_time: '2020-05-15',
+        //     level: 3,
+        //     valid_period: 5,
+        //     authorizing_unit: '中国农业协会',
+        //     description: '高级农业技术专家认证',
+        //     status: 'valid'
+        //   },
+        //   {
+        //     certificate_id: 2,
+        //     obtain_time: '2018-10-20',
+        //     level: 4,
+        //     valid_period: 10,
+        //     authorizing_unit: '农业农村部',
+        //     description: '作物栽培与管理专家资格证',
+        //     status: 'expired'
+        //   },
+        //   {
+        //     certificate_id: 3,
+        //     obtain_time: '2021-03-12',
+        //     level: 2,
+        //     valid_period: 5,
+        //     authorizing_unit: '国家农科院',
+        //     description: '植物病虫害防治专业认证',
+        //     status: 'valid'
+        //   },
+        //   {
+        //     certificate_id: 4,
+        //     obtain_time: '2019-07-01',
+        //     level: 5,
+        //     valid_period: 3,
+        //     authorizing_unit: '国际农业合作组织',
+        //     description: '有机农业国际认证',
+        //     status: 'valid'
+        //   },
+        //   {
+        //     certificate_id: 5,
+        //     obtain_time: '2022-01-10',
+        //     level: 1,
+        //     valid_period: 2,
+        //     authorizing_unit: '中国农业大学',
+        //     description: '农业可持续发展研究认证',
+        //     status: 'valid'
+        //   }
+        // ];
+        const id = this.$route.params.id;
+        const res = await getCertificateById(id);
+        //const res = mockData.find(cert => cert.certificate_id === Number(id));
 
         if (res) {
           this.certificate = {

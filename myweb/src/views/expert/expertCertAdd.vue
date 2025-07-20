@@ -59,7 +59,7 @@ export default {
     async submitCertificate() {
       try {
         const token = this.userStore.token;
-        const expertId = this.userStore.expertId;
+        const expertId = this.userStore.userId;
 
         const payload = {
           expert_id: expertId,
