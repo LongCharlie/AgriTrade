@@ -33,9 +33,17 @@
 </template>
 
 <script>
-import { uploadCertificate } from '@/views/expert/expertApi';
+//import { uploadCertificate } from '@/views/expert/expertApi';
+import { useUserStore } from '@/stores/user';
+import axios from "axios";
 
 export default {
+  setup() {
+    const userStore = useUserStore();
+    return {
+      userStore
+    };
+  },
   data() {
     return {
       cert: {
@@ -50,28 +58,30 @@ export default {
   methods: {
     async submitCertificate() {
       try {
-        const expertId = this.$store.getters.userId;
+        const token = this.userStore.token;
+        const expertId = this.userStore.expertId;
 
         const payload = {
           expert_id: expertId,
           obtain_time: this.cert.obtainTime,
           level: this.cert.level,
           valid_period: this.cert.validPeriod,
-          authorizing_unit: this.cert.authorizingUnit || '中国农业协会',
+          authorizing_unit: this.cert.authorizingUnit,
           description: this.cert.description
         };
 
         // mock 数据测试用
-        const mockRes = {
-          certificate_id: Math.floor(Math.random() * 1000)
-        };
+        // const mockRes = {
+        //   certificate_id: Math.floor(Math.random() * 1000)
+        // };
 
-        // 实际接口调用
-        // const res = await uploadCertificate(payload);
+        const res = await axios.post('http://localhost:3000/api/certificates', payload, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
 
         this.$message.success('证书上传成功');
-
-        // 提交完成后返回证书列表页
         this.$router.push('/expert/cert');
       } catch (error) {
         this.$message.error('上传失败，请检查网络或重试');

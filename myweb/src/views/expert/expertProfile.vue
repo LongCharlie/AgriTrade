@@ -62,24 +62,25 @@
 </template>
 
 <script>
-import {
-  getExpertById,
-  getMyCertificates,
-  uploadCertificate as uploadCertApi,
-  updateExpertProfile
-} from '@/views/expert/expertApi';
+// import {
+//   getExpertById,
+//   getMyCertificates,
+//   uploadCertificate as uploadCertApi,
+//   updateExpertProfile
+// } from '@/views/expert/expertApi';
+import axios from "axios";
+import { useUserStore } from '../../stores/user';
 
 export default {
+  setup() {
+    const userStore = useUserStore();
+    const userId = userStore.userId;
+    return { userStore, userId };
+  },
   data() {
     return {
       user: {},
-      expert: {
-        realName: '',
-        title: '',
-        institution: '',
-        expertise: '',
-        bio: ''
-      },
+      expert: {},
       certificates: []
     };
   },
@@ -89,18 +90,11 @@ export default {
   methods: {
     async initData() {
       try {
-        const userId = this.$store.getters.userId;
+        const userId = this.userStore.userId;
 
         // 获取用户信息
-        const userProfile = await this.$get('/api/user/profile');
-        this.user = {
-          username: userProfile.username,
-          phone: userProfile.phone,
-          province: userProfile.province,
-          city: userProfile.city,
-          district: userProfile.district,
-          address_detail: userProfile.address_detail
-        };
+        const response = await axios.get('http://localhost:3000/api/user/profile');
+        this.user = response.data;
 
         // 获取专家信息
         const expertDetails = await getExpertById(userId);

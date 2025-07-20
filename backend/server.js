@@ -440,10 +440,14 @@ app.patch('/api/questions/:id/status', authenticateToken, checkRole([ROLES.FARME
 // 专家上传证书
 app.post('/api/certificates', authenticateToken, checkRole([ROLES.EXPERT]), async (req, res) => {
   try {
-    const { expert_id, obtain_time, level, valid_period } = req.body;
+    const { expert_id, obtain_time, level, valid_period, authorizing_unit, description } = req.body;
+    const defaultStatus = 'valid'; // 默认证书状态
     const result = await db.query(
-      'INSERT INTO certificates (expert_id, obtain_time, level, valid_period) VALUES ($1, $2, $3, $4) RETURNING certificate_id',
-      [expert_id, obtain_time, level, valid_period]
+        `INSERT INTO certificates 
+        (expert_id, obtain_time, level, valid_period, authorizing_unit, description, status) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7) 
+       RETURNING certificate_id`,
+        [expert_id, obtain_time, level, valid_period, defaultAuthorizingUnit, defaultDescription, defaultStatus]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -592,12 +596,10 @@ app.get('/api/price-trends', authenticateToken, checkRole([ROLES.BUYER]), async 
 // 专家排名接口
 app.get('/api/expert-rankings', async (req, res) => {
   const rankings = await db.query(`
-    SELECT e.*, COUNT(a.answer_id) AS answer_count 
-    FROM experts e 
-    LEFT JOIN answers a ON e.expert_id = a.expert_id 
-    GROUP BY e.expert_id 
-    ORDER BY answer_count DESC 
-    LIMIT 10
+    SELECT e.*, u.avatar_url
+    FROM experts e
+    JOIN users u ON e.expert_id = u.user_id
+    ORDER BY e.answer_count DESC;
   `);
   res.json(rankings.rows);
 });
@@ -609,25 +611,25 @@ app.listen(PORT, () => {
 
 // 专家详情接口
 app.get('/api/experts/:id', async (req, res) => {
-  const expertId = req.params.id
-  try {
-    const result = await db.query(
-        'SELECT * FROM experts WHERE expert_id = $1',
-        [expertId]
-    )
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: '专家不存在' })
-    }
-    res.json(result.rows[0])
-  } catch (error) {
-    console.error('获取专家详情失败:', error)
-    res.status(500).json({ error: '服务器错误' })
-  }
+  const expertId = req.params.id //从 HTTP 请求的 URL 参数中提取 id 值
+  const result = await db.query(` 
+      SELECT 
+        e.*, 
+        u.*,
+        c.*
+      FROM experts e
+      JOIN users u ON e.expert_id = u.user_id
+      LEFT JOIN certificates c ON e.expert_id = c.expert_id
+      WHERE e.expert_id = $1
+      `,
+      [expertId]
+  );
+  res.json(result.rows[0]);
 })
 
-//获取专家证书（通过token自动识别当前专家）
+//获取专家证书
 app.get('/api/certificates/my', authenticateToken, checkRole([ROLES.EXPERT]), async (req, res) => {
-  const expertId = req.user.userId; // 从 token 中获取当前用户ID
+  const expertId = req.user.userId;
 
   try {
     const result = await db.query(
