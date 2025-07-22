@@ -64,7 +64,12 @@ app.post('/api/register', async (req, res) => {
     province,
     city,
     district,
-    address_detail
+    address_detail,
+    eal_name,   //专家字段
+    title,
+    institution,
+    expertise,
+    bio
   } = req.body;
 
   try {

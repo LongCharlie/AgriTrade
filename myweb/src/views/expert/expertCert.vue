@@ -23,7 +23,7 @@
 
       <!-- 已有证书卡片 -->
       <el-col :span="8" v-for="(cert, index) in filteredCertificates" :key="index">
-        <el-card class="crop-card" shadow="hover" @click="viewCertificateDetail(cert.certificateId)">
+        <el-card class="crop-card" shadow="hover" @click="viewCertificateDetail(cert.certificate_id)">
           <div class="card-header">
             <span class="cert-name">{{ cert.authorizing_unit }}</span>
             <el-tag :type="cert.status === 'valid' ? 'success' : 'danger'">
@@ -37,7 +37,7 @@
             <p><strong>描述：</strong>{{ cert.description || '暂无描述' }}</p>
           </div>
           <div class="card-footer">
-            <span class="delete-btn" @click.stop="deleteCertificate(cert.certificateId)">删除</span>
+            <span class="delete-btn" @click.stop="deleteCertificate(cert.certificate_id)">删除</span>
             <span class="edit-btn" @click.stop="editCertificate(cert)">编辑</span>
           </div>
         </el-card>
@@ -46,18 +46,18 @@
 
     <!-- 弹窗 - 编辑证书 -->
     <el-dialog :modal="false" :close-on-click-modal="false" title="编辑证书" v-model="dialogVisible" width="50%">
-      <el-form @submit.prevent="updateCertificate" label-width="120px">
+      <el-form @submit.prevent="updateCertificate(cert.certificate_id)" label-width="120px">
         <el-form-item label="获得时间">
-          <el-date-picker v-model="editingCert.obtainTime" type="date" placeholder="选择日期" />
+          <el-date-picker v-model="editingCert.obtain_time" type="date" placeholder="选择日期" />
         </el-form-item>
         <el-form-item label="等级">
           <el-input-number v-model="editingCert.level" :min="1" :max="5" />
         </el-form-item>
         <el-form-item label="有效期(年)">
-          <el-input-number v-model="editingCert.validPeriod" :min="1" :max="10" />
+          <el-input-number v-model="editingCert.valid_period" :min="1" :max="10" />
         </el-form-item>
         <el-form-item label="授权单位">
-          <el-input v-model="editingCert.authorizingUnit" />
+          <el-input v-model="editingCert.authorizing_unit" />
         </el-form-item>
         <el-form-item label="描述">
           <el-input v-model="editingCert.description" type="textarea" />
@@ -188,17 +188,25 @@ export default {
     viewCertificateDetail(certificateId) {
       this.$router.push(`/expert/cert/detail/${certificateId}`);
     },
-    async updateCertificate() {
+    async updateCertificate(id) {
       try {
+        const token = this.userStore.token;
+        const expertId = this.userStore.userId;
+
         const payload = {
-          obtain_time: this.editingCert.obtainTime,
-          level: this.editingCert.level,
-          valid_period: this.editingCert.validPeriod,
-          authorizing_unit: this.editingCert.authorizingUnit,
-          description: this.editingCert.description
+          //expert_id: expertId,
+          obtain_time: this.cert.obtainTime,
+          level: this.cert.level,
+          valid_period: this.cert.validPeriod,
+          authorizing_unit: this.cert.authorizingUnit,
+          description: this.cert.description
         };
 
-        await updateCertificate(this.editingCert.certificateId, payload);
+        const res = await axios.patch(`http://localhost:3000/api/certificates/${id}`, payload, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
 
         const cert = this.certifications.find(c => c.certificateId === this.editingCert.certificateId);
         if (cert) {
@@ -214,24 +222,21 @@ export default {
     },
     async deleteCertificate(id) {
       try {
-        await deleteCertificate(id);
-        this.certifications = this.certifications.filter(cert => cert.certificateId !== id);
+        const token = this.userStore.token;
+        const response = await axios.delete(`http://localhost:3000/api/certificates/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
         this.$message.success('证书删除成功');
+        this.fetchCertificates();
       } catch (error) {
         this.$message.error('证书删除失败');
         console.error('删除证书失败:', error);
       }
     },
     editCertificate(cert) {
-      this.editingCert = {
-        certificateId: cert.certificateId,
-        obtainTime: cert.obtainTime || '',
-        level: cert.level || 1,
-        validPeriod: cert.validPeriod || 1,
-        authorizingUnit: cert.authorizingUnit || '',
-        description: cert.description || '',
-        status: cert.status || 'valid'
-      };
+      this.editingCert = cert;
       this.dialogVisible = true;
     },
     filterCertificates(status) {

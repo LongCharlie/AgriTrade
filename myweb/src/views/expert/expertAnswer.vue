@@ -27,14 +27,14 @@
           </div>
 
           <div>
-            <p><strong>提问者：</strong>{{ question.farmerName || '匿名' }}</p>
-            <p><strong>时间：</strong>{{ question.createdAt }}</p>
+            <p><strong>提问者：</strong>{{ question.farmer_name || '匿名' }}</p>
+            <p><strong>时间：</strong>{{ question.created_at }}</p>
             <p><strong>内容：</strong>{{ question.content }}</p>
 
           <!-- 回答表单 -->
             <el-form @submit.prevent="submitAnswer" label-width="80px">
               <el-form-item label="回答">
-                <el-input v-model="question.answerContent" type="textarea" :rows="4" placeholder="请输入回答"/>
+                <el-input v-model="question.answer_content" type="textarea" :rows="4" placeholder="请输入回答"/>
               </el-form-item>
               <el-button type="primary" native-type="submit">提交</el-button>
               <el-button @click="$router.back()">取消</el-button>
@@ -45,24 +45,24 @@
         <div class="answers-container">
           <el-card
               v-for="answer in answers"
-              :key="answer.answerId"
+              :key="answer.answer_id"
               class="answer-card"
               shadow="hover"
-              @click.native="viewAnswerDetail(answer.answerId)"
+              @click.native="viewAnswerDetail(answer.answer_id)"
           >
             <div class="answer-header">
       <span class="expert-info">
         <el-avatar
-            @click="$router.push(`/expert/detail/${answer.expertId}`)"
+            @click="$router.push(`/expert/detail/${answer.expert_id}`)"
             :size="40"
             :src="answer.avatar_url || defaultAvatar"
         ></el-avatar>
         <div>
-          <strong>{{ answer.expertName }}</strong>
-          <span v-if="answer.expertTitle" class="expert-title">{{ answer.expertTitle }}</span>
+          <strong>{{ answer.expert_name }}</strong>
+          <span v-if="answer.expert_title" class="expert-title">{{ answer.expert_title }}</span>
         </div>
       </span>
-              <span class="answer-time">{{ formatDate(answer.answeredAt) }}</span>
+              <span class="answer-time">{{ formatDate(answer.answered_at) }}</span>
             </div>
             <div class="answer-content">{{ answer.content }}</div>
             <div class="answer-footer">
@@ -78,13 +78,20 @@
 </template>
 
 <script>
-import {getQuestionById, submitAnswer, getAnswersByQuestionId} from '@/views/expert/expertApi';
+//import {getQuestionById, submitAnswer, getAnswersByQuestionId} from '@/views/expert/expertApi';
 import { useUserStore } from '@/stores/user'
 import expertCommonAside from "@/components/expertCommonAside.vue";
 import expertCommonHeader from "@/components/expertCommonHeader.vue";
+import axios from "axios";
 
 export default {
   components: {expertCommonHeader, expertCommonAside},
+  setup() {
+    const userStore = useUserStore();
+    return {
+      userStore
+    };
+  },
   data() {
     return {
       question: {},
@@ -123,10 +130,17 @@ export default {
       this.fetchQuestions();
     },
     async fetchQuestion() {
-      const id = Number(this.$route.params.id);
+      const id = this.$route.params.id;
       try {
+        const token = this.userStore.token;
+        const response = await axios.get(`http://localhost:3000/api/questions/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        this.question = response.data;
         //mock
-        const mockData = [
+        /*const mockData = [
           {
             questionId: 1,
             farmerId: 2,
@@ -157,19 +171,17 @@ export default {
             answerCount: 2,
             farmerName: '王农户'
           }
-        ]
-        //const res = await getQuestionById(id);
-        //this.question = res.data;
-        this.question = mockData.find(item => item.questionId === id); //mock
+        ]*/
+        //this.question = mockData.find(item => item.questionId === id); //mock
       } catch (error) {
         console.error('获取问题失败:', error);
       }
     },
     async fetchAnswers() {
       try {
-        const id = Number(this.$route.params.id);
+        const id = this.$route.params.id;
         // mock
-        const mockData = [
+        /*const mockData = [
             {
               answerId: 1,
               questionId: 1,
@@ -190,10 +202,10 @@ export default {
               upvotes: 8,
               answeredAt: '2023-04-12'
             }
-        ]
+        ]*/
         //const res = await getAnswersByQuestionId(id);
         //this.answers = res.data;
-        this.answers = mockData.filter(item => item.questionId === id);
+        //this.answers = mockData.filter(item => item.questionId === id);
       } catch (error) {
         console.error('获取回答失败:', error);
       }

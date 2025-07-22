@@ -30,7 +30,7 @@
 </template>
 
 <script>
-import { getCertificateById } from '@/views/expert/expertApi';
+//import { getCertificateById } from '@/views/expert/expertApi';
 
 export default {
   data() {

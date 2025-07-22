@@ -56,13 +56,13 @@
         <div class="card-body">
           <p class="question-content" v-html="highlightSearchText(truncateText(question.content, 150), true)"></p>
           <div class="question-meta">
-            <span><i class="el-icon-user"></i> {{ question.farmerName }}</span>
-            <span><i class="el-icon-time"></i> {{ question.createdAt }}</span>
-            <span><i class="el-icon-chat-dot-round"></i> {{ question.answerCount }} 回答</span>
+            <span><i class="el-icon-user"></i> {{ question.farmer_name }}</span>
+            <span><i class="el-icon-time"></i> {{ question.created_at }}</span>
+            <span><i class="el-icon-chat-dot-round"></i> {{ question.answer_count }} 回答</span>
           </div>
         </div>
         <div class="card-footer">
-          <el-button type="primary" size="small" @click="viewQuestionDetail(question.questionId)">去回答</el-button>
+          <el-button type="primary" size="small" @click="viewQuestionDetail(question.question_id)">去回答</el-button>
         </div>
       </el-card>
 
@@ -84,10 +84,18 @@
 
 <script>
 import DOMPurify from 'dompurify';
-import { getAllQuestions } from '../../views/expert/expertApi';
+import axios from "axios";
+import { useUserStore } from '@/stores/user';
+//import { getAllQuestions } from '../../views/expert/expertApi';
 //import { getQuestions, closeQuestion } from '../../views/expert/expertApi';
 
 export default {
+  setup() {
+    const userStore = useUserStore();
+    return {
+      userStore
+    };
+  },
   data() {
     return {
       questions: [],
@@ -139,8 +147,15 @@ export default {
   methods: {
     async fetchQuestions() {
       try {
+        const token = this.userStore.token;
+        const response = await axios.get('http://localhost:3000/api/questions/all', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        this.questions = response.data.questions;
         // mock
-        const mockData = [
+        /*const mockData = [
           {
             question_id: 1,
             farmer_id: 2,
@@ -171,7 +186,7 @@ export default {
             answer_count: 2,
             farmer_name: '王农户'
           }
-        ];
+        ];*/
 
         // //mock
         // const res = await getQuestions({
@@ -180,7 +195,7 @@ export default {
         // this.questions = res.data;
 
         //mock
-        this.questions = mockData.map(q => ({
+        /*this.questions = mockData.map(q => ({
           questionId: q.question_id,
           farmerId: q.farmer_id,
           title: q.title,
@@ -189,7 +204,7 @@ export default {
           createdAt: q.created_at,
           answerCount: q.answer_count,
           farmerName: q.farmer_name
-        }));
+        }));*/
       } catch (error) {
         console.error('获取问题列表失败:', error);
         this.$message.error('获取问题列表失败');
