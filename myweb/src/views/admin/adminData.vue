@@ -1,74 +1,185 @@
 <template>
-  <div>
-    <h1>我的订单</h1>
-    <h1>总收入: ¥ {{ totalRevenue }}</h1>
-    </div>
+  <div class="container">
+    <h1>数据统计</h1>
+
+    <el-row gutter="20">
+      <el-col :span="8">
+        <el-card class="data-card">
+          <h3>买家数量</h3>
+          <el-tag class="data-tag">{{ buyerCount }}</el-tag>
+        </el-card>
+      </el-col>
+      <el-col :span="8">
+        <el-card class="data-card">
+          <h3>农户数量</h3>
+          <el-tag class="data-tag">{{ farmerCount }}</el-tag>
+        </el-card>
+      </el-col>
+      <el-col :span="8">
+        <el-card class="data-card">
+          <h3>专家数量</h3>
+          <el-tag class="data-tag">{{ expertCount }}</el-tag>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <el-row gutter="20">
+      <el-col :span="8">
+        <el-card class="data-card">
+          <h3>周订单总金额</h3>
+          <el-tag class="data-tag">¥ {{ weekOrderSum }}</el-tag>
+        </el-card>
+      </el-col>
+      <el-col :span="8">
+        <el-card class="data-card">
+          <h3>月订单总金额</h3>
+          <el-tag class="data-tag">¥ {{ monthOrderSum }}</el-tag>
+        </el-card>
+      </el-col>
+      <el-col :span="8">
+        <el-card class="data-card">
+          <h3>年订单总金额</h3>
+          <el-tag class="data-tag">¥ {{ yearOrderSum }}</el-tag>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <el-row gutter="20">
+      <el-col :span="8">
+        <el-card class="data-card">
+          <h3>农产品种类数</h3>
+          <el-tag class="data-tag">{{ agricultureCount }}</el-tag>
+        </el-card>
+      </el-col>
+<!--      <el-col :span="8">-->
+<!--        <el-card class="data-card">-->
+<!--          <div class="vegetable-list">-->
+<!--            <div class="vegetable-item" v-for="(vegetable, index) in vegetables" :key="index">-->
+<!--              {{ vegetable }}-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </el-card>-->
+<!--      </el-col>-->
+      <el-col :span="8">
+        <el-card class="data-card">
+          <div class="vegetable-list">
+            <div v-for="(vegetable, index) in vegetables" :key="index">
+              <el-tag class="vegetable-item">{{ vegetable }}</el-tag>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+  </div>
 </template>
 
-
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { useUserStore } from '../../stores/user';
+
 const userStore = useUserStore();
-import Photo from "@/assets/platform_logo2.png";
+const buyerCount = ref(0);
+const farmerCount = ref(0);
+const expertCount = ref(0);
+const weekOrderSum = ref(0);
+const monthOrderSum = ref(0);
+const yearOrderSum = ref(0);
+const agricultureCount = ref(0);
 
-
-
-// 模拟订单数据
-const simulatedTableData = [
-  { order_id: 1, product_name: '白米', quantity: 100, price: 15, delivery_location: '北京', buyer_id: '1', buyer_name: 'A老板', phone: '123456789', created_at: '2023-10-01', status: 'pending_shipment' },
-  { order_id: 2, product_name: '西瓜', quantity: 200, price: 10, delivery_location: '河北', buyer_id: '2', buyer_name: '老王', phone: '987654321', created_at: '2023-10-02', status: 'completed' },
-  { order_id: 3, product_name: '白米', quantity: 50, price: 8, delivery_location: '广东', buyer_id: '3', buyer_name: '孙经理', phone: '135792468', created_at: '2024-10-03', status: 'shipped' },
-  { order_id: 4, product_name: '玉米', quantity: 150, price: 12, delivery_location: '四川', buyer_id: '4', buyer_name: '小李', phone: '159753864', created_at: '2024-10-04', status: 'after_sale_requested', after_sale_reason: '玉米变质（附图）', after_sale_reason_images: `${Photo},${Photo},${Photo},${Photo}` },
-  { order_id: 5, product_name: '黄豆', quantity: 80, price: 20, delivery_location: '江苏', buyer_id: '5', buyer_name: '老张', phone: '246813579', created_at: '2024-11-05', status: 'after_sale_resolved', after_sale_reason: '变质（附图）', after_sale_reason_images: `${Photo},${Photo}`, reason: '同意'},
-  { order_id: 6, product_name: '白米', quantity: 100, price: 8, delivery_location: '广东', buyer_id: '3', buyer_name: '孙经理', phone: '135792468', created_at: '2024-11-03', status: 'completed' },
-  { order_id: 7, product_name: '玉米', quantity: 150, price: 12, delivery_location: '四川', buyer_id: '4', buyer_name: '小李', phone: '159753864', created_at: '2024-11-04', status: 'completed' },
-  { order_id: 8, product_name: '黄豆', quantity: 80, price: 20, delivery_location: '江苏', buyer_id:'5', buyer_name: '老张', phone: '246813579', created_at: '2024-11-05', status: 'shipped' },
-  { order_id: 9, product_name: '玉米', quantity: 150, price: 12, delivery_location: '四川', buyer_id:'4', buyer_name: '小李', phone: '159753864', created_at: '2024-11-04', status: 'pending_shipment' },
-  { order_id: 10, product_name: '黄豆', quantity: 80, price: 20, delivery_location: '江苏', buyer_id:'5', buyer_name: '老张', phone: '246813579', created_at: '2024-11-05', status: 'pending_shipment' },
-  { order_id: 11, product_name: '玉米', quantity: 150, price: 12, delivery_location: '四川', buyer_id:'4', buyer_name: '小李', phone: '159753864', created_at: '2024-10-04', status: 'completed'},
-];
-
-// 表格数据
-const tableData = ref([]); // 初始化表格数据为一个空数组
-const filteredTableData = ref([]); // 初始化过滤后的数据
+// 新增蔬菜列表
+const vegetables = ref([
+  '辣椒', '白菜', '菠菜', '葱', '豆角',
+  '番茄', '黄瓜', '萝卜', '南瓜', '茄子',
+  '山药', '蒜', '土豆', '莴苣'
+]);
 
 const fetchData = async () => {
-  const token = userStore.token; // 从用户存储中获取 token
+  const token = userStore.token;
+
   try {
-    const response = await axios.get('http://localhost:3000/api/orders/all', {
-      headers: {
-        'Authorization': `Bearer ${token}` // 设置 Authorization 头
-      }
-    });
-    tableData.value = response.data || []; // 假设 API 返回的数据就是我们需要的格式
-    filteredTableData.value = [...tableData.value]; // 同步过滤后的数据
+    const [buyerRes, farmerRes, expertRes, weekSumRes, monthSumRes, yearSumRes, agriRes] = await Promise.all([
+      axios.get('http://localhost:3000/api/buyer-count', { headers: { 'Authorization': `Bearer ${token}` } }),
+      axios.get('http://localhost:3000/api/farmer-count', { headers: { 'Authorization': `Bearer ${token}` } }),
+      axios.get('http://localhost:3000/api/expert-count', { headers: { 'Authorization': `Bearer ${token}` } }),
+      axios.get('http://localhost:3000/api/week-order-sum', { headers: { 'Authorization': `Bearer ${token}` } }),
+      axios.get('http://localhost:3000/api/month-order-sum', { headers: { 'Authorization': `Bearer ${token}` } }),
+      axios.get('http://localhost:3000/api/year-order-sum', { headers: { 'Authorization': `Bearer ${token}` } }),
+      axios.get('http://localhost:3000/api/agriculture-count', { headers: { 'Authorization': `Bearer ${token}` } }),
+    ]);
+
+    buyerCount.value = buyerRes.data.count;
+    farmerCount.value = farmerRes.data.count;
+    expertCount.value = expertRes.data.count;
+    weekOrderSum.value = weekSumRes.data.sum;
+    monthOrderSum.value = monthSumRes.data.sum;
+    yearOrderSum.value = yearSumRes.data.sum;
+    // agricultureCount.value = agriRes.data.count;
+    agricultureCount.value = 14;
   } catch (error) {
-    console.error('获取采购需求数据失败，使用模拟数据', error);
-    tableData.value = simulatedTableData; // 使用模拟数据
-    filteredTableData.value = [...simulatedTableData]; // 同步过滤后的数据
+    console.error('获取管理员统计数据失败，使用模拟数据:', error);
+    buyerCount.value = 5;
+    farmerCount.value = 5;
+    expertCount.value = 5;
+    weekOrderSum.value = 7000;
+    monthOrderSum.value = 12000;
+    yearOrderSum.value = 365000;
+    agricultureCount.value = 14;
   }
 };
 
-// 在组件挂载时调用 fetchData
 onMounted(() => {
   fetchData();
 });
-
-// 计算总收入
-const totalRevenue = computed(() => {
-  return (filteredTableData.value || []).filter(order => order.status === 'completed')
-      .reduce((sum, order) => sum + (order.quantity * order.price), 0);
-});
-
 </script>
 
 <style scoped>
 h1 {
   margin-bottom: 20px;
+  color: #333;
+}
+
+.data-card {
+  text-align: center;
+  min-height: 150px;
+  margin-bottom: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  transition: all 0.6s;
+}
+
+.data-card:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.data-tag {
+  font-size: 24px;
+  color: #409EFF;
+}
+
+.vegetable-list {
+  margin-top: 10px; /* 上方间距 */
+  display: flex;
+  flex-wrap: wrap; /* 允许换行 */
+  justify-content: center; /* 居中对齐 */
+}
+
+.vegetable-item {
+  background-color: #f2f8ff; /* 背景色 */
+  border: 1px solid powderblue; /* 边框色 */
+  border-radius: 4px; /* 圆角 */
+  padding: 8px 12px; /* 内边距 */
+  margin: 5px; /* 外边距 */
+  font-size: 14px; /* 字体大小 */
+  color: #333; /* 字体颜色 */
+  transition: all 0.3s; /* 添加过渡效果 */
+}
+
+/* 鼠标悬停时的样式 */
+.vegetable-item:hover {
+  background-color: #e0f0ff; /* 背景色变化 */
+  border-color: #008CBA; /* 边框颜色变化 */
+  transform: scale(1.05); /* 放大效果 */
 }
 
 </style>
-<script setup lang="ts">
-</script>
