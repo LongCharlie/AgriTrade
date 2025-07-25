@@ -7,29 +7,25 @@
           :key="index"
           :class="['chat-message', msg.role]"
       >
-        <el-card class="message-card" :body-style="{ padding: '20px' }">
-          <strong>{{ msg.role === 'user' ? '用户' : 'Assistant' }}:</strong>
-          <span v-html="formatMessage(msg.content)"></span>
-        </el-card>
+        <strong>{{ msg.role === 'user' ? 'You' : 'Assistant' }}:</strong>
+        <span>{{ msg.content }}</span>
       </div>
       <div v-if="loading" class="loading-message">...</div>
     </div>
     <div class="input-area">
-      <el-input
-          type="textarea"
+      <textarea
           v-model="userMessage"
-          placeholder="请输入您的问题"
+          placeholder="Type your message here..."
           rows="3"
-          :autosize="{ minRows: 3, maxRows: 4 }"
-      ></el-input>
-      <el-button @click="sendMessage" class="send-button">发送</el-button>
+      ></textarea>
+      <el-button @click="sendMessage" class="send-button">Send</el-button>
     </div>
     <div class="selected-area">
       <el-select
           v-model="selectedOption"
           placeholder="选择快速回复"
-          @change="onSelectChange"
-          style="margin-top: 10px; width: 200px;"
+          @change="insertText"
+          style="margin-top: 10px;width: 200px;"
       >
         <el-option
             v-for="record in growthRecords"
@@ -38,15 +34,15 @@
             :value="record.record_id"
         />
       </el-select>
+
     </div>
   </div>
 </template>
 
 <script>
 import axios from 'axios';
-import { ref, onMounted } from 'vue';
-import { useUserStore } from '../../stores/user';
-import cropPhoto from "@/assets/platform_logo2.png"; // 导入用户存储
+import { ref, onMounted, computed } from 'vue';
+import { useUserStore } from '../../stores/user'; // 确保导入用户存储
 
 export default {
   setup() {
@@ -55,9 +51,8 @@ export default {
     const chatLog = ref([]);
     const loading = ref(false);
     const selectedOption = ref(null);
-    const growthRecords = ref([]); // 存储获取到的种植记录
-    const historicalRecords = ref([]); // 存储获取到的历史记录
 
+    const growthRecords = ref([]); // 用来存储获取到的种植记录
     const mockGrowthRecords = [
       { record_id: 51, product_name: '萝卜', province: '陕西省', growth_status: 'harvested', created_at: '2024/01/03' },
       { record_id: 56, product_name: '番茄', province: '河北省', growth_status: 'harvested', created_at: '2024/08/25' },
@@ -68,18 +63,13 @@ export default {
       { record_id: 55, product_name: '辣椒', province: '陕西省', growth_status: 'harvested', created_at: '2025/03/22' },
     ];
 
-    const mockHistoricalRecords = [
-      { activity_id: 1, activity_date: '2023-05-01', activity_type: 'seeding', description: '使用XX牌种子', images: `${cropPhoto},${cropPhoto}` },
-      { activity_id: 2, activity_date: '2023-05-05', activity_type: 'fertilizing', description: '施用氮肥', images: cropPhoto },
-      { activity_id: 3, activity_date: '2023-05-07', activity_type: 'pesticide', description: '喷洒病虫害防治药物', images: `${cropPhoto},${cropPhoto},${cropPhoto}` },
-      { activity_id: 4, activity_date: '2023-05-15', activity_type: 'harvest', description: '首次收获', images: cropPhoto },
-    ];
-
     onMounted(async () => {
       const token = userStore.token; // 从用户存储中获取 token
       try {
         const response = await axios.get('http://localhost:3000/api/growth-records', {
-          headers: { 'Authorization': `Bearer ${token}` },
+          headers: {
+            'Authorization': `Bearer ${token}`, // 设置 Authorization 头
+          },
         });
         growthRecords.value = response.data;
       } catch (error) {
@@ -101,11 +91,11 @@ export default {
           temperature: 0.7,
         }, {
           headers: {
-            'Authorization': `Bearer ${process.env.VUE_AI_API_KEY}`,
+            'Authorization': `Bearer YOUR_API_KEY`, // 替换为你的API密钥
             'Content-Type': 'application/json',
           },
         });
-        console.log(response.data.choices[0].message.content);
+
         const assistantMessage = response.data.choices[0].message.content;
         chatLog.value.push({ role: 'assistant', content: assistantMessage });
 
@@ -115,48 +105,14 @@ export default {
       } finally {
         loading.value = false;
         userMessage.value = ''; // 清空输入框
-        selectedOption.value = null;
       }
     };
 
-    const fetchHistoricalRecords = async (recordId) => {
-      const token = userStore.token; // 从用户存储中获取 token
-      try {
-        const response = await axios.get(`http://localhost:3000/api/historical-activity/${recordId}`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-        });
-        historicalRecords.value = response.data; // 假设接口返回的数据符合预期
-      } catch (error) {
-        console.error('获取历史活动失败，使用模拟数据:', error);
-        historicalRecords.value = mockHistoricalRecords; // 使用模拟数据
-      }
-    };
-
-    const onSelectChange = async (record_id) => {
-      await fetchHistoricalRecords(record_id); // 调用接口获取历史活动
-      // 在这里构造用户消息
+    const insertText = (record_id) => {
       const selectedRecord = growthRecords.value.find(record => record.record_id === record_id);
-      if (selectedRecord && historicalRecords.value.length) {
-        const description = historicalRecords.value.map(record => {
-          return `日期: ${record.activity_date}, 活动类型: ${getChineseActivityType(record.activity_type)}, 描述: ${record.description}`;
-        }).join('\n'); // 将历史记录信息合并为字符串
-        userMessage.value = `种植作物种类: ${selectedRecord.product_name}, 位置: ${selectedRecord.province}\n种植历史记录:\n${description}`;
+      if (selectedRecord) {
+        userMessage.value = `Selected Record: ${selectedRecord.product_name}`;
       }
-    };
-
-    const getChineseActivityType = (type) => {
-      const typeMapping = {
-        seeding: '播种',
-        fertilizing: '施肥',
-        pesticide: '喷药',
-        harvest: '收获',
-        other: '其他',
-      };
-      return typeMapping[type] || type; // 如果未找到对应类型，返回原值
-    };
-
-    const formatMessage = (message) => {
-      return message.replace(/\n/g, '<br/>'); // 将换行符替换为 <br/> 标签
     };
 
     return {
@@ -166,8 +122,7 @@ export default {
       selectedOption,
       growthRecords,
       sendMessage,
-      onSelectChange,
-      formatMessage, // 暴露格式化函数
+      insertText,
     };
   },
 };
@@ -187,12 +142,11 @@ export default {
   text-align: center;
   font-size: 24px;
   margin-bottom: 20px;
-  margin-top: 10px;
   color: #333;
 }
 
 .chat-log {
-  max-height: 350px;
+  max-height: 400px;
   overflow-y: auto;
   border: 1px solid #ddd;
   border-radius: 5px;
@@ -204,25 +158,17 @@ export default {
   margin: 5px 0;
   padding: 8px 10px;
   border-radius: 5px;
-  display: flex; /* 使用 Flex 布局 */
-  justify-content: flex-start; /* 左对齐 */
 }
 
-.message-card {
-  margin-bottom: 10px; /* 调整卡片间距 */
-  width: 100%; /* 确保卡片宽度为 100% */
+.user {
+  background-color: #d1e7dd;
+  align-self: flex-end;
+  text-align: right;
 }
 
-.message-card strong {
-  display: inline-block; /* 让强制文本显示为块元素，便于布局 */
-}
-
-.user .message-card {
-  background-color: #d1e7dd; /* 用户消息背景色 */
-}
-
-.assistant .message-card {
-  background-color: #f8d7da; /* 助手消息背景色 */
+.assistant {
+  background-color: #f8d7da;
+  align-self: flex-start;
 }
 
 .loading-message {
@@ -236,9 +182,22 @@ export default {
   margin-top: 10px;
 }
 
+textarea {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  resize: none;
+  margin-right: 10px;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
 .send-button {
   padding: 10px 12px;
-  margin-left: 10px;
   background-color: #007bff;
   color: white;
   border: none;
