@@ -6,20 +6,7 @@
       <form @submit.prevent="submitQuote" class="quote-form">
         <div class="input-group">
           <label for="crop">作物种类:</label>
-          <el-select
-              v-model="formData.crop"
-              placeholder="请选择作物种类"
-              clearable
-              filterable
-              :style="{ width: '200px' }"
-          >
-            <el-option
-                v-for="product in crops"
-                :key="product"
-                :label="product"
-                :value="product"
-            />
-          </el-select>
+          <el-input id="crop" v-model="formData.crop" placeholder="请输入作物种类" style="width: 200px;" />
         </div>
 
         <div class="input-group">
@@ -41,13 +28,13 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import axios from 'axios';
-import { useUserStore } from '../../stores/user';
+import axios from 'axios'; // 引入 axios
+import { useUserStore } from '../../stores/user'; // 引入 Pinia 用户存储
 import { ElMessage } from 'element-plus';
 
 const router = useRouter();
-const userStore = useUserStore();
-const token = userStore.token;
+const userStore = useUserStore(); // 获取用户状态
+const token = userStore.token; // 从用户存储中获取 token
 
 // 表单数据结构
 const formData = ref({
@@ -55,30 +42,13 @@ const formData = ref({
   province: userStore.province,
 });
 
-// 可选择的作物
-const crops = [
-  '辣椒',
-  '白菜',
-  '菠菜',
-  '葱',
-  '豆角',
-  '番茄',
-  '黄瓜',
-  '萝卜',
-  '南瓜',
-  '茄子',
-  '山药',
-  '蒜',
-  '土豆',
-  '莴苣'
-];
-
 // 格式化开始日期
 const currentDate = new Date();
 const formattedStartDate = computed(() => {
   const year = currentDate.getFullYear();
   const month = String(currentDate.getMonth() + 1).padStart(2, '0');
   const day = String(currentDate.getDate()).padStart(2, '0');
+
   return `${year}-${month}-${day}`;
 });
 
@@ -90,7 +60,7 @@ const submitQuote = async () => {
       province: formData.value.province // 省份
     }, {
       headers: {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${token}`, // 设置 Authorization 头
       }
     });
     ElMessage.success('成功创建种植记录');
@@ -100,25 +70,24 @@ const submitQuote = async () => {
     ElMessage.error('创建种植记录失败，请重试！');
   }
 };
-
 </script>
 
 <style scoped>
 .quote-form {
-  margin-top: 50px;
-  margin-left: 20px;
+  margin-top: 50px; /* 表单和上方的表格之间的间距 */
+  margin-left: 20px; /* 增加左边距 */
 }
 .input-group {
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 10px; /* 输入组之间的间距 */
 }
 .input-group label {
-  margin-right: 5px;
-  min-width: 100px;
+  margin-right: 5px; /* 标签和输入框之间的间距 */
+  min-width: 100px; /* 标签最小宽度 */
 }
 .submit-button {
   margin-top: 15px;
-  cursor: pointer;
+  cursor: pointer; /* 鼠标为手型 */
 }
 </style>

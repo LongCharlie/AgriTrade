@@ -25,11 +25,26 @@
       <el-button @click="sendMessage" class="send-button">发送</el-button>
     </div>
     <div class="selected-area">
+<!--  1.某个种植记录的信息以及所有种植活动信息   -->
       <el-select
           v-model="selectedOption"
-          placeholder="选择快速回复"
+          placeholder="选择种植记录"
           @change="onSelectChange"
           style="margin-top: 10px; width: 200px;"
+      >
+        <el-option
+            v-for="record in growthRecords"
+            :key="record.record_id"
+            :label="`id: ${record.record_id} - 种类：${record.product_name} - 创建时间：${record.created_at}`"
+            :value="record.record_id"
+        />
+      </el-select>
+<!--  2.某个提问的问题和回答信息      -->
+      <el-select
+          v-model="selectedOption"
+          placeholder="选择提问和回答"
+          @change="onSelectChange"
+          style="margin-left: 10px; margin-top: 10px; width: 200px;"
       >
         <el-option
             v-for="record in growthRecords"
@@ -235,7 +250,11 @@ export default {
   align-items: center;
   margin-top: 10px;
 }
-
+.selected-area {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+}
 .send-button {
   padding: 10px 12px;
   margin-left: 10px;
