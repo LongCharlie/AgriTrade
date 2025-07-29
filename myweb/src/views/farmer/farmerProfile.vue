@@ -106,6 +106,9 @@ onMounted(async () => {
 
 // 处理头像上传
 const handleAvatarChange = async (file) => {
+  console.log(file);
+  console.log(file.status);
+  console.log(file.response);
   // 上传成功直接更新头像 URL
   if (file.status === 'success' && file.response && file.response.avatarUrl) {
     const avatarUrl = file.response.avatarUrl; // 从响应中获取头像 URL
@@ -125,6 +128,8 @@ const beforeAvatarUpload = (file) => {
     ElMessage.error('只能上传图片格式的文件!');
     return false;
   }
+  // ElMessage.success('格式正确!');
+  // console.log(file);
   return true;
 };
 
