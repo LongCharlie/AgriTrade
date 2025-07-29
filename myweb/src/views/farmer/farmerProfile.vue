@@ -156,6 +156,12 @@ const saveProfile = async () => {
         'Authorization': `Bearer ${token}`
       }
     });
+    // 更新 Pinia 中的用户信息
+    userStore.phone = user.value.phone;
+    userStore.province = user.value.province;
+    userStore.city = user.value.city;
+    userStore.district = user.value.district;
+    userStore.address_detail = user.value.address_detail;
     ElMessage.success('保存成功');
   } catch (error) {
     console.error('保存失败:', error);
