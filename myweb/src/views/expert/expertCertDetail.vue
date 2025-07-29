@@ -9,18 +9,32 @@
     <div v-else-if="certificate" class="cert-info">
       <el-card shadow="hover">
         <div class="cert-header">
-          <span class="cert-title">{{ certificate.authorizingUnit }}</span>
-          <el-tag :type="certificate.status === 'valid' ? 'success' : 'danger'">
-            {{ certificate.status === 'valid' ? '有效' : '过期' }}
+          <span class="cert-title">{{ certificate.certificate_name }}</span>
+          <el-tag :type="getTagType(certificate.is_audited)">
+            {{ getAuditStatusText(certificate.is_audited) }}
           </el-tag>
         </div>
 
         <div class="cert-body">
-          <p><strong>获得时间：</strong>{{ certificate.obtainTime }}</p>
+          <p><strong>授权单位：</strong>{{ certificate.authorizing_unit }}</p>
+          <p><strong>获得时间：</strong>{{ certificate.obtain_time }}</p>
           <p><strong>等级：</strong>{{ certificate.level }}</p>
-          <p><strong>有效期：</strong>{{ certificate.validPeriod }} 年</p>
-          <p><strong>授权单位：</strong>{{ certificate.authorizingUnit }}</p>
+          <p><strong>有效期：</strong>{{ certificate.valid_period }} 年</p>
           <p><strong>描述：</strong>{{ certificate.description || '暂无描述' }}</p>
+          <!-- 证书图片展示 -->
+          <div v-if="certificate.certificate_image" class="certificate-image-section">
+            <p><strong>证书图片：</strong></p>
+            <div class="image-container">
+              <img
+                  :src="getImageUrl(certificate.certificate_image)"
+                  :alt="certificate.certificate_name"
+                  class="certificate-image"
+              />
+            </div>
+          </div>
+          <div v-else class="no-image">
+            <p><strong>证书图片：</strong>暂无图片</p>
+          </div>
         </div>
       </el-card>
     </div>
@@ -31,8 +45,16 @@
 
 <script>
 //import { getCertificateById } from '@/views/expert/expertApi';
+import axios from "axios";
+import {useUserStore} from "@/stores/user";
 
 export default {
+  setup() {
+    const userStore = useUserStore();
+    return {
+      userStore
+    };
+  },
   data() {
     return {
       certificate: null,
@@ -93,30 +115,53 @@ export default {
         //     status: 'valid'
         //   }
         // ];
-        const id = this.$route.params.id;
-        const res = await getCertificateById(id);
         //const res = mockData.find(cert => cert.certificate_id === Number(id));
 
-        if (res) {
-          this.certificate = {
-            certificateId: res.certificate_id,
-            obtainTime: res.obtain_time,
-            level: res.level,
-            validPeriod: res.valid_period,
-            authorizingUnit: res.authorizing_unit,
-            description: res.description,
-            status: res.status
-          };
-        } else {
-          this.certificate = null;
-        }
+        //改
+        const id = this.$route.params.id;
+        const token = this.userStore.token;
+        const response = await axios.get(`http://localhost:3000/api/certificates/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        this.certificate = response.data;
       } catch (error) {
         console.error('获取证书详情失败:', error);
         this.certificate = null;
       } finally {
         this.loading = false;
       }
-    }
+    },
+    getAuditStatusText(is_audited) {
+      const auditstatusMap = {
+        'pending': '审核中',
+        'approved': '审核通过',
+        'rejected': '审核未通过'
+      };
+      return auditstatusMap[is_audited] || '未知状态';
+    },
+    getTagType(is_audited) {
+      const typeMap = {
+        'pending': 'warning',
+        'approved': 'success',
+        'rejected': 'danger'
+      };
+      return typeMap[is_audited] || 'info';
+    },
+    //改
+    getImageUrl(imagePath) {
+      // 如果已经是完整URL，直接返回
+      if (imagePath.startsWith('http')) {
+        return imagePath;
+      }
+      // 如果是相对路径，拼接完整URL
+      if (imagePath.startsWith('/')) {
+        return `http://localhost:3000${imagePath}`;
+      }
+      // 否则添加路径前缀
+      return `http://localhost:3000/uploads/certificates/${imagePath}`;
+    },
   }
 };
 </script>
@@ -147,5 +192,30 @@ export default {
   text-align: center;
   color: #999;
   margin-top: 40px;
+}
+
+.certificate-image-section {
+  margin-top: 20px;
+}
+
+.certificate-image-section p {
+  margin-bottom: 10px;
+}
+
+.image-container {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.certificate-image {
+  max-width: 100%;
+  max-height: 400px;
+  border: 1px solid #eee;
+  border-radius: 4px;
+}
+
+.no-image {
+  margin-top: 20px;
+  color: #999;
 }
 </style>

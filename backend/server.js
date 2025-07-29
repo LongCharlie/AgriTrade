@@ -712,7 +712,7 @@ app.patch('/api/certificates/:id', authenticateToken, checkRole([ROLES.EXPERT]),
     }
 
     // 构建 SQL 更新语句
-    const fields = ['obtain_time', 'level', 'valid_period', 'authorizing_unit', 'description'];
+    const fields = ['obtain_time', 'level', 'valid_period', 'authorizing_unit', 'description', 'is_audited'];
     const updateFields = {};
 
     fields.forEach(field => {

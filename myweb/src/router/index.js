@@ -80,7 +80,9 @@ const routes = [
             { path: 'planting/new', component: () => import("../views/farmer/farmerPlantingNew.vue") },
             { path: 'share', component: () => import("../views/farmer/farmerShare.vue") },
             { path: 'questions', component: () => import("../views/farmer/farmerQuestions.vue") },
-            { path: 'profile', component: () => import("../views/farmer/farmerProfile.vue") }
+            { path: 'ques/:id/answer', component: () => import("../views/farmer/farmerAnswer.vue") },
+            { path: 'profile', component: () => import("../views/farmer/farmerProfile.vue"),meta: { requiresAuth: true, role: ['farmer'] } },
+            { path: 'answer/:id', component: () => import("../views/farmer/farmerAnswerDetail.vue") },
         ]
 },
     {
