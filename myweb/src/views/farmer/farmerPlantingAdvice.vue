@@ -2,6 +2,7 @@
   <div>
     <h1>种植建议</h1>
 <!--    <p>表格列出上一年该地区所有订单的产品总数和均价 + 点击产品可以查看近几年的总数和均价趋势图</p>-->
+    <p>近三年<strong>{{userStore.province}}</strong>所有订单的的平均年售出总数和均价</p>
     <div class="container">
       <div class="chart-container">
         <canvas ref="pieChartRef"></canvas>
