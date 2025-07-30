@@ -23,6 +23,9 @@ import MerchantAddPurchase from '@/views/merchant/merchantAddPurchase.vue';
 import MerchantMain from '@/views/merchant/merchantMain.vue'
 import MerchantHome from '@/views/merchant/merchantHome.vue'
 import MerchantMessage from '@/views/merchant/merchantMessage.vue'
+import { componentSizeMap } from 'element-plus';
+
+
 
 const routes = [
     { path: '', component: () => import("../views/welcom.vue")},
@@ -99,11 +102,13 @@ const routes = [
             { path: 'cert', component: () => import("../views/admin/adminCert.vue") },
             { path: 'ques', component: () => import("../views/admin/adminQues.vue") },
             { path: 'share', component: () => import("../views/admin/adminShare.vue") },
+            { path : 'sharecomment', component: () =>import('../views/admin/ShareCommentCheck.vue')},
             { path: 'ques/:id', component: () => import("../views/admin/adminAnswers.vue") },
         ]
     },
       {
-      path: '/buyer',
+      path: '/merchant',
+      redirect: 'merchant/Main',
       component: MainLayout,
       children: [
         {
@@ -112,32 +117,32 @@ const routes = [
           component: MerchantMain
         },
         {
-          path: '/order',
+          path: 'order',
           name: 'Order',
           component: MerchantOrder
         },
         {
-          path: '/purchases',
+          path: 'purchases',
           name: 'Purchases',
           component: MerchantPurchase
         },
         {
-          path: '/purchaseDetail',
+          path: 'purchaseDetail',
           name: 'PurchaseDetail',
           component: merchantPurchaseDetails
         },
         {
-          path: '/addPurchase',
+          path: 'addPurchase',
           name: 'AddPurchase',
           component: MerchantAddPurchase
         },
         {
-          path: '/merchantHome',
+          path: 'merchantHome',
           name: 'MerchantHome',
           component: MerchantHome
         },
         {
-          path: '/merchantMessage',
+          path: 'merchantMessage',
           name: 'MerchantMessage',
           component: MerchantMessage
         }

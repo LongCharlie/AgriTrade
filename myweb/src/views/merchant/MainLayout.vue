@@ -24,25 +24,25 @@ export default {
     handleNavigation(path) {
       switch(path) {
         case 'home':
-          this.$router.push('/');
+          this.$router.push('/merchant');
           break;
         case 'orders':
-          this.$router.push('/order');
+          this.$router.push('/merchant/order');
           break;
         case 'purchases':
-          this.$router.push('/purchases');
+          this.$router.push('/merchant/purchases');
           break;
         case 'MerchantMessage':
-          this.$router.push('merchantMessage');
+          this.$router.push('/merchant/merchantMessage');
           break;
         case 'MerchantHome':
-          this.$router.push('/merchantHome');
+          this.$router.push('/merchant/merchantHome');
           break;
       }
     },
     // 处理采购页面跳转到新增采购
     goToAddPurchase() {
-      this.$router.push('/addPurchase');
+      this.$router.push('/merchant/addPurchase');
     }
   }
 }
