@@ -10,7 +10,13 @@ export const useRegisterStore = defineStore('register', {
         province: '',
         city: '',
         district: '',
-        address_detail: ''
+        address_detail: '',
+        // 专家字段
+        real_name: '',
+        title: '',
+        institution: '',
+        expertise: '',
+        bio: ''
     }),
     persist: true,  // 启用持久化
 });

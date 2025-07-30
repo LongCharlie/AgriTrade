@@ -1,200 +1,110 @@
 <template>
   <div class="expert-home-container">
     <!-- 头部欢迎 -->
-    <el-row :gutter="20" class="welcome-section">
-      <el-col :span="18">
-        <h2>您好，{{ expert.realName }}！</h2>
-        <p>欢迎回到耘联农业平台，快来解惑吧！</p>
-      </el-col>
-    </el-row>
+    <h2>您好，{{ expert.expertName }}！</h2>
+    <p>欢迎回到耘联农业平台，快来答疑解惑吧！</p>
 
     <!-- 卡片信息 -->
     <el-row :gutter="20" class="info-cards">
-      <!-- 当前排名 -->
       <el-col :span="6">
-        <el-card class="info-card rank-card">
+        <el-card class="info-card home-card" @click="$router.push('/expert/profile')">
           <div slot="header">
-            <strong>当前排名</strong>
+            <strong>我的主页</strong>
           </div>
           <div class="card-content">
-            <p>{{ expert.rank || '暂无排名' }}</p>
+            <p>查看或修改个人信息</p>
           </div>
         </el-card>
       </el-col>
 
-      <!-- 回答数 -->
       <el-col :span="6">
-        <el-card class="info-card answer-count">
+        <el-card class="info-card order-card" @click="$router.push('/expert/ques')">
           <div slot="header">
-            <strong>累计回答</strong>
+            <strong>解答问题</strong>
           </div>
           <div class="card-content">
-            <p>{{ expert.answerCount || 0 }} 条</p>
+            <p>查看或解答农户提问</p>
           </div>
         </el-card>
       </el-col>
 
-      <!-- 待回答问题 -->
       <el-col :span="6">
-        <el-card class="info-card unanswered-questions">
+        <el-card class="info-card recommendation-card" @click="$router.push('/expert/rank')">
           <div slot="header">
-            <strong>未回答问题</strong>
+            <strong>排行榜</strong>
           </div>
           <div class="card-content">
-            <p>{{ stats.unansweredCount || 0 }} 条</p>
+            <p>查看个人排名</p>
           </div>
         </el-card>
       </el-col>
 
-      <!-- 最新动态 -->
+
       <el-col :span="6">
-        <el-card class="info-card latest-activity">
+        <el-card class="info-card question-card" @click="$router.push('/expert/cert')">
           <div slot="header">
-            <strong>证书数量</strong>
+            <strong>知识认证</strong>
           </div>
           <div class="card-content">
-            <p>{{ stats.certCount || 0 }} 个</p>
+            <p>查看或编辑我的证书</p>
           </div>
         </el-card>
       </el-col>
     </el-row>
-
-    <!-- 快捷操作 -->
-    <el-row :gutter="20" class="quick-actions">
-      <el-col :span="6">
-        <el-button @click="$router.push('/expert/ques')" style="width: 100%; background-color: #e6f7ff;">去回答问题</el-button>
-      </el-col>
-      <el-col :span="6">
-        <el-button @click="$router.push('/expert/cert')" style="width: 100%; background-color: #fff7e6;">查看我的证书</el-button>
-      </el-col>
-      <el-col :span="6">
-        <el-button @click="$router.push('/expert/rank')" style="width: 100%; background-color: #f9f9f9;">查看排行榜</el-button>
-      </el-col>
-      <el-col :span="6">
-        <el-button @click="$router.push('/expert/profile')" style="width: 100%; background-color: #f0f9eb;">完善个人信息</el-button>
-      </el-col>
-    </el-row>
-
-    <!-- 最近回答列表 -->
-    <el-card class="recent-answers">
-      <div slot="header">
-        <strong>最近回答</strong>
-      </div>
-      <ul v-if="recentAnswers.length">
-        <li v-for="(answer, index) in recentAnswers" :key="index" class="answer-item">
-          <strong>关于：</strong>{{ answer.title }}<br/>
-          <small>{{ answer.content.substring(0, 50) }}...</small>
-        </li>
-      </ul>
-      <p v-else>暂无回答记录</p>
-    </el-card>
   </div>
 </template>
 
-<script>
-import { useUserStore } from '@/stores/user';
+<script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useUserStore } from '../../stores/user'; // 导入用户状态 Store
 
-import {
-  getExpertById,
-  getMyCertificates,
-  getAllQuestions,
-  getRecentAnswers
-} from '@/views/expert/expertApi';
+const router = useRouter();
+const userStore = useUserStore(); // 使用用户 Store
 
-export default {
-  data() {
-    return {
-      expert: {},
-      stats: {
-        unansweredCount: 0,
-        certCount: 0
-      },
-      recentAnswers: [],
-      latestAnswer: null
-    };
-  },
-  mounted() {
-    this.initData();
-  },
-  methods: {
-    async initData() {
-      try {
-        const userStore = useUserStore();
-        const userId = userStore.userId;
-        //const userId = this.$store.getters.userId;
-
-        // 获取专家信息
-        const expert = await getExpertById(userId);
-        this.expert = {
-          expertId: expert.user_id,
-          realName: expert.real_name || '未登录专家',
-          title: expert.title || '暂无职称',
-          institution: expert.institution || '暂无机构',
-          expertise: expert.expertise || '暂无领域',
-          answerCount: expert.answer_count || 0,
-          expertRank: expert.expert_rank || '暂无排名',
-          bio: expert.bio || '暂无简介'
-        };
-
-        // 获取证书数量
-        const certificates = await getMyCertificates(userId);//接口没改
-        this.stats.certCount = certificates.length;
-
-        // 获取未回答问题数量
-        const questions = await getAllQuestions();
-        this.stats.unansweredCount = questions.filter(q => !q.answered).length;
-
-        // 获取最近回答
-        const answers = await getRecentAnswers(userId);
-        this.recentAnswers = answers.slice(0, 5);
-        this.latestAnswer = answers[0] || null;
-      } catch (error) {
-        console.error('加载专家首页数据失败:', error);
-        this.$message.error('加载数据失败，请刷新重试');
-      }
-    },
-    getDefaultAvatar(expertId) {
-      return `https://via.placeholder.com/60?text=Exp${expertId}`;
-    }
-  }
-};
+// 从用户状态中获取农户信息
+const expert = ref({
+  expertName: userStore.username || '默认专家' // 默认为 '农户' 如果未登录
+});
 </script>
 
 <style scoped>
 .expert-home-container {
   padding: 20px;
 }
-.welcome-section {
-  margin-bottom: 20px;
-}
+
 .info-cards .info-card {
-  margin-bottom: 20px;
+  margin-top: 40px;
+  margin-bottom: 20px; /* 统一每个卡片的下边距 */
+  cursor: pointer; /* 添加鼠标指针样式 */
+  min-height: 200px; /* 使卡片高度一致 */
+  transition: transform 0.2s ease; /* 添加平滑过渡效果 */
 }
+
+.info-cards .info-card:hover {
+  transform: scale(1.05); /* 鼠标悬停时放大 */
+}
+
+.home-card {
+  background-color: #e6f7ff; /* 浅蓝色背景 */
+}
+.order-card {
+  background-color: #fff7e6; /* 浅橙色背景 */
+}
+.recommendation-card {
+  background-color: #f9f9f9; /* 浅灰色背景 */
+}
+.question-card {
+  background-color: #f0f9eb; /* 浅绿色背景 */
+}
+
+.card-content {
+  text-align: center; /* 内容居中对齐 */
+}
+
 .card-content p {
-  font-size: 24px;
-  font-weight: bold;
-  color: #333;
-}
-.quick-actions .el-button {
-  padding: 30px 70px;
-  font-size: 16px;
-  margin-bottom: 20px;
-  transition: all 0.3s ease;
-  transform: scale(1);
-}
-
-.quick-actions .el-button:hover {
-  transform: scale(1.05);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-  z-index: 1;
-}
-
-.recent-answers ul {
-  list-style-type: none;
-  padding-left: 0;
-  margin-bottom: 20px;
-}
-.answer-item {
-  margin-bottom: 10px;
+  font-size: 24px; /* 字体大小 */
+  font-weight: bold; /* 加粗文字 */
+  color: #333; /* 字体颜色 */
 }
 </style>

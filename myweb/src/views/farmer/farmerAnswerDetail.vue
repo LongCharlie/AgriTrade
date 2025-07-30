@@ -1,13 +1,13 @@
 <template>
   <div>
     <el-container>
-<!--      <el-aside width="200px">-->
-<!--        <expert-common-aside />-->
-<!--      </el-aside>-->
+      <!--      <el-aside width="200px">-->
+      <!--        <expert-common-aside />-->
+      <!--      </el-aside>-->
       <el-container>
-<!--        <el-header>-->
-<!--          <expert-common-header />-->
-<!--        </el-header>-->
+        <!--        <el-header>-->
+        <!--          <expert-common-header />-->
+        <!--        </el-header>-->
         <el-main>
           <div class="answer-detail-container">
             <!-- 回答主体内容 -->
@@ -20,9 +20,9 @@
                 </div>
                 <div class="answer-meta">
                   <span class="time">{{ formatDate(answer.answered_at) }}</span>
-<!--                  <el-tag :type="answer.isAccepted ? 'success' : ''">-->
-<!--                    {{ answer.isAccepted ? '已采纳' : '未采纳' }}-->
-<!--                  </el-tag>-->
+                  <!--                  <el-tag :type="answer.isAccepted ? 'success' : ''">-->
+                  <!--                    {{ answer.isAccepted ? '已采纳' : '未采纳' }}-->
+                  <!--                  </el-tag>-->
                 </div>
               </div>
 
@@ -34,33 +34,33 @@
                 <el-button type="text" icon="el-icon-thumb">
                   {{ answer.upvotes || 0 }} 有用
                 </el-button>
-<!--                <el-button type="text" icon="el-icon-chat-round" @click="showReplyForm = !showReplyForm">-->
-<!--                  回复-->
-<!--                </el-button>-->
+                <!--                <el-button type="text" icon="el-icon-chat-round" @click="showReplyForm = !showReplyForm">-->
+                <!--                  回复-->
+                <!--                </el-button>-->
               </div>
             </el-card>
 
             <!-- 回复表单 -->
-<!--            <el-card v-if="showReplyForm" class="reply-form">-->
-<!--              <el-input-->
-<!--                  v-model="replyContent"-->
-<!--                  type="textarea"-->
-<!--                  :rows="3"-->
-<!--                  placeholder="请输入您的回复"-->
-<!--              ></el-input>-->
-<!--              <div class="form-actions">-->
-<!--                <el-button type="primary" @click="submitReply">提交</el-button>-->
-<!--                <el-button @click="showReplyForm = false">取消</el-button>-->
-<!--              </div>-->
-<!--            </el-card>-->
+            <!--            <el-card v-if="showReplyForm" class="reply-form">-->
+            <!--              <el-input-->
+            <!--                  v-model="replyContent"-->
+            <!--                  type="textarea"-->
+            <!--                  :rows="3"-->
+            <!--                  placeholder="请输入您的回复"-->
+            <!--              ></el-input>-->
+            <!--              <div class="form-actions">-->
+            <!--                <el-button type="primary" @click="submitReply">提交</el-button>-->
+            <!--                <el-button @click="showReplyForm = false">取消</el-button>-->
+            <!--              </div>-->
+            <!--            </el-card>-->
 
             <!-- 回复列表 -->
-<!--            <div class="replies-container">-->
-<!--              <h3>回复 ({{ replies.length }})</h3>-->
-<!--              <div v-for="reply in replies" :key="reply.id" class="reply-item">-->
-<!--                &lt;!&ndash; 回复项内容 &ndash;&gt;-->
-<!--              </div>-->
-<!--            </div>-->
+            <!--            <div class="replies-container">-->
+            <!--              <h3>回复 ({{ replies.length }})</h3>-->
+            <!--              <div v-for="reply in replies" :key="reply.id" class="reply-item">-->
+            <!--                &lt;!&ndash; 回复项内容 &ndash;&gt;-->
+            <!--              </div>-->
+            <!--            </div>-->
           </div>
         </el-main>
       </el-container>

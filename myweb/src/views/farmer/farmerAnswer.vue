@@ -1,13 +1,13 @@
 <template>
   <div>
     <el-container>
-      <el-aside width="200px">
-        <expert-common-aside></expert-common-aside>
-      </el-aside>
+<!--      <el-aside width="200px">-->
+<!--        <expert-common-aside></expert-common-aside>-->
+<!--      </el-aside>-->
       <el-container>
-        <el-header>
-          <expert-common-header></expert-common-header>
-        </el-header>
+<!--        <el-header>-->
+<!--          <expert-common-header></expert-common-header>-->
+<!--        </el-header>-->
         <el-main>
           <div class="expert-answer-detail">
             <h2>问题详情</h2>
@@ -19,6 +19,12 @@
                   <el-tag :type="question.answer_count > 0 ? 'success' : 'warning'">
                     {{ question.answer_count > 0 ? '已回答' : '未回答' }}
                   </el-tag>
+                  <el-tag
+                      v-if="question.user_id === userStore.userId"
+                      :type="question.status === 'open' ? 'success' : 'info'"
+                  >
+                    {{ question.status === 'open' ? '开启' : '关闭' }}
+                  </el-tag>
                 </div>
               </div>
 
@@ -28,13 +34,13 @@
                 <p><strong>内容：</strong>{{ question.content }}</p>
 
                 <!-- 回答表单 -->
-                <el-form @submit.prevent="submitAnswer" label-width="80px">
-                  <el-form-item label="回答">
-                    <el-input v-model="answerContent" type="textarea" :rows="4" placeholder="请输入回答"/>
-                  </el-form-item>
-                  <el-button type="primary" native-type="submit">提交</el-button>
-                  <el-button @click="$router.back()">取消</el-button>
-                </el-form>
+<!--                <el-form @submit.prevent="submitAnswer" label-width="80px">-->
+<!--                  <el-form-item label="回答">-->
+<!--                    <el-input v-model="answerContent" type="textarea" :rows="4" placeholder="请输入回答"/>-->
+<!--                  </el-form-item>-->
+<!--                  <el-button type="primary" native-type="submit">提交</el-button>-->
+<!--                  <el-button @click="$router.back()">取消</el-button>-->
+<!--                </el-form>-->
               </div>
             </el-card>
             <!-- 回答列表 -->
@@ -49,7 +55,7 @@
                 <div class="answer-header">
       <span class="expert-info">
         <el-avatar
-            @click="$router.push(`/expert/detail/${answer.expert_id}`)"
+            @click.stop="$router.push(`/expert/detail/${answer.expert_id}`)"
             :size="40"
             :src="answer.avatar_url || defaultAvatar"
         ></el-avatar>
@@ -63,6 +69,14 @@
                 <div class="answer-content">{{ answer.content }}</div>
                 <div class="answer-footer">
                   <el-button type="text" icon="el-icon-thumb">{{ answer.upvotes || 0 }} 有用</el-button>
+                  <el-button
+                      v-if="question.user_id === userStore.userId"
+                      type="text"
+                      icon="el-icon-delete"
+                      @click="deleteAnswer(answer.answer_id)"            style="color: #f56c6c; margin-left: 10px;"
+                  >
+                    删除
+                  </el-button>
                 </div>
               </el-card>
             </div>
@@ -76,12 +90,12 @@
 <script>
 //import {getQuestionById, submitAnswer, getAnswersByQuestionId} from '@/views/expert/expertApi';
 import { useUserStore } from '@/stores/user'
-import expertCommonAside from "@/components/expertCommonAside.vue";
-import expertCommonHeader from "@/components/expertCommonHeader.vue";
+// import expertCommonAside from "@/components/expertCommonAside.vue";
+// import expertCommonHeader from "@/components/expertCommonHeader.vue";
 import axios from "axios";
 
 export default {
-  components: {expertCommonHeader, expertCommonAside},
+  // components: {expertCommonHeader, expertCommonAside},
   setup() {
     const userStore = useUserStore();
     return {
@@ -102,7 +116,7 @@ export default {
   },
   methods: {
     viewAnswerDetail(answerId) {
-      this.$router.push(`/expert/answer/${answerId}`);
+      this.$router.push(`/farmer/answer/${answerId}`);
     },
     async fetchQuestion() {
       try {
@@ -168,6 +182,41 @@ export default {
       } catch (error) {
         this.$message.error('回答失败，请重试');
         console.error('提交回答失败:', error);
+      }
+    },
+    async deleteAnswer(answerId) {
+      try {
+        await this.$confirm('确定要删除这条回答吗？此操作不可恢复', '删除确认', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        });
+      } catch {
+        return; // 用户取消删除
+      }
+
+      try {
+        const token = this.userStore.token;
+
+        await axios.delete(`http://localhost:3000/api/answers/${answerId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        // 从本地列表中移除
+        const index = this.answers.findIndex(a => a.answer_id === answerId);
+        if (index !== -1) {
+          this.answers.splice(index, 1);
+        }
+
+        // 更新问题的回答计数
+        this.question.answer_count -= 1;
+
+        this.$message.success('删除回答成功');
+      } catch (error) {
+        this.$message.error('删除回答失败');
+        console.error('删除回答失败:', error);
       }
     }
   }

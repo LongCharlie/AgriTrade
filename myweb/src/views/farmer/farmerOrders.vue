@@ -166,7 +166,7 @@ const fetchData = async () => {
     tableData.value = response.data || []; // 假设 API 返回的数据就是我们需要的格式
     filteredTableData.value = [...tableData.value]; // 同步过滤后的数据
   } catch (error) {
-    console.error('获取采购需求数据失败，使用模拟数据', error);
+    console.error('获取订单数据失败，使用模拟数据', error);
     tableData.value = simulatedTableData; // 使用模拟数据
     filteredTableData.value = [...simulatedTableData]; // 同步过滤后的数据
   }

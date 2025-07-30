@@ -20,8 +20,6 @@
       <!-- 状态筛选按钮 -->
       <div class="filter-buttons">
         <el-button :type="filter === 'all' ? 'primary' : 'default'" @click="filterQuestions('all')">全部</el-button>
-        <el-button :type="filter === 'open' ? 'primary' : 'default'" @click="filterQuestions('open')">未关闭</el-button>
-        <el-button :type="filter === 'closed' ? 'primary' : 'default'" @click="filterQuestions('closed')">已关闭</el-button>
         <el-button :type="filter === 'unanswered' ? 'primary' : 'default'" @click="filterQuestions('unanswered')">未回答</el-button>
         <el-button :type="filter === 'answered' ? 'primary' : 'default'" @click="filterQuestions('answered')">已回答</el-button>
       </div>
@@ -45,24 +43,21 @@
         <div class="card-header">
           <span class="question-title" v-html="highlightSearchText(question.title, true)"></span>
           <div class="tag">
-            <el-tag :type="question.status === 'open' ? 'warning' : 'info'">
-              {{ question.status === 'open' ? '未关闭' : '已关闭' }}
-            </el-tag>
-            <el-tag :type="question.answerCount === 0 ? 'warning' : 'info'">
-              {{ question.answerCount === 0 ? '未回答' : '已回答' }}
+            <el-tag :type="question.answer_count === 0 ? 'warning' : 'success'">
+              {{ question.answer_count === 0 ? '未回答' : '已回答' }}
             </el-tag>
           </div>
         </div>
         <div class="card-body">
           <p class="question-content" v-html="highlightSearchText(truncateText(question.content, 150), true)"></p>
           <div class="question-meta">
-            <span><i class="el-icon-user"></i> {{ question.farmerName }}</span>
-            <span><i class="el-icon-time"></i> {{ question.createdAt }}</span>
-            <span><i class="el-icon-chat-dot-round"></i> {{ question.answerCount }} 回答</span>
+            <span><i class="el-icon-user"></i> {{ question.username }}</span>
+            <span><i class="el-icon-time"></i> {{ formatDate(question.created_at) }}</span>
+            <span><i class="el-icon-chat-dot-round"></i> {{ question.answer_count }} 回答</span>
           </div>
         </div>
         <div class="card-footer">
-          <el-button type="primary" size="small" @click="viewQuestionDetail(question.questionId)">去回答</el-button>
+          <el-button type="primary" size="small" @click="viewQuestionDetail(question.question_id)">去回答</el-button>
         </div>
       </el-card>
 
@@ -84,10 +79,18 @@
 
 <script>
 import DOMPurify from 'dompurify';
-import { getAllQuestions } from '../../views/expert/expertApi';
+import axios from "axios";
+import { useUserStore } from '@/stores/user';
+//import { getAllQuestions } from '../../views/expert/expertApi';
 //import { getQuestions, closeQuestion } from '../../views/expert/expertApi';
 
 export default {
+  setup() {
+    const userStore = useUserStore();
+    return {
+      userStore
+    };
+  },
   data() {
     return {
       questions: [],
@@ -102,17 +105,13 @@ export default {
   computed: {
     // 根据状态和搜索词过滤问题
     filteredQuestions() {
-      let filtered = this.questions;
+      let filtered = this.questions.filter(q => q.status === 'open');
 
       // 状态筛选
-      if (this.filter === 'open') {
-        filtered = filtered.filter(q => q.status === 'open');
-      } else if (this.filter === 'closed') {
-        filtered = filtered.filter(q => q.status === 'closed');
-      } else if (this.filter === 'answered') {
-        filtered = filtered.filter(q => q.answerCount > 0);
+      if (this.filter === 'answered') {
+        filtered = filtered.filter(q => q.answer_count > 0);
       } else if (this.filter === 'unanswered') {
-        filtered = filtered.filter(q => q.answerCount === 0);
+        filtered = filtered.filter(q => q.answer_count === 0);
       }
 
       // 搜索筛选
@@ -139,8 +138,15 @@ export default {
   methods: {
     async fetchQuestions() {
       try {
+        const token = this.userStore.token;
+        const response = await axios.get('http://localhost:3000/api/questions/all', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        this.questions = response.data.questions;
         // mock
-        const mockData = [
+        /*const mockData = [
           {
             question_id: 1,
             farmer_id: 2,
@@ -171,7 +177,7 @@ export default {
             answer_count: 2,
             farmer_name: '王农户'
           }
-        ];
+        ];*/
 
         // //mock
         // const res = await getQuestions({
@@ -180,7 +186,7 @@ export default {
         // this.questions = res.data;
 
         //mock
-        this.questions = mockData.map(q => ({
+        /*this.questions = mockData.map(q => ({
           questionId: q.question_id,
           farmerId: q.farmer_id,
           title: q.title,
@@ -189,7 +195,7 @@ export default {
           createdAt: q.created_at,
           answerCount: q.answer_count,
           farmerName: q.farmer_name
-        }));
+        }));*/
       } catch (error) {
         console.error('获取问题列表失败:', error);
         this.$message.error('获取问题列表失败');
@@ -245,34 +251,14 @@ export default {
     viewQuestionDetail(questionId) {
       this.$router.push(`/expert/ques/${questionId}/answer`);
     },
-    // async closeQuestion(questionId) {
-    //   try {
-    //     await this.$confirm('确定要关闭这个问题吗?', '提示', {
-    //       confirmButtonText: '确定',
-    //       cancelButtonText: '取消',
-    //       type: 'warning'
-    //     });
-    //
-    //     // 实际API调用
-    //     // await closeQuestion(questionId);
-    //
-    //     // 模拟关闭操作
-    //     const question = this.questions.find(q => q.questionId === questionId);
-    //     if (question) {
-    //       question.status = 'closed';
-    //     }
-    //
-    //     this.$message.success('问题已关闭');
-    //   } catch (error) {
-    //     if (error !== 'cancel') {
-    //       console.error('关闭问题失败:', error);
-    //       this.$message.error('关闭问题失败');
-    //     }
-    //   }
-    // },
     filterQuestions(status) {
       this.filter = status;
-      this.fetchQuestions();
+      this.pagination.currentPage = 1;
+    },
+    formatDate(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
     }
   }
 };
@@ -324,10 +310,6 @@ export default {
 .questions-container {
   padding: 20px;
   min-height: calc(100vh - 120px); /* 根据实际布局调整 */
-}
-
-.questions-container {
-  padding: 20px;
 }
 
 .filter-buttons {

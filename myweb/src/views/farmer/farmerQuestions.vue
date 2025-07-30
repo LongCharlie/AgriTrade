@@ -1,181 +1,478 @@
 <template>
   <div class="questions-container">
-    <!-- 过滤按钮 -->
-    <div class="filter-buttons">
-      <el-button :type="filter === 'all' ? 'primary' : 'default'" @click="setFilter('all')">全部</el-button>
-      <el-button :type="filter === 'mine' ? 'primary' : 'default'" @click="setFilter('mine')">我的提问</el-button>
+    <h2>问题列表</h2>
+
+    <!-- 搜索和筛选区域 -->
+    <div class="search-filter-container">
+      <el-input
+          v-model="searchQuery"
+          placeholder="输入问题标题或内容搜索"
+          class="search-input"
+          clearable
+          @clear="handleSearchClear"
+          @keyup.enter="handleSearch"
+      >
+        <!--        <template #append>-->
+        <!--          <el-button type="primary" @click="handleSearch" icon="el-icon-search">搜索</el-button>-->
+        <!--        </template>-->
+      </el-input>
+      <!-- 状态筛选按钮 -->
+      <div class="filter-buttons">
+        <el-button :type="filter === 'all' ? 'primary' : 'default'" @click="filterQuestions('all')">全部提问</el-button>
+        <el-button :type="filter === 'mine' ? 'primary' : 'default'" @click="filterQuestions('mine')">我的提问</el-button>      </div>
     </div>
 
-    <!-- 提问卡片列表 -->
-    <el-row :gutter="20" class="question-cards">
-      <el-col :span="8" v-for="(question, index) in displayedQuestions" :key="index">
-        <el-card class="question-card" @click="goToDetail(question.question_id)">
-          <div class="card-header">
-            <span class="title">{{ question.title }}</span>
-          </div>
-          <div class="card-body">
-            <p class="content">{{ question.content }}</p>
-            <p class="meta">提问者：{{ question.farmerName || '匿名' }}</p>
-            <p class="meta">时间：{{ formatTime(question.created_at) }}</p>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
+    <!-- 问题列表展示区域 -->
+    <div class="question-list">
+      <!-- 搜索结果提示 -->
+      <div v-if="searchQuery" class="search-result-tip">
+        共找到 {{ filteredQuestions.length }} 条关于"{{ searchQuery }}"的结果
+        <el-button type="text" @click="clearSearch" v-if="searchQuery">清除搜索</el-button>
+      </div>
 
-    <!-- 空状态 -->
-    <div v-if="displayedQuestions.length === 0" class="no-data">
-      暂无提问
+      <!-- 问题卡片 -->
+      <el-card
+          class="question-card"
+          v-for="(question, index) in paginatedQuestions"
+          :key="index"
+          shadow="hover"
+      >
+        <div class="card-header">
+          <span class="question-title" v-html="highlightSearchText(question.title, true)"></span>
+          <div class="tag">
+            <el-tag :type="question.answer_count === 0 ? 'warning' : 'success'">
+              {{ question.answer_count === 0 ? '未回答' : '已回答' }}
+            </el-tag>
+            <el-tag v-if="filter === 'mine'" :type="question.status === 'open' ? 'success' : 'info'">
+              {{ question.status === 'open' ? '开启' : '关闭' }}
+            </el-tag>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="question-content" v-html="highlightSearchText(truncateText(question.content, 150), true)"></p>
+          <div class="question-meta">
+            <span><i class="el-icon-user"></i> {{ question.username }}</span>
+            <span><i class="el-icon-time"></i> {{ formatDate(question.created_at) }}</span>
+            <span><i class="el-icon-chat-dot-round"></i> {{ question.answer_count }} 回答</span>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="footer-buttons">
+            <el-button type="primary" size="small" @click="viewQuestionDetail(question.question_id)">
+              查看详情
+            </el-button>
+            <div v-if="filter === 'mine'" class="action-buttons">
+              <el-button
+                  type="warning"
+                  size="small"
+                  @click="toggleQuestionStatus(question)"
+                  :loading="question.updatingStatus"
+              >
+                {{ question.status === 'open' ? '关闭提问' : '打开提问' }}
+              </el-button>
+              <el-button
+                  type="danger"
+                  size="small"
+                  @click="deleteQuestion(question.question_id)"
+                  :loading="question.deleting"
+              >
+                删除提问
+              </el-button>
+            </div>
+          </div>
+        </div>
+      </el-card>
+
+      <!-- 分页组件 -->
+      <div class="pagination-container">
+        <el-pagination
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+            :current-page="pagination.currentPage"
+            :page-sizes="[5, 10, 20, 50]"
+            :page-size="pagination.pageSize"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="filteredQuestions.length">
+        </el-pagination>
+      </div>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import axios from 'axios';
+<script>
+import DOMPurify from 'dompurify';
+import axios from "axios";
+import { useUserStore } from '@/stores/user';
+//import { getAllQuestions } from '../../views/expert/expertApi';
+//import { getQuestions, closeQuestion } from '../../views/expert/expertApi';
 
-const router = useRouter();
-
-// 当前筛选状态
-const filter = ref('mine'); // 默认显示“我的提问”
-
-//mock
-const testQuestions = ref([
-  {
-    question_id: 1,
-    title: '如何防治小麦锈病？',
-    content: '我种植的小麦最近出现了锈病，请问有什么有效的防治方法？',
-    farmerName: '张三',
-    farmer_id: 101,
-    created_at: '2025-04-05T10:00:00Z',
-    status: 'open',
-    answer_count: 2
+export default {
+  setup() {
+    const userStore = useUserStore();
+    return {
+      userStore
+    };
   },
-  {
-    question_id: 2,
-    title: '玉米种植的最佳时间是什么时候？',
-    content: '我在北方种植玉米，想知道最佳的播种时间以及需要注意的事项。',
-    farmerName: '李四',
-    farmer_id: 102,
-    created_at: '2025-04-06T11:30:00Z',
-    status: 'closed',
-    answer_count: 1
+  data() {
+    return {
+      questions: [],
+      filter: 'all',
+      searchQuery: '', // 搜索关键词
+      pagination: {
+        currentPage: 1,
+        pageSize: 10
+      }
+    };
   },
-  {
-    question_id: 3,
-    title: '有机肥料对土壤的作用有哪些？',
-    content: '我想了解有机肥料对改善土壤的具体作用，以及如何正确使用。',
-    farmerName: '王五',
-    farmer_id: 103,
-    created_at: '2025-04-07T14:20:00Z',
-    status: 'open',
-    answer_count: 0
-  }
-]);
+  computed: {
+    // 根据状态和搜索词过滤问题
+    filteredQuestions() {
+      let filtered = [...this.questions];
 
-// 存储所有问题
-const allQuestions = ref([]);
+      // 状态筛选
+      if (this.filter === 'all') {
+        // 全部提问：只显示状态为'open'的问题
+        filtered = filtered.filter(q => q.status === 'open');
+      } else if (this.filter === 'mine') {
+        // 我的提问：只显示当前用户的问题（无论status是open还是closed都显示）
+        filtered = filtered.filter(q => q.user_id === this.userStore.userId);
+      }
 
-// 加载状态
-const loading = ref(false);
+      // 搜索筛选
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        filtered = filtered.filter(q =>
+            q.title.toLowerCase().includes(query) ||
+            q.content.toLowerCase().includes(query)
+        );
+      }
 
-// 获取问题列表
-const fetchQuestions = async () => {
-  try {
-    loading.value = true;
-    let res;
-
-    if (filter.value === 'mine') {
-      // 获取当前用户的提问
-      res = await axios.get('/api/questions');
-    } else {
-      // 获取所有问题（仅专家可见）
-      res = await axios.get('/api/questions/all');
+      return filtered;
+    },
+    // 分页后的数据
+    paginatedQuestions() {
+      const start = (this.pagination.currentPage - 1) * this.pagination.pageSize;
+      const end = start + this.pagination.pageSize;
+      return this.filteredQuestions.slice(start, end);
     }
+  },
+  created() {
+    this.fetchQuestions();
+  },
+  methods: {
+    async fetchQuestions() {
+      try {
+        const token = this.userStore.token;
+        const response = await axios.get('http://localhost:3000/api/questions/all', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        this.questions = response.data.questions;
+        // mock
+        /*const mockData = [
+          {
+            question_id: 1,
+            farmer_id: 2,
+            title: '水稻病虫害防治问题',
+            content: '最近发现稻田里出现大量害虫，叶片上有明显的啃食痕迹，请问该如何有效防治？使用什么农药比较合适？需要注意哪些安全事项？',
+            status: 'open',
+            created_at: '2023-05-10',
+            answer_count: 3,
+            farmer_name: '张农户'
+          },
+          {
+            question_id: 2,
+            farmer_id: 3,
+            title: '小麦种植最佳时间',
+            content: '请问在我们这个地区，小麦的最佳种植时间是什么时候？不同品种的小麦在种植时间上有什么区别？',
+            status: 'closed',
+            created_at: '2023-04-15',
+            answer_count: 5,
+            farmer_name: '李农户'
+          },
+          {
+            question_id: 3,
+            farmer_id: 1,
+            title: '有机肥料使用建议',
+            content: '想请教专家关于有机肥料的使用方法和注意事项。如何判断有机肥料的质量？施用量应该如何控制？',
+            status: 'open',
+            created_at: '2023-05-20',
+            answer_count: 2,
+            farmer_name: '王农户'
+          }
+        ];*/
 
-    // 处理返回数据
-    const questionsWithNames = res.data.questions.map(q => ({
-      ...q,
-      farmerName: q.farmer ? q.farmer.username : null
-    }));
+        // //mock
+        // const res = await getQuestions({
+        //   status: this.filter === 'all' ? undefined : this.filter
+        // });
+        // this.questions = res.data;
 
-    allQuestions.value = questionsWithNames;
-  } catch (error) {
-    console.error('获取问题失败:', error);
-  } finally {
-    loading.value = false;
+        //mock
+        /*this.questions = mockData.map(q => ({
+          questionId: q.question_id,
+          farmerId: q.farmer_id,
+          title: q.title,
+          content: q.content,
+          status: q.status,
+          createdAt: q.created_at,
+          answerCount: q.answer_count,
+          farmerName: q.farmer_name
+        }));*/
+      } catch (error) {
+        console.error('获取问题列表失败:', error);
+        this.$message.error('获取问题列表失败');
+      }
+    },
+    // 搜索处理
+    handleSearch() {
+      this.pagination.currentPage = 1; // 搜索时重置到第一页
+    },
+    // 清除搜索
+    clearSearch() {
+      this.searchQuery = '';
+      this.pagination.currentPage = 1;
+    },
+    // 搜索框清空时处理
+    handleSearchClear() {
+      this.pagination.currentPage = 1;
+    },
+    // 高亮搜索文本
+    highlightSearchText(text, isHtml = false) {
+      if (!this.searchQuery || !text) return text;
+
+      const query = this.searchQuery.toLowerCase();
+      const regex = new RegExp(query, 'gi');
+
+      if (isHtml) {
+        // 用于v-html的情况
+        const highlighted = text.toString().replace(regex, match =>
+            `<span class="highlight-text">${match}</span>`
+        );
+        return DOMPurify.sanitize(highlighted);
+      } else {
+        // 用于普通文本插值的情况
+        return text.toString().replace(regex, match =>
+            `{{${match}}}`
+        );
+      }
+    },
+    // 每页条数改变
+    handleSizeChange(val) {
+      this.pagination.pageSize = val;
+      this.pagination.currentPage = 1; // 重置到第一页
+    },
+    // 当前页改变
+    handleCurrentChange(val) {
+      this.pagination.currentPage = val;
+    },
+    truncateText(text, length) {
+      if (!text) return '';
+      if (text.length <= length) return text;
+      return text.substring(0, length) + '...';
+    },
+    viewQuestionDetail(questionId) {
+      this.$router.push(`/farmer/ques/${questionId}/answer`);
+    },
+    filterQuestions(status) {
+      this.filter = status;
+      this.pagination.currentPage = 1;
+    },
+    formatDate(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    },
+    // 切换问题状态（打开/关闭）
+    async toggleQuestionStatus(question) {
+      // 添加加载状态
+      this.$set(question, 'updatingStatus', true);
+
+      try {
+        const token = this.userStore.token;
+        const newStatus = question.status === 'open' ? 'closed' : 'open';
+
+        await axios.patch(`http://localhost:3000/api/questions/${question.question_id}/status`, {
+          status: newStatus
+        }, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        // 更新本地数据
+        question.status = newStatus;
+        this.$message.success(`${newStatus === 'open' ? '打开' : '关闭'}提问成功`);
+      } catch (error) {
+        this.$message.error(`${question.status === 'open' ? '关闭' : '打开'}提问失败`);
+        console.error('更新问题状态失败:', error);
+      } finally {
+        // 移除加载状态
+        this.$set(question, 'updatingStatus', false);
+      }
+    },
+    // 删除问题
+    async deleteQuestion(questionId) {
+      // 确认删除
+      try {
+        await this.$confirm('确定要删除这个问题吗？此操作不可恢复', '删除确认', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        });
+      } catch {
+        // 用户取消删除
+        return;
+      }
+
+      try {
+        const token = this.userStore.token;
+
+        await axios.delete(`http://localhost:3000/api/questions/${questionId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        // 从本地列表中移除
+        const index = this.questions.findIndex(q => q.question_id === questionId);
+        if (index !== -1) {
+          this.questions.splice(index, 1);
+        }
+
+        this.$message.success('删除提问成功');
+      } catch (error) {
+        this.$message.error('删除提问失败');
+        console.error('删除问题失败:', error);
+      }
+    }
   }
 };
-
-// 切换筛选条件时重新加载数据
-const setFilter = (type) => {
-  filter.value = type;
-  fetchQuestions();
-};
-
-// 格式化时间
-const formatTime = (timeStr) => {
-  return new Date(timeStr).toLocaleDateString();
-};
-
-// 显示的问题列表计算属性
-const displayedQuestions = computed(() => {
-  return testQuestions.value;//mock
-});
-
-// 跳转到问题详情页
-const goToDetail = (id) => {
-  router.push(`/farmer/questions/${id}`);
-};
-
-// 初始化加载数据
-fetchQuestions();
-
 </script>
 
-<style>
+<style scoped>
+.search-filter-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 0;
+  gap: 20px;
+}
+
+.search-input {
+  width: 300px;
+}
+
+.search-result-tip {
+  margin-bottom: 15px;
+  color: #666;
+  font-size: 14px;
+}
+
+/* 高亮文本样式 */
+.question-title ::v-deep .highlight-text,
+.question-content ::v-deep .highlight-text {
+  background-color: #FFEB3B;
+  color: #000;
+  padding: 0 2px;
+  border-radius: 2px;
+  font-weight: bold;
+  display: inline; /* 确保是行内显示 */
+}
+
+.pagination-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+/* 问题卡片样式微调 */
+.question-card {
+  margin-bottom: 20px;
+  background-color: #F7FFF9;
+}
+
+/* 确保内容区域有足够空间 */
 .questions-container {
   padding: 20px;
+  min-height: calc(100vh - 120px); /* 根据实际布局调整 */
 }
 
 .filter-buttons {
+  margin-top: 20px;
+  margin-bottom: 20px;
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 20px;
 }
 
-.question-cards {
-  margin-top: 10px;
+.question-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .question-card {
-  cursor: pointer;
-  transition: transform 0.2s ease;
-  height: 200px;
-  overflow-y: auto;
+  width: 100%;
+  margin-bottom: 20px;
+  transition: all 0.3s;
 }
 
 .question-card:hover {
-  transform: scale(1.02);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .card-header {
-  font-size: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.question-title {
   font-weight: bold;
-  margin-bottom: 10px;
+  font-size: 18px;
+  flex: 1;
+  margin-right: 15px;
 }
 
-.card-body .content {
+.card-body {
+  padding: 10px 0;
+}
+
+.question-content {
+  margin: 10px 0;
+  color: #666;
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.question-meta {
+  display: flex;
+  gap: 20px;
+  margin-top: 15px;
+  color: #888;
   font-size: 14px;
-  color: #555;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  margin-bottom: 10px;
 }
 
-.card-body .meta {
-  font-size: 12px;
-  color: #999;
+.question-meta i {
+  margin-right: 5px;
 }
+
+.card-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.tag {
+  display: flex;
+  gap: 8px;
+}
+
 </style>

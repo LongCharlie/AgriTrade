@@ -6,8 +6,8 @@
     <div class="question-header">
       <h2>{{ question.title }}</h2>
       <div class="meta">
-        <span>提问农户: {{ question.farmerName }} (ID: {{ question.farmerId }})</span>
-        <span>提问时间: {{ formatDate(question.createdAt) }}</span>
+        <span>提问农户: {{ question.username }} (ID: {{ question.user_id }})</span>
+        <span>提问时间: {{ formatDate(question.created_at) }}</span>
         <el-tag :type="question.status === 'open' ? 'success' : 'info'">
           {{ question.status === 'open' ? '开放' : '已关闭' }}
         </el-tag>
@@ -20,30 +20,33 @@
       <el-input
           v-model="searchExpert"
           placeholder="搜索专家ID或姓名"
-          clearable      style="width: 200px"
+          clearable
+          style="width: 200px"
       />
       <el-input
           v-model="searchContent"
           placeholder="搜索回答内容"
-          clearable      style="width: 300px"
+          clearable
+          style="width: 300px"
       />
       <el-date-picker
           v-model="dateRange"
           type="daterange"
           range-separator="至"
           start-placeholder="开始日期"
-          end-placeholder="结束日期"      style="width: 350px"
+          end-placeholder="结束日期"
+          style="width: 350px"
           @change="handleDateChange"
       />
-      <el-button type="primary" @click="fetchAnswers">搜索</el-button>
+      <el-button type="primary" @click="handleSearch">搜索</el-button>
       <el-button @click="resetSearch">重置</el-button>
     </div>
 
     <!-- 回答列表 -->
-    <el-table :data="filteredAnswers" v-loading="loading">
-      <el-table-column prop="expert_name" label="专家" width="150">
+    <el-table :data="paginatedAnswers" v-loading="loading">
+      <el-table-column prop="real_name" label="专家" width="150">
         <template #default="{ row }">
-          {{ row.expert_name }} (ID: {{ row.expert_id }})
+          {{ row.real_name }} (ID: {{ row.expert_id }})
         </template>
       </el-table-column>
       <el-table-column prop="content" label="回答内容" />
@@ -70,7 +73,7 @@
       <el-pagination
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
-          :total="totalAnswers"
+          :total="filteredAnswers.length"
           :page-sizes="[10, 20, 50]"
           layout="total, sizes, prev, pager, next, jumper"
           @current-change="handlePageChange"
@@ -84,12 +87,14 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getQuestionDetail, getQuestionAnswers, deleteAnswer } from '@/views/admin/adminApi'
+import axios from "axios";
+import { useUserStore } from "@/stores/user";
 
 export default {
   setup() {
     const route = useRoute()
     const router = useRouter()
+    const userStore = useUserStore();
 
     // 状态管理
     const searchExpert = ref('')
@@ -102,7 +107,6 @@ export default {
     const loading = ref(false)
     const currentPage = ref(1)
     const pageSize = ref(10)
-    const totalAnswers = ref(0)
 
     // 日期范围变更处理
     const handleDateChange = (dates) => {
@@ -122,7 +126,11 @@ export default {
       dateRange.value = []
       startDate.value = ''
       endDate.value = ''
-      fetchAnswers()
+      currentPage.value = 1; // 重置到第一页
+    }
+
+    const handleSearch = () => {
+      currentPage.value = 1; // 搜索时重置到第一页
     }
 
     // 格式化日期
@@ -139,21 +147,17 @@ export default {
     const fetchQuestion = async () => {
       try {
         loading.value = true
-        // mock数据
-        question.value = {
-          questionId: route.params.id,
-          title: '水稻病虫害防治问题',
-          content: '最近发现稻田里出现大量害虫...',
-          farmerId: 2,
-          farmerName: '张农户',
-          status: 'open',
-          createdAt: '2023-05-10T08:00:00Z',
-          answerCount: 3
-        }
-        // const res = await getQuestionDetail(route.params.id)
-        // question.value = res.data
+        const id = route.params.id;
+        const token = userStore.token;
+        const response = await axios.get(`http://localhost:3000/api/questions/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        question.value = response.data;
       } catch (error) {
         ElMessage.error('获取问题详情失败')
+        console.error('获取问题详情失败:', error)
       } finally {
         loading.value = false
       }
@@ -163,57 +167,17 @@ export default {
     const fetchAnswers = async () => {
       try {
         loading.value = true
-        // mock数据
-        const mockAnswers = [
-          {
-            answer_id: 1,
-            question_id: route.params.id,
-            expert_id: 101,
-            expert_name: '张专家',
-            content: '建议使用XX农药...',
-            answered_at: '2023-05-11T10:30:00Z',
-            upvotes: 5
-          },
-          {
-            answer_id: 2,
-            question_id: route.params.id,
-            expert_id: 102,
-            expert_name: '李教授',
-            content: '可以使用生物防治方法...',
-            answered_at: '2023-05-12T14:15:00Z',
-            upvotes: 8
+        const id = route.params.id;
+        const token = userStore.token;
+        const response = await axios.get(`http://localhost:3000/api/questions/${id}/answers`, {
+          headers: {
+            Authorization: `Bearer ${token}`
           }
-        ]
-        answers.value = mockAnswers
-        totalAnswers.value = mockAnswers.length
-
-        //// 应用筛选条件
-        // answers.value = mockAnswers.filter(answer => {
-        //   const expertMatch = String(answer.expert_id).includes(searchExpert.value) ||
-        //       answer.expert_name.toLowerCase().includes(searchExpert.value.toLowerCase())
-        //   const contentMatch = answer.content.toLowerCase().includes(searchContent.value.toLowerCase())
-        //
-        //   let dateMatch = true
-        //   if (startDate.value && endDate.value) {
-        //     const answerDate = new Date(answer.answered_at).toISOString().split('T')[0]
-        //     dateMatch = answerDate >= startDate.value && answerDate <= endDate.value
-        //   }
-        //
-        //   return expertMatch && contentMatch && dateMatch
-        // })
-        //
-        // totalAnswers.value = answers.value.length
-
-        // const params = {
-        //   page: currentPage.value,
-        //   page_size: pageSize.value,
-        //   search: searchExpert.value
-        // }
-        // const res = await getQuestionAnswers(route.params.id, params)
-        // answers.value = res.data
-        // totalAnswers.value = res.total
+        })
+        answers.value = response.data
       } catch (error) {
         ElMessage.error('获取回答列表失败')
+        console.error('获取回答列表失败:', error)
       } finally {
         loading.value = false
       }
@@ -227,11 +191,24 @@ export default {
         type: 'warning'
       }).then(async () => {
         try {
-          // await deleteAnswer(answerId)
+          const token = userStore.token;
+
+          await axios.delete(`http://localhost:3000/api/answers/${answerId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+
+          // 从本地列表中移除
+          const index = answers.value.findIndex(a => a.answer_id === answerId);
+          if (index !== -1) {
+            answers.value.splice(index, 1);
+          }
+
           ElMessage.success('回答已删除')
-          fetchAnswers() // 刷新列表
         } catch (error) {
           ElMessage.error('删除回答失败')
+          console.error('删除回答失败:', error)
         }
       }).catch(() => {
         // 用户取消
@@ -241,23 +218,43 @@ export default {
     // 计算属性 - 过滤回答
     const filteredAnswers = computed(() => {
       return answers.value.filter(answer => {
-        const search = searchExpert.value.toLowerCase()
-        return (
-            String(answer.expert_id).includes(search) ||
-            answer.expert_name.toLowerCase().includes(search)
-        )
+        // 专家ID或姓名筛选
+        const expertMatch = searchExpert.value ?
+            (String(answer.expert_id).includes(searchExpert.value) ||
+                answer.real_name.toLowerCase().includes(searchExpert.value.toLowerCase())) :
+            true;
+
+        // 内容筛选
+        const contentMatch = searchContent.value ?
+            answer.content.toLowerCase().includes(searchContent.value.toLowerCase()) :
+            true;
+
+        // 日期筛选
+        let dateMatch = true;
+        if (startDate.value && endDate.value) {
+          const answerDate = new Date(answer.answered_at).toISOString().split('T')[0];
+          dateMatch = answerDate >= startDate.value && answerDate <= endDate.value;
+        }
+
+        return expertMatch && contentMatch && dateMatch;
       })
+    })
+
+    // 计算属性 - 分页后的回答
+    const paginatedAnswers = computed(() => {
+      const start = (currentPage.value - 1) * pageSize.value;
+      const end = start + pageSize.value;
+      return filteredAnswers.value.slice(start, end);
     })
 
     // 分页处理
     const handlePageChange = (page) => {
       currentPage.value = page
-      fetchAnswers()
     }
 
     const handleSizeChange = (size) => {
       pageSize.value = size
-      fetchAnswers()
+      currentPage.value = 1 // 重置到第一页
     }
 
     // 初始化加载
@@ -272,24 +269,24 @@ export default {
       answers,
       loading,
       searchExpert,
-      currentPage,
-      pageSize,
-      totalAnswers,
       searchContent,
       dateRange,
+      currentPage,
+      pageSize,
 
       // 方法
       formatDate,
       goBack,
-      fetchAnswers,
       handleDeleteAnswer,
       handlePageChange,
       handleSizeChange,
       resetSearch,
       handleDateChange,
+      handleSearch,
 
       // 计算属性
-      filteredAnswers
+      filteredAnswers,
+      paginatedAnswers
     }
   }
 }
@@ -328,10 +325,6 @@ export default {
 .content {
   white-space: pre-wrap;
   line-height: 1.6;
-}
-
-.answer-filter {
-  margin: 15px 0;
 }
 
 .pagination {

@@ -9,7 +9,7 @@
       <!-- 第二名 -->
       <div class="podium-item second" v-if="topExperts[1]">
         <div class="podium-rank">2</div>
-        <el-avatar class="avatar" shadow="hover" @click="viewDetails(2)" :src="getDefaultAvatar(topExperts[1].expert_id)" size="large" />
+        <el-avatar class="avatar" shadow="hover" @click="viewDetails(topExperts[1].expert_id)" :src="topExperts[1].avatar_url" size="large" />
         <div class="podium-name">{{ topExperts[1].real_name }}</div>
         <div class="podium-score">{{ topExperts[1].answer_count }} 回答</div>
       </div>
@@ -17,7 +17,7 @@
       <!-- 第一名 -->
       <div class="podium-item first" v-if="topExperts[0]">
         <div class="podium-rank">1</div>
-        <el-avatar class="avatar" shadow="hover" @click="viewDetails(1)" :src="getDefaultAvatar(topExperts[0].expert_id)" size="large" />
+        <el-avatar class="avatar" shadow="hover" @click="viewDetails(topExperts[0].expert_id)" :src="topExperts[0].avatar_url" size="large" />
         <div class="podium-name">{{ topExperts[0].real_name }}</div>
         <div class="podium-score">{{ topExperts[0].answer_count }} 回答</div>
       </div>
@@ -25,7 +25,7 @@
       <!-- 第三名 -->
       <div class="podium-item third" v-if="topExperts[2]">
         <div class="podium-rank">3</div>
-        <el-avatar class="avatar" shadow="hover" @click="viewDetails(3)" :src="getDefaultAvatar(topExperts[2].expert_id)" size="large" />
+        <el-avatar class="avatar" shadow="hover" @click="viewDetails(topExperts[2].expert_id)" :src="topExperts[2].avatar_url" size="large" />
         <div class="podium-name">{{ topExperts[2].real_name }}</div>
         <div class="podium-score">{{ topExperts[2].answer_count }} 回答</div>
       </div>
@@ -68,24 +68,24 @@
 </template>
 
 <script>
-import { getExpertRank } from '../../views/expert/expertApi';
-//import { BarChart } from 'vue-echarts'
+// /api/expert-rankings
+//import { getExpertRank } from '../../views/expert/expertApi';
+import { useUserStore } from '../../stores/user';
 import Fuse from 'fuse.js';
+import axios from "axios";
+
 
 export default {
-  components: {
-    //BarChart
+  setup() {
+    const userStore = useUserStore();
+    return { userStore };
   },
   data() {
     return {
-      chartData: {
-        columns: ['专家姓名', '回答数'],
-        rows: [] // 先设为空数组
-      },
       rankList: [],
       searchKeyword: '',
       //mock
-      mockRankList: [
+      /*mockRankList: [
         {
           expert_id: 1,
           real_name: '张三',
@@ -94,7 +94,8 @@ export default {
           expertise: '农业经济',
           answer_count: 45,
           expert_rank: 1,
-          bio: '专注于农村经济发展与政策研究，具有丰富的实践经验。'
+          bio: '专注于农村经济发展与政策研究，具有丰富的实践经验。',
+          avatar_url: require('@/assets/profile.jpg')
         },
         {
           expert_id: 2,
@@ -104,7 +105,8 @@ export default {
           expertise: '植物保护',
           answer_count: 30,
           expert_rank: 2,
-          bio: '长期从事农作物病虫害防治研究，发表多篇核心论文。'
+          bio: '长期从事农作物病虫害防治研究，发表多篇核心论文。',
+          avatar_url: require('@/assets/profile.jpg')
         },
         {
           expert_id: 3,
@@ -114,7 +116,8 @@ export default {
           expertise: '土壤科学',
           answer_count: 28,
           expert_rank: 3,
-          bio: '专长于土壤改良和土地可持续利用研究。'
+          bio: '专长于土壤改良和土地可持续利用研究。',
+          avatar_url: require('@/assets/profile.jpg')
         },
         {
           expert_id: 4,
@@ -124,7 +127,8 @@ export default {
           expertise: '畜牧养殖',
           answer_count: 20,
           expert_rank: 4,
-          bio: '研究方向为畜禽遗传育种与规模化养殖技术。'
+          bio: '研究方向为畜禽遗传育种与规模化养殖技术。',
+          avatar_url: require('@/assets/profile.jpg')
         },
         {
           expert_id: 5,
@@ -134,65 +138,33 @@ export default {
           expertise: '农业机械',
           answer_count: 15,
           expert_rank: 5,
-          bio: '致力于智能农机装备研发，拥有多项专利技术。'
+          bio: '致力于智能农机装备研发，拥有多项专利技术。',
+          avatar_url: require('@/assets/profile.jpg')
         }
-      ]
+      ]*/
     };
   },
   mounted() {
-    this.fetchExpertRank(); // 页面加载完成后立即请求排行榜数据
+    this.fetchExpertRank();
     //mock
-    this.rankList = this.mockRankList;
-    //this.updateChartData();
+    //this.rankList = this.mockRankList;
   },
   methods: {
-    getDefaultAvatar(expertId) {
-      // 使用 DiceBear 提供的 SVG 头像服务（可替换为自己的图片地址）
-      return `https://avatars.dicebear.com/api/avataaars/${expertId}.svg?background=%23fff`;
-    },
     filterRankListWithFuzzy(keyword) {
       if (!keyword) return this.rankList;
 
-      const fuse = new Fuse(this.rankList, { keys: ['realName', 'expertise'] });
+      const fuse = new Fuse(this.rankList, { keys: ['real_name', 'expertise'] });
       return fuse.search(keyword).map(result => result.item);
     },
     async fetchExpertRank() {
       try {
-        const res = await getExpertRank();
-        console.log('获取到的排行榜数据:', res);
-        if (res && Array.isArray(res)) {
-          this.rankList = res.map((item) => ({
-            expertId: item.expert_id,
-            realName: item.real_name || '匿名专家',
-            expertise: item.expertise || '暂无领域',
-            answerCount: item.answer_count || 0
-          }));
-          // // 更新 chartData
-          // this.chartData = {
-          //   ...this.chartData,
-          //   rows: this.rankList.map(item => ({
-          //     '专家姓名': item.realName,
-          //     '回答数': item.answerCount
-          //   }))
-          // };
-        }
+        const response = await axios.get('http://localhost:3000/api/expert-rankings');
+        this.rankList = response.data;
       } catch (error) {
-        console.error('获取专家排行榜失败:', error);
-        this.rankList = [];
+        console.error('获取专家排名失败:', error);
       }
     },
-    //mock
-    updateChartData() {
-      this.chartData = {
-        columns: ['专家姓名', '回答数'],
-        rows: this.rankList.map(item => ({
-          '专家姓名': item.realName,
-          '回答数': item.answerCount
-        }))
-      };
-    },
     viewDetails(expertId) {
-      // 跳转到专家详情页
       this.$router.push(`/expert/detail/${expertId}`);
     }
   },
@@ -202,9 +174,8 @@ export default {
       return this.filterRankListWithFuzzy(keyword);
     },
     topExperts() {
-      // 确保 rankList 已排序
-      const sorted = [...this.filteredRankList].sort((a, b) => b.answerCount - a.answerCount);
-      return sorted.slice(0, 3); // 前三名
+      const sorted = [...this.filteredRankList].sort((a, b) => (b.answer_count || 0) - (a.answer_count || 0));
+      return sorted.slice(0, 3);
     }
   }
 };

@@ -43,6 +43,31 @@
           <label for="address_detail">详细地址:</label>
           <input type="text" v-model="registerStore.address_detail" required />
         </div>
+
+        <!-- 专家字段 -->
+        <div v-if="registerStore.role === 'expert'" class="expert-fields">
+          <div class="input-group">
+            <label>真实姓名:</label>
+            <input type="text" v-model="registerStore.real_name" required />
+          </div>
+          <div class="input-group">
+            <label>职称:</label>
+            <input type="text" v-model="registerStore.title" />
+          </div>
+          <div class="input-group">
+            <label>所属机构:</label>
+            <input type="text" v-model="registerStore.institution" />
+          </div>
+          <div class="input-group">
+            <label>专业领域:</label>
+            <input type="text" v-model="registerStore.expertise" />
+          </div>
+          <div class="input-group">
+            <label>个人简介:</label>
+            <textarea v-model="registerStore.bio" rows="3" placeholder="请输入个人简介"></textarea>
+          </div>
+        </div>
+
         <button type="submit" class="login-button">注册</button>
         <div v-if="error" class="error">{{ error }}</div>
       </form>
@@ -97,7 +122,13 @@ export default {
           province: registerStore.province,
           city: registerStore.city,
           district: registerStore.district,
-          address_detail: registerStore.address_detail
+          address_detail: registerStore.address_detail,
+          // 专家字段（只在 role 为 expert 时提交）
+          real_name: registerStore.role === 'expert' ? registerStore.real_name : undefined,
+          title: registerStore.role === 'expert' ? registerStore.title : undefined,
+          institution: registerStore.role === 'expert' ? registerStore.institution : undefined,
+          expertise: registerStore.role === 'expert' ? registerStore.expertise : undefined,
+          bio: registerStore.role === 'expert' ? registerStore.bio : undefined
         });
         alert('注册成功，请登录');
         router.push('/login');
