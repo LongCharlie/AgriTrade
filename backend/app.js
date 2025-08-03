@@ -28,6 +28,7 @@ const productRoutes = require('./routes/productRoutes');
 const demandRoutes = require('./routes/demandRoutes');
 const recordRoutes = require('./routes/recordRoutes');
 const statisticsRoutes = require('./routes/statisticsRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 // 挂载路由
 app.use('/api', authRoutes);
@@ -40,6 +41,7 @@ app.use('/api', productRoutes);
 app.use('/api', demandRoutes);
 app.use('/api', recordRoutes);
 app.use('/api', statisticsRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 文件上传处理
 const multer = require('multer');
