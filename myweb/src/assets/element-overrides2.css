@@ -1,0 +1,46 @@
+.custom-cascader {
+  width: 100%;
+}
+.custom-cascader .el-input__inner {
+  width: 100%;
+  padding: 12px 16px !important;
+  border: 1px solid #ffffff !important;
+  border-radius: 8px !important;
+  font-size: 1rem !important;
+  background: #ffffff !important;
+  color: #ffffff !important;
+  height: 48px !important;
+  line-height: 1.5 !important;
+  transition: all 0.3s !important;
+}
+.custom-cascader .el-input__inner:hover {
+  border-color: #ffffff !important;
+}
+.custom-cascader .el-input__inner:focus {
+  outline: none !important;
+  border-color: #fcfcfc !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3) !important;
+}
+.custom-cascader .el-input__suffix {
+  display: flex !important;
+  align-items: center !important;
+  right: 12px !important;
+}
+.custom-cascader .el-cascader-menu {
+  padding: 8px 0 !important;
+  background: #ffffff !important;
+  border: 1px solid #ffffff !important;
+  border-radius: 8px !important;
+}
+.custom-cascader .el-cascader-node {
+  height: 40px !important;
+  line-height: 40px !important;
+  padding: 0 20px !important;
+  color: #ffffff !important;
+}
+.custom-cascader .el-cascader-node:hover,
+.custom-cascader .el-cascader-node.in-active-path,
+.custom-cascader .el-cascader-node.is-active {
+  color: #ffffff !important;
+  background: #ffffff !important;
+}

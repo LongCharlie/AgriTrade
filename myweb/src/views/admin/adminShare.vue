@@ -364,7 +364,7 @@ onMounted(() => {
 }
 
 body {
-  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  background: linear-gradient(135deg, #8bc79379, #62c16990);
   padding: 20px;
   min-height: 100vh;
 }
@@ -379,7 +379,7 @@ body {
 }
 
 .dashboard-header {
-  background: linear-gradient(135deg, #2c3e50 0%, #1a2a6c 100%);
+  background: linear-gradient(135deg, #71b89a6e 0%, #41a8687e 100%);
   color: white;
   padding: 24px 32px;
 }

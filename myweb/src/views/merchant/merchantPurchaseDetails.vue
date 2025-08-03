@@ -1,7 +1,6 @@
 <template>
   <div id="app">
     <div class="container">
-      
       <div class="stats-cards">
         <div class="stat-card">
           <h3>总申请数</h3>
@@ -15,7 +14,6 @@
         </div>
 
       </div>
-
       <div class="applications-container">
         <div class="section-header">
           <h2><i class="fas fa-file-alt"></i> 采购申请列表</h2>
@@ -93,6 +91,11 @@
             <i class="fas fa-chevron-right"></i>
           </button>
         </div>
+          <div class="back-btn-container">
+            <button class="back-btn" @click="goBack">
+              <i class="fas fa-arrow-left"></i> 返回
+            </button>
+          </div>
       </div>
     </div>
   </div>
@@ -291,6 +294,9 @@ export default {
       if (this.currentPage < this.totalPages) {
         this.currentPage++;
       }
+    },
+    goBack(){
+      this.$router.push('/merchant/purchases');
     }
   }
 };
@@ -757,5 +763,39 @@ header h1::after {
 
 .negative {
   color: #f44336;
+}
+
+.back-btn-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e8f5e9;
+}
+
+.back-btn {
+  padding: 12px 30px;
+  border-radius: 50px;
+  border: none;
+  background: #4caf4f93;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+  box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);
+}
+
+.back-btn:hover {
+  background: #3fa244a1;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(76, 175, 80, 0.4);
+}
+
+.back-btn:active {
+  transform: translateY(0);
 }
 </style>
