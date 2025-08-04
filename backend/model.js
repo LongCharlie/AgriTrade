@@ -609,13 +609,13 @@ const updateQuestionStatusAdmin = async ({
   ]);
 };
 
-// 删除回答
-const deleteAnswer = async (answerId) => {
-  await pool.query(
-    'DELETE FROM answers WHERE answer_id = $1',
-    [answerId]
-  );
-};
+// // 删除回答
+// const deleteAnswer = async (answerId) => {
+//   await pool.query(
+//     'DELETE FROM answers WHERE answer_id = $1',
+//     [answerId]
+//   );
+// };
 
 const getCertificatesWithExpertInfo = async () => {
   const query = `
