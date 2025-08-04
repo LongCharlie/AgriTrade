@@ -27,6 +27,26 @@ router.get('/user/profile', authMiddleware.authenticateToken, async (req, res) =
   }
 });
 
+// 获取用户头像URL
+router.get('/user/avatar', authMiddleware.authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const user = await require('../model').getUserById(userId);
+    
+    if (!user || !user.avatar_url) {
+      return res.status(404).json({ error: '头像未设置' });
+    }
+    
+    res.json({ 
+      avatarUrl: `/uploads/avatars/${user.avatar_url}` 
+    });
+  } catch (error) {
+    console.error('获取头像失败:', error);
+    res.status(500).json({ error: '获取头像失败' });
+  }
+});
+
+
 // 更新用户基本信息（所有用户通用）
 router.patch('/user/profile', authMiddleware.authenticateToken, async (req, res) => {
   try {

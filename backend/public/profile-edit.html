@@ -88,14 +88,61 @@
             margin-top: 20px;
             text-align: right;
         }
+        .avatar-upload-container {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.avatar-image {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #4CAF50;
+}
+
+.avatar-upload-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.btn-upload {
+    background: #2196F3;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+}
+
+.btn-upload:hover {
+    background: #0b7dda;
+}
+
+#avatarInput {
+    display: none;
+}
     </style>
     <script src="/js/auth.js"></script>
 </head>
 <body>
     <div class="profile-container">
         <div class="profile-header">
-            <h2>编辑个人信息</h2>
+    <h2>编辑个人信息</h2>
+    <!-- 添加头像上传 -->
+    <div class="avatar-upload-container">
+        <img id="editAvatar" src="" alt="用户头像" class="avatar-image">
+        <div class="avatar-upload-controls">
+            <label for="avatarInput" class="btn-upload">选择新头像</label>
+            <input type="file" id="avatarInput" accept="image/*">
+            <button id="btnUploadAvatar" class="btn-upload" disabled>上传头像</button>
         </div>
+    </div>
+</div>
         
         <form id="profileForm">
             <div class="profile-section">
@@ -265,6 +312,63 @@
                 alert('更新失败: ' + error.message);
             }
         });
+
+        // 头像上传相关逻辑
+let selectedAvatarFile = null;
+
+async function loadEditAvatar() {
+    try {
+        const avatarUrl = await getUserAvatar();
+        document.getElementById('editAvatar').src = avatarUrl;
+        
+        // 头像选择处理
+        document.getElementById('avatarInput').addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                selectedAvatarFile = e.target.files[0];
+                if (selectedAvatarFile.size > 5 * 1024 * 1024) {
+                    alert('头像大小不能超过5MB');
+                    selectedAvatarFile = null;
+                    document.getElementById('btnUploadAvatar').disabled = true;
+                    return;
+                }
+                
+                // 预览选中的图片
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    document.getElementById('editAvatar').src = event.target.result;
+                    document.getElementById('btnUploadAvatar').disabled = false;
+                };
+                reader.readAsDataURL(selectedAvatarFile);
+            }
+        });
+        
+        // 上传按钮处理
+        document.getElementById('btnUploadAvatar').addEventListener('click', async function() {
+            if (!selectedAvatarFile) return;
+            
+            try {
+                const newAvatarUrl = await uploadAvatar(selectedAvatarFile);
+                document.getElementById('editAvatar').src = newAvatarUrl;
+                document.getElementById('btnUploadAvatar').disabled = true;
+                selectedAvatarFile = null;
+                alert('头像更新成功');
+            } catch (error) {
+                console.error('头像上传失败:', error);
+                alert('头像上传失败: ' + error.message);
+            }
+        });
+    } catch (error) {
+        console.error('加载头像失败:', error);
+    }
+}
+
+// 在DOMContentLoaded事件中添加
+document.addEventListener('DOMContentLoaded', async function() {
+    // ... 原有代码 ...
+    
+    // 加载头像
+    await loadEditAvatar();
+});
     </script>
 </body>
 </html>

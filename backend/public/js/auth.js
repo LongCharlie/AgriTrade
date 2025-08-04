@@ -33,7 +33,12 @@ async function apiRequest(url, method = 'GET', data = null) {
         options.headers['Authorization'] = `Bearer ${currentUser.token}`;
     }
 
-    if (data) {
+    // 处理不同类型的数据
+    if (data instanceof FormData) {
+        // 如果是FormData，不设置Content-Type，浏览器会自动设置
+        options.body = data;
+    } else if (data) {
+        options.headers['Content-Type'] = 'application/json';
         options.body = JSON.stringify(data);
     }
 
@@ -43,6 +48,11 @@ async function apiRequest(url, method = 'GET', data = null) {
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.error || '请求失败');
+        }
+
+        // 如果响应没有内容，返回null
+        if (response.status === 204) {
+            return null;
         }
 
         return await response.json();
@@ -61,7 +71,59 @@ function checkAuth() {
 // 检查角色权限
 function checkRole(allowedRoles) {
     loadUserFromStorage();
+    if (!currentUser) return false;
+    // 管理员拥有所有权限
+    if (currentUser.role === 'admin') return true;
     return currentUser && allowedRoles.includes(currentUser.role);
+}
+
+// 获取用户头像
+async function getUserAvatar() {
+    try {
+        const response = await apiRequest('/api/user/avatar');
+        if (response && response.avatarUrl) {
+            return response.avatarUrl;
+        }
+        return '/images/default-avatar.png'; // 默认头像路径
+    } catch (error) {
+        console.error('获取头像失败:', error);
+        return '/images/default-avatar.png';
+    }
+}
+
+async function uploadAvatar(file) {
+    try {
+        const formData = new FormData();
+        formData.append('avatar', file);
+        
+        // 注意这里使用 /api/user/avatar 而不是 /api/upload
+        const response = await fetch('/api/user/avatar', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${currentUser.token}`
+            },
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || '上传失败');
+        }
+        
+        const result = await response.json();
+        if (result && result.avatarUrl) {
+            // 更新当前用户的头像URL
+            if (currentUser) {
+                currentUser.avatarUrl = result.avatarUrl;
+                saveUserToStorage();
+            }
+            return result.avatarUrl;
+        }
+        throw new Error('上传失败');
+    } catch (error) {
+        console.error('上传头像失败:', error);
+        throw error;
+    }
 }
 
 // 初始化页面时检查登录状态
@@ -87,3 +149,4 @@ document.addEventListener('DOMContentLoaded', function() {
         unauthElements.forEach(el => el.style.display = 'block');
     }
 });
+

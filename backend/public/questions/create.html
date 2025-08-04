@@ -36,6 +36,57 @@
         .success {
             color: green;
         }
+        /* 新增图片上传相关样式 */
+        .image-upload {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .image-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .preview-item {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .remove-btn {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .upload-btn {
+            display: inline-block;
+            padding: 8px 15px;
+            background: #3498db;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .upload-btn input {
+            display: none;
+        }
     </style>
     <script src="/js/auth.js"></script>
 </head>
@@ -52,23 +103,141 @@
             <label for="content">内容:</label>
             <textarea id="content" required></textarea>
         </div>
+        <!-- 新增图片上传区域 -->
+        <div class="image-upload">
+            <label>上传图片(最多5张):</label>
+            <label class="upload-btn">
+                选择图片
+                <input type="file" id="imageInput" accept="image/*" multiple>
+            </label>
+            <div class="image-preview" id="imagePreview"></div>
+        </div>
         <button type="submit">提交</button>
         <div id="error" class="error"></div>
         <div id="success" class="success"></div>
     </form>
     
     <script>
+        // 存储已选择的图片文件
+        let selectedImages = [];
+        
+        // 图片选择事件处理
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const files = e.target.files;
+            const previewContainer = document.getElementById('imagePreview');
+            
+            // 检查图片数量是否超过限制
+            if (selectedImages.length + files.length > 5) {
+                alert('最多只能上传5张图片');
+                return;
+            }
+            
+            // 添加新图片到预览和文件列表
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                // 检查文件类型
+                if (!file.type.startsWith('image/')) {
+                    continue;
+                }
+                
+                // 检查文件大小 (5MB限制)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert(`图片 ${file.name} 超过5MB限制`);
+                    continue;
+                }
+                
+                selectedImages.push(file);
+                
+                // 创建预览
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'preview-item';
+                    previewItem.dataset.index = selectedImages.length - 1;
+                    
+                    previewItem.innerHTML = `
+                        <img src="${e.target.result}" alt="预览">
+                        <button class="remove-btn" onclick="removeImage(${selectedImages.length - 1})">×</button>
+                    `;
+                    
+                    previewContainer.appendChild(previewItem);
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            // 重置文件输入，允许重复选择相同文件
+            e.target.value = '';
+        });
+        
+        // 移除图片函数
+        window.removeImage = function(index) {
+            selectedImages.splice(index, 1);
+            updateImagePreviews();
+        };
+        
+        // 更新图片预览
+        function updateImagePreviews() {
+            const previewContainer = document.getElementById('imagePreview');
+            previewContainer.innerHTML = '';
+            
+            selectedImages.forEach((file, index) => {
+                const previewItem = document.createElement('div');
+                previewItem.className = 'preview-item';
+                previewItem.dataset.index = index;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewItem.innerHTML = `
+                        <img src="${e.target.result}" alt="预览">
+                        <button class="remove-btn" onclick="removeImage(${index})">×</button>
+                    `;
+                };
+                reader.readAsDataURL(file);
+                
+                previewContainer.appendChild(previewItem);
+            });
+        }
+        
+        // 表单提交处理
         document.getElementById('questionForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const title = document.getElementById('title').value;
             const content = document.getElementById('content').value;
             
+            // 验证表单
+            if (!title || !content) {
+                document.getElementById('error').textContent = '标题和内容是必填项';
+                return;
+            }
+            
             try {
-                const response = await apiRequest('/api/questions', 'POST', {
-                    title,
-                    content
+                // 创建FormData对象
+                const formData = new FormData();
+                formData.append('title', title);
+                formData.append('content', content);
+                
+                // 添加图片文件
+                selectedImages.forEach((file, index) => {
+                    formData.append('images', file);
                 });
+                
+                // 发送请求
+                const response = await fetch('/api/questions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${currentUser.token}`
+                    },
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || '提交问题失败');
+                }
+                
+                const data = await response.json();
                 
                 document.getElementById('success').textContent = '问题提交成功';
                 document.getElementById('error').textContent = '';
@@ -76,6 +245,8 @@
                 // 清空表单
                 document.getElementById('title').value = '';
                 document.getElementById('content').value = '';
+                selectedImages = [];
+                document.getElementById('imagePreview').innerHTML = '';
                 
                 // 3秒后跳转到问题列表
                 setTimeout(() => {

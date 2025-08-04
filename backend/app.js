@@ -3,19 +3,71 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const app = express();
+const multer = require('multer');
+const { v4: uuidv4 } = require('uuid');
 
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use(express.static('public'));
 // 创建上传目录
 const uploadDir = path.join(__dirname, 'uploads', 'avatars');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-const app = express();
+// 配置multer
+const avatarStorage = multer.diskStorage({
+  destination: uploadDir,
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const filename = `${uuidv4()}${ext}`;
+    cb(null, filename);
+  }
+});
+
+const uploadAvatar = multer({
+  storage: avatarStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB限制
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('只允许上传图片文件'), false);
+    }
+  }
+});
+
+// 头像上传路由
+app.post('/api/user/avatar', 
+  require('./middleware/authMiddleware').authenticateToken,
+  uploadAvatar.single('avatar'),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: '请上传有效的图片文件' });
+      }
+      
+      const userId = req.user.userId;
+      const avatarUrl = await require('./model').updateUserAvatar(userId, req.file.filename);
+      
+      res.json({ 
+        success: true,
+        avatarUrl: avatarUrl
+      });
+    } catch (error) {
+      console.error('头像上传失败:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
 
 // 应用中间件
-app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static('public'));
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use('/uploads/question_images', express.static(path.join(__dirname, 'uploads', 'question_images')));
+app.use('/uploads/avatars', express.static(path.join(__dirname, 'uploads', 'avatars')));
 
 // 引入路由
 const authRoutes = require('./routes/authRoutes');
@@ -28,6 +80,7 @@ const productRoutes = require('./routes/productRoutes');
 const demandRoutes = require('./routes/demandRoutes');
 const recordRoutes = require('./routes/recordRoutes');
 const statisticsRoutes = require('./routes/statisticsRoutes');
+const answerRoutes = require('./routes/answerRoutes');
 
 // 挂载路由
 app.use('/api', authRoutes);
@@ -40,45 +93,9 @@ app.use('/api', productRoutes);
 app.use('/api', demandRoutes);
 app.use('/api', recordRoutes);
 app.use('/api', statisticsRoutes);
+app.use('/api', answerRoutes);
 
-// 文件上传处理
-const multer = require('multer');
-const { v4: uuidv4 } = require('uuid');
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const cleanedName = file.originalname.replace(/[/\\?%*:|"<>]/g, '');
-    cb(null, `${uuidv4()}-${cleanedName}`);
-  }
-});
-
-const upload = multer({ 
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) cb(null, true);
-    else cb(new Error('仅支持图片格式'));
-  }
-});
-
-// 上传头像路由
-app.post('/api/upload', 
-  require('./middleware/authMiddleware').authenticateToken, 
-  upload.single('avatar'), 
-  async (req, res) => {
-    try {
-      const userId = req.user.userId;
-      const avatarUrl = req.file.filename; 
-      const newAvatarUrl = await require('./model').updateUserAvatar(userId, avatarUrl); 
-      res.json({ avatarUrl: newAvatarUrl });
-    } catch (error) {
-      res.status(400).json({ error: error.message });
-    }
-  }
-);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

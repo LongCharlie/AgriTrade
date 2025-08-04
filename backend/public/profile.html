@@ -63,15 +63,50 @@
         .btn-edit:hover {
             background: #45a049;
         }
+        .avatar-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.avatar-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #4CAF50;
+}
+
+.btn-change-avatar {
+    background: #2196F3;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-change-avatar:hover {
+    background: #0b7dda;
+}
     </style>
     <script src="/js/auth.js"></script>
 </head>
 <body>
     <div class="profile-container">
         <div class="profile-header">
-            <h2>个人信息</h2>
+    <div>
+        <h2>个人信息</h2>
+        <!-- 添加头像显示 -->
+        <div class="avatar-container">
+            <img id="userAvatar" src="" alt="用户头像" class="avatar-image">
             <button class="btn-edit" onclick="location.href='/profile-edit.html'">编辑信息</button>
+            <button class="btn-change-avatar" onclick="document.getElementById('avatarUpload').click()">更换头像</button>
+            <input type="file" id="avatarUpload" accept="image/*" style="display: none;">
         </div>
+    </div>
+</div>
         
         <div class="profile-section">
             <h3>基本信息</h3>
@@ -174,6 +209,43 @@
                 alert('获取用户信息失败: ' + error.message);
             }
         });
+        // 加载用户头像
+async function loadUserAvatar() {
+    try {
+        const avatarUrl = await getUserAvatar();
+        document.getElementById('userAvatar').src = avatarUrl;
+        
+        // 头像上传处理
+        document.getElementById('avatarUpload').addEventListener('change', async function(e) {
+            if (e.target.files.length > 0) {
+                try {
+                    const file = e.target.files[0];
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('头像大小不能超过5MB');
+                        return;
+                    }
+                    
+                    const newAvatarUrl = await uploadAvatar(file);
+                    document.getElementById('userAvatar').src = newAvatarUrl;
+                    alert('头像更新成功');
+                } catch (error) {
+                    console.error('头像上传失败:', error);
+                    alert('头像上传失败: ' + error.message);
+                }
+            }
+        });
+    } catch (error) {
+        console.error('加载头像失败:', error);
+    }
+}
+
+// 在DOMContentLoaded事件中添加
+document.addEventListener('DOMContentLoaded', async function() {
+    // ... 原有代码 ...
+    
+    // 加载头像
+    await loadUserAvatar();
+});
     </script>
 </body>
 </html>

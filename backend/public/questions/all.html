@@ -60,6 +60,22 @@
     <div id="error" class="error"></div>
     
     <script>
+    // 管理员删除问题
+    window.adminDeleteQuestion = async function(questionId) {
+        if (!confirm('确定要删除这个问题吗？此操作将同时删除所有相关回答和图片，且不可恢复。')) {
+            return;
+        }
+        
+        try {
+            await apiRequest(`/api/questions/${questionId}`, 'DELETE');
+            alert('问题删除成功');
+            loadQuestions(); // 刷新列表
+        } catch (error) {
+            document.getElementById('error').textContent = error.message;
+        }
+    };
+
+
         document.addEventListener('DOMContentLoaded', async function() {
             if (!checkAuth()) {
                 window.location.href = '/login.html';
@@ -81,16 +97,20 @@
                     const questionCard = document.createElement('div');
                     questionCard.className = 'question-card';
                     questionCard.innerHTML = `
-                        <div class="question-title">
-                            <a href="/questions/detail.html?id=${question.question_id}">${question.title}</a>
-                        </div>
-                        <div>${question.content}</div>
-                        <div class="question-meta">
-                            <span class="status status-${question.status}">${getStatusText(question.status)}</span>
-                            · ${formatDate(question.created_at)}
-                            · 农户ID: ${question.farmer_id}
-                        </div>
-                    `;
+                        <div class="question-card">
+    <div class="question-title">
+        <a href="/questions/detail.html?id=${question.question_id}">${question.title}</a>
+        ${currentUser && currentUser.role === 'admin' ? `
+            <button onclick="adminDeleteQuestion(${question.question_id})" class="delete" style="float: right; margin-left: 10px;">删除</button>
+        ` : ''}
+    </div>
+    <div>${question.content}</div>
+    <div class="question-meta">
+        <span class="status status-${question.status}">${getStatusText(question.status)}</span>
+        · ${formatDate(question.created_at)}
+        · 农户ID: ${question.farmer_id}
+    </div>
+</div>`;
                     questionList.appendChild(questionCard);
                 });
             } catch (error) {
