@@ -1,0 +1,100 @@
+.new-cascader {
+  width: 100%;
+}
+
+.new-cascader .el-input__inner {
+  width: 100%;
+  padding: 12px 16px !important;
+  border: 1px solid #a5d6a7 !important;
+  border-radius: 8px !important;
+  font-size: 1rem !important;
+  background: #f1f8e9 !important;
+  color: #1b5e20 !important;
+  height: 48px !important;
+  line-height: 1.5 !important;
+  transition: all 0.3s !important;
+}
+
+.new-cascader .el-input__inner:hover {
+  border-color: #81c784 !important;
+}
+
+.new-cascader .el-input__inner:focus {
+  outline: none !important;
+  border-color: #4caf50 !important;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.3) !important;
+}
+
+.new-cascader .el-input__suffix {
+  display: flex !important;
+  align-items: center !important;
+  right: 12px !important;
+}
+
+.new-cascader .el-cascader-menu {
+  padding: 8px 0 !important;
+  background: #f1f8e9 !important;
+  border: 1px solid #a5d6a7 !important;
+  border-radius: 8px !important;
+}
+
+.new-cascader .el-cascader-node {
+  height: 40px !important;
+  line-height: 40px !important;
+  padding: 0 20px !important;
+  color: #1b5e20 !important;
+}
+
+.new-cascader .el-cascader-node:hover,
+.new-cascader .el-cascader-node.in-active-path,
+.new-cascader .el-cascader-node.is-active {
+  color: #4caf50 !important;
+  background: #e8f5e9 !important;
+}
+
+/* .new-cascader {
+  width: 100%;
+}
+.new-cascader .el-input__inner {
+  width: 100%;
+  padding: 12px 16px !important;
+  border: 1px solid #ffffff !important;
+  border-radius: 8px !important;
+  font-size: 1rem !important;
+  background: #ffffff !important;
+  color: #ffffff !important;
+  height: 48px !important;
+  line-height: 1.5 !important;
+  transition: all 0.3s !important;
+}
+.new-cascader .el-input__inner:hover {
+  border-color: #ffffff !important;
+}
+.new-cascader .el-input__inner:focus {
+  outline: none !important;
+  border-color: #fcfcfc !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3) !important;
+}
+.new-cascader .el-input__suffix {
+  display: flex !important;
+  align-items: center !important;
+  right: 12px !important;
+}
+.new-cascader .el-cascader-menu {
+  padding: 8px 0 !important;
+  background: #ffffff !important;
+  border: 1px solid #ffffff !important;
+  border-radius: 8px !important;
+}
+.new-cascader .el-cascader-node {
+  height: 40px !important;
+  line-height: 40px !important;
+  padding: 0 20px !important;
+  color: #ffffff !important;
+}
+.new-cascader .el-cascader-node:hover,
+.new-cascader .el-cascader-node.in-active-path,
+.new-cascader .el-cascader-node.is-active {
+  color: #ffffff !important;
+  background: #ffffff !important;
+} */

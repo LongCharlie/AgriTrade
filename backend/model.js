@@ -542,6 +542,91 @@ const updateApplication = async (applicationId, farmerId, data) => {
   return rows[0];
 };
 
+// 删除证书
+const deleteCertificate = async (certificateId) => {
+  await pool.query(
+    'DELETE FROM certificates WHERE certificate_id = $1',
+    [certificateId]
+  );
+};
+
+// 获取管理员视图问题列表
+const getAdminQuestions = async () => {
+  const query = `
+    SELECT q.*, u.username 
+    FROM questions q
+    LEFT JOIN users u ON q.farmer_id = u.user_id
+  `;
+  const { rows } = await pool.query(query);
+  return rows;
+};
+
+// 获取带用户信息的问题详情
+const getQuestionWithUser = async (questionId) => {
+  const query = `
+    SELECT q.*, u.username 
+    FROM questions q
+    LEFT JOIN users u ON q.farmer_id = u.user_id
+    WHERE q.question_id = $1
+  `;
+  const { rows } = await pool.query(query, [questionId]);
+  return rows[0];
+};
+
+// 获取问题的所有回答（关联专家信息）
+const getAnswersByQuestion = async (questionId) => {
+  const query = `
+    SELECT a.*, e.real_name 
+    FROM answers a
+    LEFT JOIN experts e ON a.expert_id = e.expert_id
+    WHERE a.question_id = $1
+  `;
+  const { rows } = await pool.query(query, [questionId]);
+  return rows;
+};
+
+// 管理员更新问题状态
+const updateQuestionStatusAdmin = async ({
+  questionId,
+  is_deleted,
+  delete_reason,
+  adminId
+}) => {
+  const query = `
+    UPDATE questions 
+    SET 
+      is_deleted = $1,
+      delete_reason = $2,
+      deleted_by = $3,
+      deleted_at = NOW()
+    WHERE question_id = $4
+  `;
+  await pool.query(query, [
+    is_deleted,
+    delete_reason,
+    adminId,
+    questionId
+  ]);
+};
+
+// 删除回答
+const deleteAnswer = async (answerId) => {
+  await pool.query(
+    'DELETE FROM answers WHERE answer_id = $1',
+    [answerId]
+  );
+};
+
+const getCertificatesWithExpertInfo = async () => {
+  const query = `
+    SELECT c.*, e.real_name, e.title, e.institution 
+    FROM certificates c
+    LEFT JOIN experts e ON c.expert_id = e.expert_id
+  `;
+  const { rows } = await pool.query(query);
+  return rows;
+};
+
 // 导出所有数据库操作方法
 module.exports = {
   checkUserExists,
@@ -581,6 +666,13 @@ module.exports = {
   deleteAnswer,
   upvoteAnswer,
   updateApplication,
+  deleteCertificate,
+  getAdminQuestions,
+  getQuestionWithUser,
+  getAnswersByQuestion,
+  updateQuestionStatusAdmin,
+  deleteAnswer,
+  getCertificatesWithExpertInfo,
   // 也可以导出原始的query方法以便特殊查询使用
   query: (text, params) => pool.query(text, params),
 };

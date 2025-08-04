@@ -1,22 +1,7 @@
 <template>
   <div class="container">
-    <!-- 内联SVG叶子装饰 -->
-    <svg class="leaf-decoration leaf-1" viewBox="0 0 24 24">
-      <path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C7.14,19.87 7.64,20 8,20C19,20 22,3 22,3C21,5 14,5.25 9,6.25C4,7.25 2,11.5 2,13.5C2,15.5 3.75,17.25 3.75,17.25C7,8 17,8 17,8Z" />
-    </svg>
-    
-    <svg class="leaf-decoration leaf-2" viewBox="0 0 24 24">
-      <path d="M2,21C8,16 8,10 8,10C8,10 12.89,7 20,10C20,10 19,21 19,21C19,21 15,21 13,17C11,13 11,10 11,10C11,10 8,3 2,21Z" />
-    </svg>
-    
-    <svg class="leaf-decoration leaf-3" viewBox="0 0 24 24">
-      <path d="M12,3C12,3 7,10 7,14C7,17.31 9.69,20 13,20C16.31,20 19,17.31 19,14C19,10 12,3 12,3Z" />
-    </svg>
     <header>
       <div class="greeting">
-        <svg style="width:18px;height:18px;vertical-align:-4px;fill:#4caf50" viewBox="0 0 24 24">
-          <path d="M11,18H13V16H11V18M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 4,12A8,8 0 0,1 12,20C16.41,20 20,16.41 20,12A8,8 0 0,1 12,4M12,6A4,4 0 0,0 8,10H10A2,2 0 0,1 12,8A2,2 0 0,1 14,10C14,12 11,11.75 11,15H13C13,12.75 16,12.5 16,10A4,4 0 0,0 12,6Z" />
-        </svg>
         欢迎回来，今天是{{ currentDate }},祝您工作愉快！
       </div>
     </header>
@@ -25,7 +10,7 @@
       <section class="profile-card">
         <div class="avatar-container">
           <img :src="profile.avatar" alt="商户头像" class="avatar">
-          <div class="change-avatar">
+          <div class="change-avatar" @click="handleChangeAvatar">
             <svg class="camera-icon" viewBox="0 0 24 24">
               <path d="M4,4H7L9,2H15L17,4H20A2,2 0 0,1 22,6V18A2,2 0 0,1 20,20H4A2,2 0 0,1 2,18V6A2,2 0 0,1 4,4M12,7A5,5 0 0,0 7,12A5,5 0 0,0 12,17A5,5 0 0,0 17,12A5,5 0 0,0 12,7M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9Z" />
             </svg>
@@ -33,7 +18,6 @@
         </div>
         
         <h2 class="merchant-name">{{ profile.name }}</h2>
-        <p class="merchant-id">商户ID: {{ profile.merchantId }}</p>
         
         <div class="stats">
           <div class="stat-item">
@@ -41,24 +25,8 @@
             <div class="stat-label">成交订单</div>
           </div>
           <div class="stat-item">
-            <div class="stat-value">{{ profile.stats.years }}</div>
-            <div class="stat-label">商户年限</div>
-          </div>
-        </div>
-        <div class="merchant-level">
-          <div class="level-card">
-            <h3>
-              <svg class="trophy-icon" viewBox="0 0 24 24">
-                <path d="M18,2C17.1,2 16,3 16,4H8C8,3 6.9,2 6,2H2V11C2,12 3,13 4,13H6.2C6.6,15 7.9,16.7 11,17V19.08C8,19.54 8,22 8,22H16C16,22 16,19.54 13,19.08V17C16.1,16.7 17.4,15 17.8,13H20C21,13 22,12 22,11V2H18M6,11H4V4H6V11M20,11H18V4H20V11Z" />
-              </svg>
-              商户等级
-            </h3>
-            <div class="level-progress">
-              <div class="progress-bar">
-                <div class="progress-fill"></div>
-              </div>
-              <div class="level-name">{{ profile.level }}</div>
-            </div>
+            <div class="stat-value">{{ profile.stats.purchases }}</div>
+            <div class="stat-label">采购信息</div>
           </div>
         </div>
       </section>
@@ -81,28 +49,33 @@
           <div class="info-row">
             <div class="info-label">商户ID</div>
             <div class="info-value">{{ profile.merchantId }}</div>
-            <button class="edit-btn" disabled>
-              <svg class="lock-icon" viewBox="0 0 24 24">
-                <path d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.89,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V10C4,8.89 4.89,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z" />
-              </svg>
-            </button>
           </div>
           <div class="info-row">
             <div class="info-label">昵称</div>
-            <div class="info-value">{{ profile.nickname }}</div>
-            <button class="edit-btn">
-              <svg class="edit-icon" viewBox="0 0 24 24">
-                <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
-              </svg>
-            </button>
+            <div v-if="!editingProfile" class="info-value">{{ profile.nickname }}</div>
+            <input v-else class="info-input" v-model="editProfile.nickname">
           </div>
           <div class="info-row">
             <div class="info-label">联系电话</div>
-            <div class="info-value">{{ profile.phone }}</div>
-            <button class="edit-btn">
-              <svg class="edit-icon" viewBox="0 0 24 24">
-                <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
-              </svg>
+            <div v-if="!editingProfile" class="info-value">{{ profile.phone }}</div>
+            <input v-else class="info-input" v-model="editProfile.phone">
+          </div>
+          
+          <div v-if="!editingProfile" class="btn-group">
+            <button class="btn btn-edit" @click="startEditingProfile">
+              <i class="fas fa-edit"></i>
+              编辑个人信息
+            </button>
+          </div>
+          
+          <div v-else class="btn-group">
+            <button class="btn btn-save" @click="confirmProfileEdit">
+              <i class="fas fa-check"></i>
+              提交修改
+            </button>
+            <button class="btn btn-cancel" @click="cancelProfileEdit">
+              <i class="fas fa-times"></i>
+              取消
             </button>
           </div>
         </div>
@@ -110,62 +83,89 @@
         <div class="info-group">
           <h3>
             <svg style="width:22px;height:22px;vertical-align:-5px;fill:#4caf50" viewBox="0 0 24 24">
-              <path d="M12,11.5A2.5,2.5 0 0,1 9.5,9A2.5,2.5 0 0,1 12,6.5A2.5,2.5 0 0,1 14.5,9A2.5,2.5 0 0,1 12,11.5M12,2A7,7 0 0,0 5,9C5,14.25 12,22 12,22C12,22 19,14.25 19,9A7,7 0 0,0 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
+              <path d="M12,15C10.9,15 10,14.1 10,13C10,11.9 10.9,11 12,11C13.1,11 14,11.9 14,13C14,14.1 13.1,15 12,15M6,20V10H18V20H6M6,8H18V6H6V8M20,4H4V20H20V4M22,2V22H2V2H22Z" />
             </svg>
             安全设置
           </h3>
-          <div class="info-row">
-            <div class="info-label">登录密码</div>
-            <div class="info-value">••••••••</div>
-            <button class="edit-btn">
-              <svg class="edit-icon" viewBox="0 0 24 24">
-                <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
-              </svg>
-            </button>
-          </div>
-          <div class="password-strength">
-            <div class="password-strength-bar"></div>
-          </div>
-          <p style="font-size: 0.9rem; color: #4caf50; margin-top: 5px;">
-            <svg style="width:14px;height:14px;vertical-align:-2px;fill:#4caf50" viewBox="0 0 24 24">
-              <path d="M12,20A8,8 0 0,0 4,12A8,8 0 0,0 12,4A8,8 0 0,0 20,12A8,8 0 0,0 12,20M12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22M12,6A2,2 0 0,0 10,8A2,2 0 0,0 12,10A2,2 0 0,0 14,8A2,2 0 0,0 12,6M5,10H19" />
-            </svg>
-            上次修改时间: {{ profile.lastPasswordChange }}
-          </p>
-        </div>
-        
-        <div class="info-group">
-          <h3>
-            <svg style="width:22px;height:22px;vertical-align:-5px;fill:#4caf50" viewBox="0 0 24 24">
-              <path d="M12,11.5A2.5,2.5 0 0,1 9.5,9A2.5,2.5 0 0,1 12,6.5A2.5,2.5 0 0,1 14.5,9A2.5,2.5 0 0,1 12,11.5M12,2A7,7 0 0,0 5,9C5,14.25 12,22 12,22C12,22 19,14.25 19,9A7,7 0 0,0 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
-            </svg>
-            收货地址
-          </h3>
-          <div class="address-list">
-            <div class="address-item">
-              <p><strong>{{ address.name }}</strong> {{ address.phone }}</p>
-              <p>{{ address.street }}</p>
-              <p>邮编: {{ address.postalCode }}</p>
-              <div class="address-actions">
-                <button class="address-btn edit">
-                  <svg class="btn-icon" viewBox="0 0 24 24">
-                    <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
-                  </svg>
-                  修改
-                </button>
-              </div>
+          
+          <button v-if="!editingPassword" class="btn btn-change" @click="startEditingPassword">
+            <i class="fas fa-lock"></i>
+            修改密码
+          </button>
+          
+          <div v-else class="password-form">
+            <div class="password-row">
+              <input type="password" class="password-input" placeholder="旧密码" v-model="password.oldPassword">
+            </div>
+            <div class="password-row">
+              <input type="password" class="password-input" placeholder="新密码" v-model="password.newPassword">
+            </div>
+            <div class="password-row">
+              <input type="password" class="password-input" placeholder="确认新密码" v-model="password.confirmPassword">
+            </div>
+            
+            <div class="btn-group">
+              <button class="btn btn-save" @click="confirmPasswordChange">
+                <i class="fas fa-check"></i>
+                确认修改
+              </button>
+              <button class="btn btn-cancel" @click="cancelPasswordChange">
+                <i class="fas fa-times"></i>
+                取消
+              </button>
             </div>
           </div>
         </div>
         
-        <div class="action-buttons">
-          <button class="btn btn-save">
-            <svg style="width:20px;height:20px;fill:white" viewBox="0 0 24 24">
-              <path d="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z" />
-            </svg>
-            保存更改
+        <div class="info-group">
+      <h3>
+        <svg style="width:22px;height:22px;vertical-align:-5px;fill:#4caf50" viewBox="0 0 24 24">
+          <path d="M12,11.5A2.5,2.5 0 0,1 9.5,9A2.5,2.5 0 0,1 12,6.5A2.5,2.5 0 0,1 14.5,9A2.5,2.5 0 0,1 12,11.5M12,2A7,7 0 0,0 5,9C5,14.25 12,22 12,22C12,22 19,14.25 19,9A7,7 0 0,0 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
+        </svg>
+        收货地址
+      </h3>
+      
+      <div v-if="!editingAddress" class="address-item">
+        <p>{{ profile.address.province }} {{ profile.address.city }} {{ profile.address.district }}</p>
+        <p>{{ profile.address.street }}</p>
+        
+        <button class="btn btn-edit" @click="startEditingAddress" style="margin-top: 15px;">
+          <i class="fas fa-edit"></i>
+          修改收货地址
+        </button>
+      </div>
+      
+      <div v-else class="address-form">
+
+        <el-cascader
+          class="new-cascader"
+          :options="areaOptions"
+          v-model="selectedLocation"
+          @change="handleLocationChange"
+          placeholder="请选择省、市、区"
+          clearable
+        />
+        
+        <div class="form-group" style="grid-column: span 2;">
+          <label>详细地址</label>
+          <input type="text" class="form-control" v-model="editAddress.street">
+        </div>
+        
+        <div class="btn-group" style="grid-column: span 2;">
+          <button class="btn btn-save" @click="confirmAddressEdit">
+            <i class="fas fa-check"></i>
+            保存地址
           </button>
-          <button class="btn btn-logout">
+          <button class="btn btn-cancel" @click="cancelAddressEdit">
+            <i class="fas fa-times"></i>
+            取消
+          </button>
+        </div>
+      </div>
+    </div>
+        
+        <div class="action-buttons">
+          <button class="btn btn-logout" @click="handleLogout">
             <svg style="width:20px;height:20px;fill:white" viewBox="0 0 24 24">
               <path d="M16,17V14H9V10H16V7L21,12L16,17M14,2A2,2 0 0,1 16,4V6H14V4H5V20H14V18H16V20A2,2 0 0,1 14,22H5A2,2 0 0,1 3,20V4A2,2 0 0,1 5,2H14Z" />
             </svg>
@@ -174,85 +174,235 @@
         </div>
       </section>
     </div>
+    
+    <!-- 确认弹窗 -->
+    <div class="modal" v-if="showConfirmation">
+      <div class="modal-content">
+        <h3 class="modal-title">确认修改</h3>
+        <p class="modal-message">确定要保存修改吗？</p>
+        <div class="modal-buttons">
+          <button class="btn btn-save btn-modal" @click="saveChanges">
+            <i class="fas fa-check"></i>
+            确认
+          </button>
+          <button class="btn btn-cancel btn-modal" @click="cancelChanges">
+            <i class="fas fa-times"></i>
+            取消
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
+import { pcaTextArr, codeToText } from "element-china-area-data";
 export default {
-  name: 'MerchantProfile',
   data() {
     return {
+      areaOptions: pcaTextArr,  // 使用导入的数据
+      selectedLocation: [],     // 用于绑定级联选择器的值
       currentDate: this.getFormattedDate(),
+
+      editingProfile: false,
+      editingPassword: false,
+      editingAddress: false,
+      showConfirmation: false,
+      pendingAction: null,
+      loadingAddressData: false,
       profile: {
         name: '张明远',
         merchantId: 'MER20230715',
         avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80',
         stats: {
           orders: '128',
-          positiveRate: '96%',
-          years: '3年'
+          purchases: '24'
         },
-        level: '黄金商户',
         nickname: '明远商贸',
-        phone: '138****5678',
-        lastPasswordChange: '2025-06-15'
+        phone: '13883785678',
+        address: {
+          name: '张明远',
+          phone: '13883785678',
+          province: '上海市', // 初始为空，等待API数据
+          city: '',
+          district: '宝山区',
+          street: '建国路88号华贸中心3号楼1502室',
+        }
       },
-      address: {
-        name: '张明远',
-        phone: '138****5678',
-        street: '北京市朝阳区建国路88号华贸中心3号楼1502室',
-        postalCode: '100025'
-      }
-    }
+      editProfile: {
+        nickname: '',
+        phone: ''
+      },
+      password: {
+        oldPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      },
+      editAddress: {
+        name: '',
+        phone: '',
+        province: '',
+        city: '',
+        district: '',
+        street: ''
+      },
+      // 数据结构调整为包含value和label的对象数组
+      provinces: [],
+      cities: [],
+      districts: [],
+    };
   },
+  
   mounted() {
-    // 头像上传功能
-    const changeAvatar = document.querySelector('.change-avatar');
-    changeAvatar.addEventListener('click', function() {
-      alert('头像上传功能已触发，您可以选择新头像进行上传');
-    });
-    
-    // 编辑按钮功能
-    const editButtons = document.querySelectorAll('.edit-btn:not([disabled])');
-    editButtons.forEach(button => {
-      button.addEventListener('click', function() {
-        const row = this.closest('.info-row');
-        const label = row.querySelector('.info-label').textContent;
-        alert(`准备编辑: ${label}`);
-      });
-    });
-    
-    // 地址操作功能
-    const addressActions = document.querySelectorAll('.address-btn');
-    addressActions.forEach(button => {
-      button.addEventListener('click', function() {
-        const action = this.textContent;
-        alert(`执行操作: ${action} 地址`);
-      });
-    });
-    
-    // 保存按钮
-    const saveBtn = document.querySelector('.btn-save');
-    saveBtn.addEventListener('click', function() {
-      alert('所有更改已保存成功！');
-    });
-    
-    // 退出登录
-    const logoutBtn = document.querySelector('.btn-logout');
-    logoutBtn.addEventListener('click', function() {
-      if(confirm('确定要退出登录吗？')) {
-        alert('您已成功退出登录，正在跳转到首页...');
-        // 实际应用中这里会跳转到登录页
-      }
-    });
+    // 初始化编辑数据
+    this.editProfile.nickname = this.profile.nickname;
+    this.editProfile.phone = this.profile.phone;
+    this.editAddress = {...this.profile.address};
   },
   methods: {
+    startEditingAddress() {
+      this.editingAddress = true;
+      // 初始化编辑数据
+      this.editAddress = {...this.profile.address};
+      
+      // 如果已有地址数据，设置级联选择器的值
+      if (this.profile.address.province && this.profile.address.city && this.profile.address.district) {
+        const provinceCode = Object.keys(codeToText).find(
+          key => codeToText[key] === this.profile.address.province
+        );
+        const cityCode = Object.keys(codeToText).find(
+          key => codeToText[key] === this.profile.address.city
+        );
+        const districtCode = Object.keys(codeToText).find(
+          key => codeToText[key] === this.profile.address.district
+        );
+        
+        if (provinceCode && cityCode && districtCode) {
+          this.selectedLocation = [provinceCode, cityCode, districtCode];
+        }
+      }
+    },
+    
+    // 修正位置变化处理方法
+    handleLocationChange(selected) {
+      if (selected && selected.length >= 1) {
+        this.editAddress.province = codeToText[selected[0]];
+      }
+      if (selected && selected.length >= 2) {
+        this.editAddress.city = codeToText[selected[1]];
+      }
+      if (selected && selected.length >= 3) {
+        this.editAddress.district = codeToText[selected[2]];
+      }
+    },
+    // 获取格式化日期
     getFormattedDate() {
       const now = new Date();
-      return `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
+      const year = now.getFullYear();
+      const month = (now.getMonth() + 1).toString().padStart(2, '0');
+      const day = now.getDate().toString().padStart(2, '0');
+      const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+      const weekday = weekdays[now.getDay()];
+      return `${year}年${month}月${day}日 星期${weekday}`;
+    },
+    
+    // API请求方法
+    
+    // 事件处理
+    onProvinceChange() {
+      this.loadCities(this.editAddress.province);
+    },
+    
+    onCityChange() {
+      this.loadDistricts(this.editAddress.city);
+    },
+    
+    // 其他方法保持不变
+    handleChangeAvatar() {
+      alert('头像上传功能已触发，您可以选择新头像进行上传');
+    },
+    startEditingProfile() {
+      this.editingProfile = true;
+    },
+    startEditingPassword() {
+      this.editingPassword = true;
+    },
+    confirmProfileEdit() {
+      this.showConfirmation = true;
+      this.pendingAction = 'profile';
+    },
+    confirmPasswordChange() {
+      if (this.password.newPassword !== this.password.confirmPassword) {
+        alert('两次输入的新密码不一致');
+        return;
+      }
+      if (this.password.newPassword.length < 6) {
+        alert('新密码长度至少为6位');
+        return;
+      }
+      this.showConfirmation = true;
+      this.pendingAction = 'password';
+    },
+    confirmAddressEdit() {
+      if (!this.editAddress.name || !this.editAddress.phone || !this.editAddress.street) {
+        alert('请填写完整的收货地址信息');
+        return;
+      }
+      this.showConfirmation = true;
+      this.pendingAction = 'address';
+    },
+    cancelProfileEdit() {
+      this.editingProfile = false;
+      this.editProfile.nickname = this.profile.nickname;
+      this.editProfile.phone = this.profile.phone;
+    },
+    cancelPasswordChange() {
+      this.editingPassword = false;
+      this.password = {
+        oldPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      };
+    },
+    cancelAddressEdit() {
+      this.editingAddress = false;
+      this.editAddress = {...this.profile.address};
+    },
+    saveChanges() {
+      if (this.pendingAction === 'profile') {
+        this.profile.nickname = this.editProfile.nickname;
+        this.profile.phone = this.editProfile.phone;
+        this.editingProfile = false;
+        alert('个人信息修改成功！');
+      } else if (this.pendingAction === 'password') {
+        // 实际应用中这里会有密码验证和更新逻辑
+        this.editingPassword = false;
+        this.password = {
+          oldPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        };
+        alert('密码修改成功！');
+      } else if (this.pendingAction === 'address') {
+        this.profile.address = {...this.editAddress};
+        this.editingAddress = false;
+        alert('收货地址更新成功！');
+      }
+      
+      this.showConfirmation = false;
+      this.pendingAction = null;
+    },
+    cancelChanges() {
+      this.showConfirmation = false;
+      this.pendingAction = null;
+    },
+    handleLogout() {
+      if (confirm('确定要退出登录吗？')) {
+        alert('您已成功退出登录，正在跳转到首页...');
+      }
     }
   }
-}
+};
 </script>
 
 <style scoped>
@@ -273,32 +423,6 @@ body {
   overflow-x: hidden;
 }
 
-.leaf-decoration {
-  position: absolute;
-  width: 120px;
-  height: 120px;
-  opacity: 0.15;
-  z-index: 1;
-}
-
-.leaf-1 {
-  top: 50px;
-  right: 50px;
-  transform: rotate(25deg);
-}
-
-.leaf-2 {
-  bottom: 100px;
-  left: 50px;
-  transform: rotate(-15deg);
-}
-
-.leaf-3 {
-  bottom: 200px;
-  right: 100px;
-  transform: rotate(45deg);
-}
-
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -307,41 +431,11 @@ body {
 }
 
 header {
+  background: transparent !important;
   text-align: center;
   padding: 30px 0;
   margin-bottom: 30px;
   position: relative;
-}
-
-header h1 {
-  font-size: 2.8rem;
-  color: #1b5e20;
-  margin-bottom: 10px;
-  text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
-  position: relative;
-  display: inline-block;
-}
-
-header h1::after {
-  content: "";
-  position: absolute;
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80px;
-  height: 4px;
-  background: #4caf50;
-  border-radius: 2px;
-}
-
-header p {
-  font-size: 1.2rem;
-  color: #388e3c;
-  max-width: 700px;
-  margin: 20px auto 0;
-  padding: 10px;
-  background: rgba(76, 175, 80, 0.1);
-  border-radius: 8px;
 }
 
 .greeting {
@@ -469,15 +563,6 @@ h2 {
   margin-bottom: 5px;
 }
 
-.merchant-id {
-  font-size: 1.1rem;
-  color: #388e3c;
-  margin-bottom: 20px;
-  background: #e8f5e9;
-  padding: 5px 15px;
-  border-radius: 20px;
-}
-
 .stats {
   display: flex;
   justify-content: space-around;
@@ -539,30 +624,21 @@ h2 {
   color: #2e7d32;
 }
 
-.edit-btn {
-  margin-left: 10px;
-  background: #4CAF50;
-  color: white;
-  border: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
+.info-input {
+  flex: 1;
+  padding: 10px 15px;
+  border: 1px solid #a5d6a7;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  background: #f1f8e9;
+  color: #1b5e20;
   transition: all 0.3s;
 }
 
-.edit-btn:hover {
-  background: #388E3C;
-  transform: scale(1.05);
-}
-
-.lock-icon {
-  width: 16px;
-  height: 16px;
-  fill: #7F8C8D;
+.info-input:focus {
+  outline: none;
+  border-color: #4caf50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.3);
 }
 
 .address-list {
@@ -584,85 +660,50 @@ h2 {
   transform: translateX(5px);
 }
 
-.address-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
+.address-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
 }
 
-.address-btn {
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-  display: flex;
-  align-items: center;
-  gap: 5px;
+
+.form-group{
+  margin-bottom: 15px;
 }
 
-.address-btn.edit {
-  background: #4CAF50;
-  color: white;
-}
-
-.address-btn.set-default {
-  background: #43A047;
-  color: white;
-}
-
-.address-btn:hover {
-  opacity: 0.9;
-  transform: translateY(-2px);
-}
-
-.add-address {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 20px;
-  padding: 12px;
-  background: #E8F5E9;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s;
-  border: 2px dashed #4CAF50;
-  color: #2E7D32;
+.form-group label{
+  display: block;
+  margin-bottom: 8px;
   font-weight: 600;
-  gap: 8px;
+  color: #1b5e20;
 }
 
-.add-address:hover {
-  background: #4CAF50;
-  color: white;
+.form-control{
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #a5d6a7;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #f1f8e9;
+  color: #1b5e20;
 }
 
-.plus-icon {
-  width: 18px;
-  height: 18px;
-  fill: currentColor;
-}
-
-.password-strength {
-  height: 8px;
-  background: #C8E6C9;
-  border-radius: 4px;
-  margin-top: 8px;
-  overflow: hidden;
-}
-
-.password-strength-bar {
-  height: 100%;
-  width: 70%;
-  background: #43A047;
-  border-radius: 4px;
+.form-control:focus{
+  outline: none;
+  border-color: #4caf50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.3);
 }
 
 .action-buttons {
   display: flex;
   gap: 15px;
   margin-top: 30px;
+}
+
+.btn-group {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
 }
 
 .btn {
@@ -679,17 +720,30 @@ h2 {
   gap: 10px;
 }
 
+.btn-edit {
+  background: #8db0f1c8;
+  color: white;
+}
+
 .btn-save {
   background: #43A047;
   color: white;
-  flex: 1;
   box-shadow: 0 4px 6px rgba(67, 160, 71, 0.3);
+}
+
+.btn-cancel {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.btn-change {
+  background: #8db0f1c8;
+  color: white;
 }
 
 .btn-logout {
   background: #E74C3C;
   color: white;
-  flex: 1;
   box-shadow: 0 4px 6px rgba(231, 76, 60, 0.3);
 }
 
@@ -699,80 +753,91 @@ h2 {
   box-shadow: 0 7px 14px rgba(0, 0, 0, 0.1);
 }
 
-.trophy-icon {
-  width: 24px;
-  height: 24px;
-  fill: #FF9800;
-}
-
-.level-card {
-  background: #E8F5E9;
-  padding: 15px;
-  border-radius: 10px;
-  margin-top: 25px;
-}
-
-.level-card h3 {
-  margin-bottom: 10px;
-  color: #2E7D32;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.level-progress {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.progress-bar {
-  flex: 1;
-  height: 10px;
-  background: #C8E6C9;
-  border-radius: 5px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  width: 85%;
-  background: #4CAF50;
-  border-radius: 5px;
-}
-
-.level-name {
-  font-weight: bold;
-  color: #1B5E20;
-  min-width: 80px;
-}
-
-footer {
-  text-align: center;
-  margin-top: 40px;
+.password-form {
+  margin-top: 20px;
   padding: 20px;
-  color: #4CAF50;
-  font-size: 0.9rem;
-  border-top: 1px solid #C8E6C9;
+  background: #f1f8e9;
+  border-radius: 10px;
+  border: 1px solid #c5e1a5;
+}
+
+.password-row {
+  margin-bottom: 15px;
+}
+
+.password-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #a5d6a7;
+  border-radius: 8px;
+  background: #f1f8e9;
+  color: #1b5e20;
+  font-size: 1rem;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.modal-title {
+  font-size: 24px;
+  color: #2c3e50;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.modal-message {
+  font-size: 18px;
+  color: #7f8c8d;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.btn-modal {
+  min-width: 120px;
 }
 
 @media (max-width: 768px) {
   .profile-container {
     flex-direction: column;
   }
-  
-  header h1 {
-    font-size: 2.2rem;
-  }
-  
+
   .info-row {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .info-label {
     margin-bottom: 5px;
     width: 100%;
+  }
+
+  .address-form {
+    grid-template-columns: 1fr;
   }
 }
 </style>

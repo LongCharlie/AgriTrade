@@ -74,6 +74,12 @@
               <div class="post-date">
                 <i class="far fa-clock"></i> {{ post.time }}
               </div>
+              <router-link 
+                to="/farmer/sharedetails" 
+                class="view-more"
+              >
+                查看更多
+              </router-link>
               <div class="post-actions">
                 <div class="post-action" @click="likePost(post.id)">
                   <i class="far fa-thumbs-up"></i> {{ post.likes }}
@@ -125,7 +131,7 @@
                 <i class="far fa-clock"></i> {{ post.time }}
               </div>
               <router-link 
-                to="/farmershare" 
+                to="/farmer/sharedetails" 
                 class="view-more"
               >
                 查看更多
@@ -273,7 +279,6 @@ export default {
 
 .view-more:hover {
   opacity: 0.8;
-  /* 保持文字装饰 */
   text-decoration: underline;
 }
 
@@ -281,7 +286,6 @@ export default {
   --primary-green: #2e7d32;
   --light-green: #4caf50;
   --lighter-green: #8bc34a;
-  --dark-green: #1b5e20;
   --background: #f5f9f5;
   --card-bg: #ffffff;
   --text-dark: #333333;
@@ -308,21 +312,7 @@ body {
   padding: 20px;
 }
 
-header {
-  background: linear-gradient(135deg, var(--dark-green), var(--primary-green));
-  color: white;
-  padding: 20px 0;
-  border-radius: 0 0 15px 15px;
-  box-shadow: var(--shadow);
-  margin-bottom: 30px;
-}
 
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 20px;
-}
 
 .logo {
   display: flex;
@@ -408,7 +398,6 @@ header {
 }
 
 .page-title {
-  color: var(--primary-green);
   margin-bottom: 25px;
   padding-bottom: 15px;
   border-bottom: 2px solid var(--lighter-green);

@@ -4,7 +4,7 @@
     <div class="dashboard-header">
       <div class="header-content">
         <div>
-          <div class="header-title">评论审核系统</div>
+          <div class="header-title">评论审核</div>
         </div>
       </div>
     </div>
@@ -346,7 +346,7 @@ onMounted(() => {
 }
 
 .dashboard-header {
-  background: linear-gradient(135deg, #2c3e50 0%, #80828a 100%);
+  background: linear-gradient(135deg, #8bc79379, #62c16990);
   color: white;
   padding: 24px 32px;
   display: flex;
@@ -437,10 +437,10 @@ onMounted(() => {
   height: 100%;
 }
 
-.stat-card.pending:before { background: #ffc107; }
-.stat-card.reviewed:before { background: #28a745; }
-.stat-card.rejected:before { background: #dc3545; }
-.stat-card.total:before { background: #007bff; }
+.stat-card.pending:before { background: #ffc1077a; }
+.stat-card.reviewed:before { background: #28a74694; }
+.stat-card.rejected:before { background: #dc35468f; }
+.stat-card.total:before { background: #007bff97; }
 
 .stat-card:hover {
   transform: translateY(-5px);
@@ -481,10 +481,10 @@ onMounted(() => {
   margin: 4px 0;
 }
 
-.pending .stat-value { color: #ffc107; }
-.reviewed .stat-value { color: #28a745; }
-.rejected .stat-value { color: #dc3545; }
-.total .stat-value { color: #007bff; }
+.pending .stat-value { color: #ffc10778; }
+.reviewed .stat-value { color: #28a74691; }
+.rejected .stat-value { color: #dc354697; }
+.total .stat-value { color: #007bff97; }
 
 .stat-change {
   font-size: 14px;

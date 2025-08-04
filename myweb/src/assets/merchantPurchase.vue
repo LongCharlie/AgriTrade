@@ -233,11 +233,11 @@ export default {
     },
     // 添加新采购
     addPurchase() {
-       this.$router.push('/merchant/addPurchase');
+       this.$router.push('/addPurchase');
     },
     // 查看采购详情
     viewPurchase() {
-      this.$router.push('/merchant/purchaseDetail');
+      this.$router.push('/purchaseDetail');
     },
     // 修改采购信息
     modifyPurchase(purchase) {
