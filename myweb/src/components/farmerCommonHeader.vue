@@ -29,8 +29,8 @@ export default {
     return {
       loading: true, // 加载状态
       user: {
-        avatar: profile, // 默认用户头像
-        name: "默认农户" // 默认用户名
+        avatar: '', // 默认用户头像
+        name: "" // 默认用户名
       },
     }
   },
@@ -63,7 +63,7 @@ export default {
         userStore.city = userData.city;
         userStore.district = userData.district;
         userStore.address_detail = userData.address_detail;
-        userStore.avatar_url = userData.avatar_url;
+        userStore.avatar_url = "http://localhost:3000/uploads/avatars/" + userData.avatar_url;
 
         console.log('这里是Header//userStore');
         console.log(userStore.userId);
@@ -82,8 +82,8 @@ export default {
       } catch (error) {
         console.error('获取用户信息失败:', error);
         // 在获取失败时使用默认信息
-        this.user.avatar = profile; // 默认头像
-        this.user.name = "默认农户超长用户名不全部显示"; // 默认用户名
+        this.user.avatar = ''; // 默认头像
+        this.user.name = ""; // 默认用户名
       } finally {
         this.loading = false; // 加载完成
       }
