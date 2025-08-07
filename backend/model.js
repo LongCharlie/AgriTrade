@@ -10,7 +10,7 @@ const pool = new Pool({
   host: '22.tcp.cpolar.top',
   database: 'agriculture db',
   password: '12345678',
-  port: 14065,
+  port: 12568,
   ssl: false,
 });
 
