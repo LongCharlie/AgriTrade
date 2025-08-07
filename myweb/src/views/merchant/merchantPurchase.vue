@@ -4,73 +4,78 @@
       <div class="header-title">
         <h1>我的采购信息</h1>
       </div>
-      <button class="add-btn" @click="addPurchase">
-        <i class="fas fa-plus"></i>
-        添加新采购
-      </button>
+      <div class="header-buttons">
+        <button class="toggle-btn" @click="toggleShowClosed">
+          <i class="fas fa-sync"></i>
+          {{ showClosed ? '查看打开采购' : '查看已关闭采购' }}
+        </button>
+        <button class="add-btn" @click="addPurchase">
+          <i class="fas fa-plus"></i>
+          添加新采购
+        </button>
+      </div>
     </header>
-    
+
     <div class="purchase-container">
-      
-      <!-- 采购信息卡片 -->
+      <!-- 采购卡片 -->
       <div class="purchase-card" v-for="purchase in paginatedPurchases" :key="purchase.id">
+        <div class="card-header">
+          <div class="card-header-title">
+            <h3>{{ purchase.title }}</h3>
+          </div>
+          <div class="status-badge" :class="statusClass(purchase.status)">
+            {{ purchase.status }}
+          </div>
+        </div>
+        
         <div class="card-content">
-          <h3>{{ purchase.title }}</h3>
           <div class="card-meta">
-  <div class="meta-row">
-    <div class="meta-item">
-      <span class="label">需求量</span>
-      <span class="value demand-value">{{ purchase.demand }}</span>
-    </div>
-    <div class="meta-item">
-      <span class="label">创建时间</span>
-      <span class="value">{{ purchase.creationDate }}</span>
-    </div>
-  </div>
-  <div class="meta-row">
-    <div class="meta-item">
-      <span class="label">状态</span>
-      <span class="value">{{ purchase.status }}</span>
-    </div>
-    <div class="meta-item">
-      <span class="label">收货地</span>
-      <span class="value">{{ purchase.deliveryAddress }}</span>
-    </div>
-  </div>
-  <div class="meta-row">
-    <div class="meta-item-full">
-      <span class="label">是否全国范围</span>
-      <span class="value">{{ purchase.isnot }}</span>
-    </div>
-  </div>
-</div>
-</div>
+            <div class="meta-row">
+              <div class="meta-item">
+                <span class="label"><i class="fas fa-weight-hanging"></i> 采购量</span>
+                <span class="value">{{ purchase.quantity }}</span>
+              </div>
+              <div class="meta-item">
+                <span class="label"><i class="far fa-calendar"></i> 创建时间</span>
+                <span class="value">{{ purchase.creationDate }}</span>
+              </div>
+            </div>
+
+            <div class="meta-row">
+              <div class="meta-item-full">
+                <span class="label"><i class="fas fa-truck"></i> 收货地址</span>
+                <div class="delivery-info">
+                  {{ purchase.deliveryAddress }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="action-buttons">
-          <div class="action-btn detail-btn" @click.stop="editPurchase(purchase)">
-            <i class="fas fa-edit"></i>
-            查看申请
-          </div>
-          <div class="action-btn delete-btn" @click.stop="deletePurchase(purchase)">
-            <i class="fas fa-trash"></i>
-            删除
-          </div>
+          <button class="action-btn detail-btn" @click.stop="viewPurchase(purchase)">
+            <i class="fas fa-eye"></i> 查看申请
+          </button>
+          <button class="action-btn modify-btn" @click.stop="modifyPurchase(purchase)">
+            <i class="fas fa-edit"></i> 修改采购
+          </button>
         </div>
       </div>
       
-      <!-- 空状态提示 -->
-      <div class="empty-state" v-if="paginatedPurchases.length === 0 && purchases.length === 0">
-        <div class="empty-icon">
-          <i class="fas fa-clipboard-list"></i>
+      <!-- 空状态 -->
+      <div class="empty-state" v-if="paginatedPurchases.length === 0">
+        <div class="empty-icon"><i class="fas fa-clipboard-list"></i></div>
+        <div class="empty-text">
+          {{ showClosed ? '您没有已关闭的采购' : '您还没有发布任何采购信息' }}
         </div>
-        <div class="empty-text">您还没有发布任何采购信息</div>
         <button class="add-btn" @click="addPurchase">
           <i class="fas fa-plus"></i>
-          发布第一个采购
+          {{ showClosed ? '发布新采购' : '发布第一个采购' }}
         </button>
       </div>
     </div>
-    
-    <!-- 分页导航 -->
+
+    <!-- 分页 -->
     <div class="pagination" v-if="totalPages > 1">
       <button @click="currentPage = 1" :disabled="currentPage === 1">第一页</button>
       <button @click="currentPage--" :disabled="currentPage === 1">上一页</button>
@@ -83,178 +88,161 @@
 
 <script>
 export default {
-
   data() {
     return {
       currentPage: 1,
+      showClosed: false,
       purchases: [
         {
           id: 1,
-          title: "新鲜有机蔬菜",
-          description: "需要各类有机蔬菜，包括西红柿、黄瓜、菠菜等，要求无农药残留，新鲜采摘。",
-          image: "https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-          demand: "500 kg/天",
-          creationDate: "2023-12-15",
-          status: "进行中",
-          deliveryAddress: "北京市朝阳区",
-          isnot:"是"
+          title: '西红柿',
+          quantity: 500,
+          unit: '公斤',
+          creationDate: '2023-12-15',
+          status: '打开',
+          deliveryAddress: '北京市朝阳区',
+          isnot: '否',
+          deliveryProvinces: ['北京', '天津']
         },
         {
           id: 2,
-          title: "优质水果",
-          description: "采购苹果、香蕉、橙子等当季水果，要求产地直供，新鲜无损伤。",
-          image: "https://images.unsplash.com/photo-1467453678174-768ec283a940?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-          demand: "300 kg/周",
-          creationDate: "2023-12-20",
-          status: "待处理",
-          deliveryAddress: "上海市浦东新区",
-          isnot:"是"
+          title: '凤梨',
+          quantity: 300,
+          unit: '箱',
+          creationDate: '2023-12-20',
+          status: '打开',
+          deliveryAddress: '上海市浦东新区',
+          isnot: '是'
         },
         {
           id: 3,
-          title: "有机大米",
-          description: "采购东北有机大米，要求无添加剂，真空包装，月供量稳定。",
-          image: "https://images.unsplash.com/photo-1559715541-5daf8a0296d0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-          demand: "2000 kg/月",
-          creationDate: "2024-01-10",
-          status: "已完成",
-          deliveryAddress: "广州市天河区",
-          isnot:"是"
-        },
-        {
-          id: 4,
-          title: "优质食用油",
-          description: "采购非转基因食用油，要求品牌可靠，品质有保障。",
-          image: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-          demand: "1500 L/月",
-          creationDate: "2023-12-15",
-          status: "进行中",
-          deliveryAddress: "深圳市南山区",
-          isnot:"否"
+          title: '大米',
+          quantity: 2000,
+          unit: '吨',
+          creationDate: '2024-01-10',
+          status: '关闭',
+          deliveryAddress: '广州市天河区',
+          isnot: '是'
         },
         {
           id: 5,
-          title: "冷冻水产品",
-          description: "采购各类冷冻海鲜产品，包括虾、鱼、贝类等，要求新鲜冷冻，品质优良。",
-          image: "https://images.unsplash.com/photo-1511556532299-8f680e7e1f4b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-          demand: "800 kg/周",
-          creationDate: "2023-12-25",
-          status: "待处理",
-          deliveryAddress: "杭州市西湖区",
-          isnot:"否"
+          title: '西兰花',
+          quantity: 800,
+          unit: '公斤',
+          creationDate: '2023-12-25',
+          status: '打开',
+          deliveryAddress: '杭州市西湖区',
+          isnot: '否',
+          deliveryProvinces: ['浙江', '江苏']
         },
         {
           id: 6,
-          title: "鲜奶制品",
-          description: "采购各类鲜奶及奶制品，要求保质期新鲜，符合国家标准。",
-          image: "https://images.unsplash.com/photo-1563636676732-d65bc937f952?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-          demand: "1000 L/周",
-          creationDate: "2023-12-18",
-          status: "已完成",
-          deliveryAddress: "成都市武侯区",
-          isnot:"否"
+          title: '土豆',
+          quantity: 1000,
+          unit: '公斤',
+          creationDate: '2023-12-18',
+          status: '关闭',
+          deliveryAddress: '成都市武侯区',
+          isnot: '否',
+          deliveryProvinces: ['四川', '重庆']
         },
         {
           id: 7,
-          title: "烘焙原料",
-          description: "采购面粉、酵母、黄油等烘焙原料，要求高品质，适合面包、蛋糕制作。",
-          image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-          demand: "500 kg/月",
-          creationDate: "2023-12-20",
-          status: "进行中",
-          deliveryAddress: "南京市鼓楼区",
-          isnot:"否"
+          title: '荔枝',
+          quantity: 500,
+          unit: '箱',
+          creationDate: '2023-12-20',
+          status: '打开',
+          deliveryAddress: '南京市鼓楼区',
+          isnot: '是'
         },
         {
           id: 8,
-          title: "调味品及酱料",
-          description: "采购各类调味品，包括酱油、醋、盐、糖、鸡精等，要求品牌可靠，口味纯正。",
-          image: "https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-          demand: "200 kg/月",
-          creationDate: "2023-12-25",
-          status: "待处理",
-          deliveryAddress: "重庆市渝中区",
-          isnot:"否"
+          title: '贵妃芒',
+          quantity: 200,
+          unit: '箱',
+          creationDate: '2023-12-25',
+          status: '打开',
+          deliveryAddress: '重庆市渝中区',
+          isnot: '否',
+          deliveryProvinces: ['重庆', '四川']
         },
         {
           id: 9,
-          title: "鲜肉及家禽",
-          description: "采购各类鲜肉和家禽产品，包括猪肉、牛肉、鸡肉等，要求新鲜无添加。",
-          image: "https://images.unsplash.com/photo-1522247020649-aa54b62886e1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-          demand: "1200 kg/周",
-          creationDate: "2023-12-15",
-          status: "已完成",
-          deliveryAddress: "武汉市洪山区",
-          isnot:"否"
+          title: '鲜肉',
+          quantity: 1200,
+          unit: '公斤',
+          creationDate: '2023-12-15',
+          status: '关闭',
+          deliveryAddress: '武汉市洪山区',
+          isnot: '是'
         },
         {
           id: 10,
-          title: "烘焙工具及消耗品",
-          description: "采购烘焙工具，包括烤箱、模具、烘焙纸等，要求质量可靠，品牌知名。",
-          image: "https://images.unsplash.com/photo-1576164771414-6391573b204b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-          demand: "每季度一批",
-          creationDate: "2023-12-31",
-          status: "进行中",
-          deliveryAddress: "西安市雁塔区",
-          isnot:"否"
+          title: '脐橙',
+          quantity: 300,
+          unit: '箱',
+          creationDate: '2023-12-31',
+          status: '打开',
+          deliveryAddress: '西安市雁塔区',
+          isnot: '否',
+          deliveryProvinces: ['陕西', '山西']
         },
         {
           id: 11,
-          title: "茶叶及咖啡",
-          description: "采购各类茶叶及咖啡，包括红茶、绿茶、咖啡豆等，要求品质优，香气足。",
-          image: "https://images.unsplash.com/photo-1556679343-c1c4b73b204e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-          demand: "300 kg/月",
-          creationDate: "2023-12-20",
-          status: "待处理",
-          deliveryAddress: "长沙市岳麓区",
-          isnot:"否"
-        },
-        {
-          id: 12,
-          title: "饮料及果汁",
-          description: "采购各类饮料及果汁，包括矿泉水、果汁饮料、茶饮料等，要求品牌可靠，品质优。",
-          image: "https://images.unsplash.com/photo-1589730801753-91b50b1f9e2b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-          demand: "500 L/周",
-          creationDate: "2023-12-25",
-          status: "已完成",
-          deliveryAddress: "郑州市金水区",
-          isnot:"否"
+          title: '草莓',
+          quantity: 300,
+          unit: '盒',
+          creationDate: '2023-12-31',
+          status: '打开',
+          deliveryAddress: '西安市雁塔区',
+          isnot: '是'
         }
       ]
     };
   },
   computed: {
+    // 筛选采购信息（根据状态）
+    filteredPurchases() {
+      return this.purchases.filter(p =>
+        this.showClosed ? p.status === '关闭' : p.status === '打开'
+      );
+    },
+    // 分页处理后的采购信息
     paginatedPurchases() {
       const pageSize = 9;
-      return this.purchases.slice(
+      return this.filteredPurchases.slice(
         (this.currentPage - 1) * pageSize,
         this.currentPage * pageSize
       );
     },
+    // 总页数计算
     totalPages() {
-      const pageSize = 9;
-      return Math.ceil(this.purchases.length / pageSize);
+      return Math.ceil(this.filteredPurchases.length / 9);
     }
   },
   methods: {
-
+    // 切换显示打开/关闭的采购
+    toggleShowClosed() {
+      this.showClosed = !this.showClosed;
+      this.currentPage = 1; // 切换时重置到第一页
+    },
+    // 获取状态标签的样式类
+    statusClass(status) {
+      return status === '打开' ? 'status-open' : 'status-closed';
+    },
+    // 添加新采购
     addPurchase() {
-      // alert('跳转到添加采购页面');
-      this.$router.push('/addPurchase');
+       this.$router.push('/merchant/addPurchase');
     },
-    editPurchase(purchase) {
-      alert(`打开申请: ${purchase.title}`);
-      this.$router.push('/purchaseDetail');
+    // 查看采购详情
+    viewPurchase() {
+      this.$router.push('/merchant/purchaseDetail');
     },
-    deletePurchase(purchase) {
-      if (confirm(`确定要删除采购 "${purchase.title}" 吗？`)) {
-        this.purchases = this.purchases.filter(p => p.id !== purchase.id);
-        
-        // 调整分页，如果删除后当前页没有数据且不是第一页，就跳转到上一页
-        if (this.currentPage > 1 && this.paginatedPurchases.length === 0) {
-          this.currentPage--;
-        }
-      }
+    // 修改采购信息
+    modifyPurchase(purchase) {
+      alert(`修改采购信息: ${purchase.title}`);
+      // 实际应用中可使用this.$router.push(`/purchase/${purchase.id}/edit`)导航到编辑页
     }
   }
 };
@@ -267,44 +255,64 @@ export default {
   box-sizing: border-box;
   font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
-    
+
 body {
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+  background: linear-gradient(135deg, #f0f9ff 0%, #e6f7ff 100%);
   color: #333;
   min-height: 100vh;
   padding: 20px;
 }
-    
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
 }
-    
+
 header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 30px;
-  padding: 20px;
+  padding: 25px;
   background: white;
   border-radius: 15px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
 }
-    
+
+header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 8px;
+  height: 100%;
+  background: linear-gradient(to bottom, #4caf50, #8bc34a);
+}
+
 .header-title h1 {
-  font-size: 28px;
+  font-size: 32px;
   color: #2c3e50;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
+  padding-left: 15px;
 }
-    
+
 .header-title p {
   color: #7f8c8d;
   font-size: 16px;
+  padding-left: 15px;
 }
-    
-.add-btn {
-  background: linear-gradient(135deg, #3498db, #2c3e50);
+
+.header-buttons {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.toggle-btn {
+  background: linear-gradient(135deg, #81c784, #66bb6a);
   color: white;
   border: none;
   padding: 12px 25px;
@@ -315,190 +323,159 @@ header {
   align-items: center;
   gap: 10px;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+  box-shadow: 0 4px 15px rgba(129, 199, 132, 0.3);
 }
-    
+
+.toggle-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(129, 199, 132, 0.4);
+}
+
+.add-btn {
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 50px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
 .add-btn:hover {
   transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
 }
-    
+
 .purchase-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
   gap: 25px;
+  margin-bottom: 40px;
 }
-    
+
 .purchase-card {
   background: white;
   border-radius: 15px;
   overflow: hidden;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s ease;
   position: relative;
   height: 350px;
   display: flex;
   flex-direction: column;
+  border-top: 4px solid #ffffff;
 }
-    
+
 .purchase-card:hover {
   transform: translateY(-10px);
-  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
 }
-    
-.card-image {
-  height: 180px;
-  overflow: hidden;
-  background: #ecf0f1;
+
+.card-header {
+  padding: 20px 20px 15px;
+  border-bottom: 1px solid #f0f4f8;
+  position: relative;
+}
+
+.card-header h3 {
+  font-size: 22px;
+  color: #2c3e50;
+  margin-bottom: 8px;
   display: flex;
   align-items: center;
-  justify-content: center;
 }
-    
-.card-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s ease;
+
+.card-header h3 i {
+  color: #4caf50;
+  margin-right: 10px;
+  font-size: 20px;
 }
-    
-.purchase-card:hover .card-image img {
-  transform: scale(1.05);
+
+.status-badge {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
 }
-    
+
+.status-open {
+  background: #e8f5e9;
+  color: #42a147ca;
+}
+
+.status-closed {
+  background: #ffebee;
+  color: #c62828;
+}
+
 .card-content {
   padding: 20px;
   flex-grow: 1;
   display: flex;
   flex-direction: column;
 }
-    
-.card-content h3 {
-  font-size: 20px;
-  margin-bottom: 10px;
-  color: #2c3e50;
-}
-    
-.card-content p {
-  font-size: 14px;
-  color: #7f8c8d;
-  margin-bottom: 15px;
-  line-height: 1.5;
-}
-    
+
 .card-meta {
-  margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px solid #eee;
   flex-grow: 1;
   display: flex;
   flex-direction: column;
+  gap: 18px;
 }
-    
+
 .meta-row {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 15px;
 }
 
 .meta-item {
   display: flex;
   flex-direction: column;
-  width: 48%; /* 两个信息项并排显示 */
-}
-
-.meta-item-full {
-  width: 100%; /* 最后一个信息项单独占据一行 */
-  display: flex;
-  flex-direction: column;
+  width: 48%;
 }
 
 .label {
   font-size: 14px;
   color: #7f8c8d;
-  margin-bottom: 5px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+}
+
+.label i {
+  margin-right: 8px;
+  color: #81c784;
+  font-size: 15px;
 }
 
 .value {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
   color: #2c3e50;
 }
 
-.demand-value {
-  color: #2c3e50;
-  font-weight: bold;
+.delivery-info {
+  background: #f1f8e9;
+  border-radius: 10px;
+  padding: 12px 15px;
+  margin-top: 5px;
 }
-    
-.add-card {
-  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-  border: 2px dashed #adb5bd;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-    
-.add-card:hover {
-  background: linear-gradient(135deg, #e9ecef, #dee2e6);
-  border-color: #6c757d;
-}
-    
-.add-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: #3498db;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 20px;
-  color: white;
-  font-size: 30px;
-  transition: all 0.3s ease;
-}
-    
-.add-card:hover .add-icon {
-  transform: scale(1.1);
-  background: #2980b9;
-}
-    
-.add-text {
-  font-size: 18px;
-  color: #6c757d;
-  font-weight: 500;
-}
-    
-.empty-state {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 50px 20px;
-  background: white;
-  border-radius: 15px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-}
-    
-.empty-icon {
-  font-size: 80px;
-  color: #bdc3c7;
-  margin-bottom: 20px;
-}
-    
-.empty-text {
-  font-size: 22px;
-  color: #7f8c8d;
-  margin-bottom: 25px;
-}
-    
+
 .action-buttons {
   display: flex;
   gap: 15px;
-  margin-top: 20px;
+  margin-top: 15px;
   justify-content: center;
+  padding: 0 20px 20px;
 }
-    
+
 .action-btn {
   padding: 10px 20px;
   border-radius: 50px;
@@ -508,68 +485,144 @@ header {
   display: flex;
   align-items: center;
   gap: 8px;
-  position: relative;
-  top: -30px;
+  border: none;
+  font-weight: 500;
 }
-    
+
 .detail-btn {
-  background: #f1f8ff;
-  color: #0366d6;
-  border: 1px solid #d1e5fa;
+  background: linear-gradient(135deg, #29b5f671, #0289d1ac);
+  color: white;
+  box-shadow: 0 4px 10px rgba(41, 182, 246, 0.25);
 }
-    
-.delete-btn {
-  background: #fff0f0;
-  color: #d73a49;
-  border: 1px solid #f9d1d1;
+
+.modify-btn {
+  background: linear-gradient(135deg, #78b87bb7, #52af57be);
+  color: white;
+  box-shadow: 0 4px 10px rgba(102, 187, 106, 0.25);
 }
-    
+
 .action-btn:hover {
   transform: translateY(-3px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
 }
-    
+
+.action-btn i {
+  font-size: 14px;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+  margin-top: 20px;
+}
+
+.empty-icon {
+  font-size: 80px;
+  color: #c8e6c9;
+  margin-bottom: 25px;
+}
+
+.empty-text {
+  font-size: 24px;
+  color: #7f8c8d;
+  margin-bottom: 30px;
+  font-weight: 500;
+}
+
 .pagination {
-  margin-top: 30px;
+  margin-top: 20px;
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 15px;
-}
-    
-.pagination button {
-  padding: 8px 15px;
+  gap: 12px;
   background: white;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+  padding: 15px;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.pagination button {
+  padding: 8px 18px;
+  background: #f5f5f5;
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
+  font-weight: 500;
 }
-    
+
 .pagination button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
-    
+
 .pagination button:hover:not(:disabled) {
-  background: #f8f9fa;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  background: #4caf50;
+  color: white;
+  box-shadow: 0 3px 8px rgba(76, 175, 80, 0.3);
 }
-    
+
+.pagination span {
+  padding: 0 15px;
+  color: #7f8c8d;
+  font-weight: 500;
+}
+
+.product-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e8f5e9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  color: #4caf50;
+}
+
+.card-header-title {
+  display: flex;
+  align-items: center;
+}
+
+/* 响应式调整 */
 @media (max-width: 768px) {
   header {
     flex-direction: column;
     gap: 20px;
     text-align: center;
+    padding: 25px 15px;
   }
-    
+  
+  header::before {
+    width: 100%;
+    height: 6px;
+  }
+  
+  .header-title {
+    width: 100%;
+  }
+  
+  .header-buttons {
+    width: 100%;
+    flex-direction: column;
+  }
+  
   .purchase-container {
     grid-template-columns: 1fr;
   }
-    
+  
   .action-buttons {
     flex-direction: column;
     align-items: center;
+  }
+  
+  .pagination {
+    flex-wrap: wrap;
   }
 }
 </style>

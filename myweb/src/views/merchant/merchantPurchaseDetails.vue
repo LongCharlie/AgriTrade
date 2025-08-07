@@ -1,120 +1,101 @@
 <template>
-  <div class="container">
-
-    <div class="search-filter-container">
-      <div class="search-box">
-        <i class="fas fa-search search-icon"></i>
-        <input type="text" placeholder="搜索农户、产品或地点...">
-      </div>
-
-      <div class="filter-section">
-        <select class="filter-select">
-          <option>所有状态</option>
-          <option>待处理</option>
-          <option>已批准</option>
-          <option>已拒绝</option>
-        </select>
-
-        <select class="filter-select">
-          <option>所有地区</option>
-          <option>华东地区</option>
-          <option>华南地区</option>
-          <option>华北地区</option>
-          <option>西部地区</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="stats-cards">
-      <div class="stat-card">
-        <h3>总申请数</h3>
-        <div class="stat-value">42</div>
-      </div>
-
-      <div class="stat-card">
-        <h3>平均报价</h3>
-        <div class="stat-value">¥128.50</div>
-      </div>
-
-    </div>
-
-    <div class="applications-container">
-      <div class="section-header">
-        <h2><i class="fas fa-file-alt"></i> 采购申请列表</h2>
-        <div>
-          <span>排序: </span>
-          <select class="filter-select" style="width: auto;">
-            <option>最新申请</option>
-            <option>价格最低</option>
-            <option>价格最高</option>
-            <option>评级最高</option>
-          </select>
+  <div id="app">
+    <div class="container">
+      <div class="stats-cards">
+        <div class="stat-card">
+          <h3>总申请数</h3>
+          <div class="stat-value">{{ totalApplications }}</div>
         </div>
+
+        <div class="stat-card">
+          <h3>平均报价</h3>
+          <div class="stat-value">¥{{ averagePrice.toFixed(2) }}</div>
+          <div class="stat-desc">最低: ¥{{ minPrice }} | 最高: ¥{{ maxPrice }}</div>
+        </div>
+
       </div>
+      <div class="applications-container">
+        <div class="section-header">
+          <h2><i class="fas fa-file-alt"></i> 采购申请列表</h2>
+          <div>
+            <span>排序: </span>
+            <select class="filter-select" style="width: auto;" v-model="sortBy">
+              <option value="latest">最新申请</option>
+              <option value="lowest">价格最低</option>
+              <option value="highest">价格最高</option>
+            </select>
+          </div>
+        </div>
 
-      <div class="application-list">
-        <div class="application-card" v-for="(application, index) in applications" :key="index">
-          <span :class="['status-badge', `status-${application.status}`]">
-            {{ getStatusText(application.status) }}
-          </span>
+        <div class="application-list">
+          <div class="application-card" v-for="(application, index) in filteredApplications" :key="index">
 
-          <div class="card-header">
-            <img :src="application.farmerAvatar" alt="农户头像" class="farmer-avatar">
-            <div class="farmer-info">
-              <div class="farmer-name">{{ application.farmerName }}</div>
-              <div class="farmer-rating">
-                <div v-for="n in 5" :key="n">
-                  <i v-if="n <= application.rating" class="fas fa-star"></i>
-                  <i v-else-if="n - 0.5 === application.rating" class="fas fa-star-half-alt"></i>
-                  <i v-else class="far fa-star"></i>
+            <div class="card-header">
+              <img :src="application.farmerAvatar" alt="农户头像" class="farmer-avatar">
+              <div class="farmer-info">
+                <div class="farmer-name">{{ application.farmerName }}</div>
+                <div class="farmer-rating">
+                  <div v-for="n in 5" :key="n">
+                    <i v-if="n <= application.rating" class="fas fa-star"></i>
+                    <i v-else-if="n - 0.5 === application.rating" class="fas fa-star-half-alt"></i>
+                    <i v-else class="far fa-star"></i>
+                  </div>
                 </div>
-                <span>{{ `${application.rating} (${application.reviews}评价)` }}</span>
               </div>
             </div>
-          </div>
 
-          <div class="application-details">
-            <div class="detail-row">
-              <div class="detail-label">报价:</div>
-              <div class="detail-value">
-                <span class="price-tag">{{ application.price }}</span> ({{ application.quantity }})
+            <div class="application-details">
+              <div class="detail-row">
+                <div class="detail-label">报价:</div>
+                <div class="detail-value">
+                  <span class="price-tag">{{ application.price }}</span> / {{ application.unit }}
+                </div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-label">发货地:</div>
+                <div class="detail-value">{{ application.shippingLocation }}</div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-label">申请时间:</div>
+                <div class="detail-value">{{ application.applicationTime }}</div>
               </div>
             </div>
-            <div class="detail-row">
-              <div class="detail-label">发货地:</div>
-              <div class="detail-value">{{ application.shippingLocation }}</div>
-            </div>
-            <div class="detail-row">
-              <div class="detail-label">申请时间:</div>
-              <div class="detail-value">{{ application.applicationTime }}</div>
-            </div>
-          </div>
 
-          <div class="card-actions">
-            <button class="action-btn profile" @click="handleAction(application.farmerName, 'profile')">
-              <i class="fas fa-user"></i> 查看主页
-            </button>
-            <button class="action-btn message" @click="handleAction(application.farmerName, 'message')">
-              <i class="fas fa-comment"></i> 消息
-            </button>
-            <button class="action-btn record" @click="handleAction(application.farmerName, 'record')">
-              <i class="fas fa-seedling"></i> 查看详情
-            </button>
+            <div class="card-actions">
+              <button class="action-btn profile" @click="handleAction(application.farmerName, 'profile')">
+                <i class="fas fa-user"></i> 查看主页
+              </button>
+              <button class="action-btn message" @click="handleAction(application.farmerName, 'message')">
+                <i class="fas fa-comment"></i> 确认
+              </button>
+              <button class="action-btn record" @click="handleAction(application.farmerName, 'record')">
+                <i class="fas fa-seedling"></i> 详情
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="pagination">
-        <button class="pagination-btn">
-          <i class="fas fa-chevron-left"></i>
-        </button>
-        <button class="pagination-btn active">1</button>
-        <button class="pagination-btn">2</button>
-        <button class="pagination-btn">3</button>
-        <button class="pagination-btn">4</button>
-        <button class="pagination-btn">
-          <i class="fas fa-chevron-right"></i>
-        </button>
+        <div class="pagination">
+          <button class="pagination-btn" @click="prevPage">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          
+          <template v-if="totalPages > 1">
+            <button class="pagination-btn" v-for="page in totalPages" :key="page" 
+                    :class="{ active: currentPage === page }" @click="changePage(page)">
+              {{ page }}
+            </button>
+          </template>
+
+          <button class="pagination-btn" @click="nextPage">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+          <div class="back-btn-container">
+            <button class="back-btn" @click="goBack">
+              <i class="fas fa-arrow-left"></i> 返回
+            </button>
+          </div>
       </div>
     </div>
   </div>
@@ -124,6 +105,11 @@
 export default {
   data() {
     return {
+      searchQuery: '',
+      statusFilter: 'all',
+      regionFilter: 'all',
+      sortBy: 'latest',
+      currentPage: 1,
       applications: [
         {
           status: 'pending',
@@ -131,11 +117,12 @@ export default {
           rating: 4.5,
           reviews: 86,
           product: '有机西红柿',
-          price: '¥125.00/箱',
-          quantity: '20kg',
+          price: '¥5.50',
+          unit: '公斤',
           shippingLocation: '山东省寿光市',
           applicationTime: '2025-07-01 14:30',
-          farmerAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80'
+          farmerAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80',
+          priceValue: 5.50
         },
         {
           status: 'approved',
@@ -143,11 +130,12 @@ export default {
           rating: 5.0,
           reviews: 142,
           product: '绿色苹果',
-          price: '¥98.50/箱',
-          quantity: '15kg',
+          price: '¥8.20',
+          unit: '公斤',
           shippingLocation: '陕西省延安市',
           applicationTime: '2025-06-28 10:15',
-          farmerAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=776&q=80'
+          farmerAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=776&q=80',
+          priceValue: 8.20
         },
         {
           status: 'pending',
@@ -155,11 +143,12 @@ export default {
           rating: 4.0,
           reviews: 64,
           product: '有机大米',
-          price: '¥210.00/袋',
-          quantity: '25kg',
+          price: '¥4.80',
+          unit: '公斤',
           shippingLocation: '黑龙江省五常市',
           applicationTime: '2025-06-30 16:45',
-          farmerAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80'
+          farmerAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80',
+          priceValue: 4.80
         },
         {
           status: 'rejected',
@@ -167,14 +156,113 @@ export default {
           rating: 3.5,
           reviews: 45,
           product: '生态茶叶',
-          price: '¥350.00/斤',
-          quantity: '500g',
+          price: '¥15.20',
+          unit: '公斤',
           shippingLocation: '浙江省杭州市',
           applicationTime: '2025-06-25 09:20',
-          farmerAvatar: 'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80'
+          farmerAvatar: 'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80',
+          priceValue: 15.20
+        },
+        {
+          status: 'approved',
+          farmerName: '陈志强',
+          rating: 4.8,
+          reviews: 120,
+          product: '高山绿茶',
+          price: '¥12.50',
+          unit: '公斤',
+          shippingLocation: '福建省武夷山市',
+          applicationTime: '2025-07-02 11:20',
+          farmerAvatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80',
+          priceValue: 12.50
+        },
+        {
+          status: 'pending',
+          farmerName: '杨晓红',
+          rating: 4.2,
+          reviews: 78,
+          product: '新鲜草莓',
+          price: '¥9.80',
+          unit: '公斤',
+          shippingLocation: '江苏省南京市',
+          applicationTime: '2025-07-03 09:45',
+          farmerAvatar: 'https://images.unsplash.com/photo-1600701704189-263eec2d0e0d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80',
+          priceValue: 9.80
         }
-      ]
+      ],
+      monthlyIncrease: 8,
+      itemsPerPage: 9
     };
+  },
+  computed: {
+    totalApplications() {
+      return this.applications.length;
+    },
+    pendingApplications() {
+      return this.applications.filter(app => app.status === 'pending').length;
+    },
+    averagePrice() {
+      if (this.applications.length === 0) return 0;
+      const total = this.applications.reduce((sum, app) => sum + app.priceValue, 0);
+      return total / this.applications.length;
+    },
+    minPrice() {
+      if (this.applications.length === 0) return 0;
+      return Math.min(...this.applications.map(app => app.priceValue)).toFixed(2);
+    },
+    maxPrice() {
+      if (this.applications.length === 0) return 0;
+      return Math.max(...this.applications.map(app => app.priceValue)).toFixed(2);
+    },
+    filteredApplications() {
+      let apps = [...this.applications];
+      
+      if (this.statusFilter !== 'all') {
+        apps = apps.filter(app => app.status === this.statusFilter);
+      }
+      
+      if (this.regionFilter !== 'all') {
+        if (this.regionFilter === 'west') {
+          apps = apps.filter(app => app.shippingLocation.includes('陕西') || 
+                                  app.shippingLocation.includes('甘肃') || 
+                                  app.shippingLocation.includes('四川'));
+        }
+      }
+      
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        apps = apps.filter(app => 
+          app.farmerName.toLowerCase().includes(query) ||
+          app.product.toLowerCase().includes(query) ||
+          app.shippingLocation.toLowerCase().includes(query)
+        );
+      }
+      
+      switch (this.sortBy) {
+        case 'latest':
+          apps.sort((a, b) => new Date(b.applicationTime) - new Date(a.applicationTime));
+          break;
+        case 'lowest':
+          apps.sort((a, b) => a.priceValue - b.priceValue);
+          break;
+        case 'highest':
+          apps.sort((a, b) => b.priceValue - a.priceValue);
+          break;
+        case 'rating':
+          apps.sort((a, b) => b.rating - a.rating);
+          break;
+      }
+      
+      return apps;
+    },
+    totalPages() {
+      return Math.ceil(this.filteredApplications.length / this.itemsPerPage);
+    },
+    paginatedApplications() {
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      const end = start + this.itemsPerPage;
+      return this.filteredApplications.slice(start, end);
+    }
   },
   methods: {
     getStatusText(status) {
@@ -193,6 +281,22 @@ export default {
       } else if (actionType === 'record') {
         alert(`查看 ${farmerName} 的种植记录`);
       }
+    },
+    changePage(page) {
+      this.currentPage = page;
+    },
+    prevPage() {
+      if (this.currentPage > 1) {
+        this.currentPage--;
+      }
+    },
+    nextPage() {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++;
+      }
+    },
+    goBack(){
+      this.$router.push('/merchant/purchases');
     }
   }
 };
@@ -214,6 +318,19 @@ body {
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect fill='none' width='100' height='100'/><path fill='%23c8e6c9' opacity='0.2' d='M20,20 Q40,5 50,30 T80,20 Q95,40 70,50 T80,80 Q60,95 50,70 T20,80 Q5,60 30,50 T20,20' /></svg>");
+  background-size: 300px;
+  opacity: 0.3;
+  z-index: 1;
 }
 
 .container {
@@ -272,6 +389,7 @@ header h1::after {
   border-radius: 15px;
   box-shadow: 0 5px 20px rgba(46, 125, 50, 0.1);
   border: 1px solid #c5e1a5;
+  animation: fadeIn 0.6s ease-out;
 }
 
 .search-box {
@@ -344,6 +462,15 @@ header h1::after {
   border: 1px solid #c5e1a5;
   transition: all 0.3s;
   text-align: center;
+  animation: slideUp 0.5s ease-out;
+}
+
+.stat-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.stat-card:nth-child(2) {
+  animation-delay: 0.2s;
 }
 
 .stat-card:hover {
@@ -376,6 +503,7 @@ header h1::after {
   box-shadow: 0 5px 20px rgba(46, 125, 50, 0.1);
   border: 1px solid #c5e1a5;
   margin-bottom: 30px;
+  animation: fadeIn 0.8s ease-out;
 }
 
 .section-header {
@@ -414,6 +542,7 @@ header h1::after {
   transition: all 0.3s;
   position: relative;
   overflow: hidden;
+  animation: cardAppear 0.6s ease-out;
 }
 
 .application-card:hover {
@@ -605,5 +734,68 @@ header h1::after {
   .action-btn {
     min-width: calc(50% - 5px);
   }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cardAppear {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.stats-change {
+  font-size: 0.9rem;
+  margin-top: 5px;
+}
+
+.positive {
+  color: #4caf50;
+}
+
+.negative {
+  color: #f44336;
+}
+
+.back-btn-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e8f5e9;
+}
+
+.back-btn {
+  padding: 12px 30px;
+  border-radius: 50px;
+  border: none;
+  background: #4caf4f93;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+  box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);
+}
+
+.back-btn:hover {
+  background: #3fa244a1;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(76, 175, 80, 0.4);
+}
+
+.back-btn:active {
+  transform: translateY(0);
 }
 </style>

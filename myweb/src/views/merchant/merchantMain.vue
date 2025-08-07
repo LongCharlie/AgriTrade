@@ -42,9 +42,6 @@ export default {
     return {
       currentIndex: 0,
       carouselImages: [
-        // 'https://via.placeholder.com/800x200?text=轮播图1',
-        // 'https://via.placeholder.com/800x200?text=轮播图2',
-        // 'https://via.placeholder.com/800x200?text=轮播图3'
         '/images/1(.jpg',
         '/images/2.jpg',
         '/images/3.jpg'
@@ -67,11 +64,11 @@ export default {
     },
     navigateTo(path) {
       if (path === 'myhome') {
-        this.$router.push('/MerchantHome');
+        this.$router.push('/merchant/MerchantHome');
       } else if (path === 'publish') {
-        this.$router.push('/addPurchase');
+        this.$router.push('/merchant/addPurchase');
       } else if (path === 'mypurchase') {
-        this.$router.push('/purchases');
+        this.$router.push('/merchant/purchases');
       }
     }
   },

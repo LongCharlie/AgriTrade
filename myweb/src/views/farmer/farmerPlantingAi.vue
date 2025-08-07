@@ -116,7 +116,7 @@ export default {
           temperature: 0.7,
         }, {
           headers: {
-            'Authorization': `Bearer ${process.env.VUE_AI_API_KEY}`,
+            'Authorization': `Bearer MY_API_KEY`,//
             'Content-Type': 'application/json',
           },
         });

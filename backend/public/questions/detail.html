@@ -65,6 +65,172 @@
         .error {
             color: red;
         }
+        /* 新增图片展示区域样式 */
+        .question-images {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .question-image {
+            width: 150px;
+            height: 150px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .question-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+        .question-image:hover img {
+            transform: scale(1.05);
+        }
+        /* 图片查看模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+        }
+        .modal-content img {
+            max-width: 100%;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+        }
+        .answers-section {
+            margin-top: 40px;
+        }
+        .answers-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .answer-list {
+            margin-top: 20px;
+        }
+        .answer-item {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #f9f9f9;
+        }
+        .answer-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .answer-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+            object-fit: cover;
+        }
+        .answer-meta {
+            flex: 1;
+        }
+        .answer-expert {
+            font-weight: bold;
+        }
+        .answer-title {
+            font-size: 0.9em;
+            color: #666;
+        }
+        .answer-date {
+            font-size: 0.8em;
+            color: #999;
+        }
+        .answer-content {
+            line-height: 1.6;
+            margin: 10px 0;
+        }
+        .answer-actions {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .upvote-btn {
+            background: none;
+            border: 1px solid #ddd;
+            padding: 3px 10px;
+            margin-right: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        .upvote-btn:hover {
+            background: #f0f0f0;
+        }
+        .upvote-count {
+            margin-left: 5px;
+        }
+        
+        .delete {
+    background: #e74c3c;
+}
+.delete:hover {
+    background: #c0392b;
+}
+
+.admin-action {
+    background: #9b59b6;
+}
+.admin-action:hover {
+    background: #8e44ad;
+}
+
+        /* 回答表单样式 */
+        .answer-form {
+            margin-top: 30px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .answer-form h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .answer-form textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            resize: vertical;
+        }
+        .answer-form button {
+            background: #3498db;
+        }
+        .answer-form button:hover {
+            background: #2980b9;
+        }
     </style>
     <script src="/js/auth.js"></script>
 </head>
@@ -76,49 +242,299 @@
         <p>加载中...</p>
     </div>
     
-    <div class="actions" id="actions" style="display: none;">
-        <button id="closeBtn" class="close">关闭问题</button>
-    </div>
+    <div class="actions" id="actions" >
+    <button id="closeBtn" class="close">关闭问题</button>
+    <button id="deleteQuestionBtn" class="delete" style="background: #e74c3c; display: none;">删除问题</button>
+</div>
     
     <div id="error" class="error"></div>
     
+    <!-- 回答区域 -->
+    <div class="answers-section">
+        <div class="answers-title">回答</div>
+        <div id="answerList" class="answer-list">
+            <!-- 回答将在这里动态加载 -->
+        </div>
+        
+        <!-- 专家回答表单 (仅专家可见) -->
+        <div id="answerForm" class="answer-form" data-role="expert">
+            <h3>回答问题</h3>
+            <textarea id="answerContent" placeholder="请输入您的回答..."></textarea>
+            <button id="submitAnswer">提交回答</button>
+        </div>
+    </div>
+    
+    <!-- 图片查看模态框 -->
+    <div id="imageModal" class="modal">
+        <span class="close-modal" onclick="closeModal()">×</span>
+        <div class="modal-content">
+            <img id="modalImage" src="">
+        </div>
+    </div>
+    
     <script>
+        // 全局变量存储当前问题ID
+        let currentQuestionId = null;
+        
         document.addEventListener('DOMContentLoaded', async function() {
             const urlParams = new URLSearchParams(window.location.search);
-            const questionId = urlParams.get('id');
+            currentQuestionId = urlParams.get('id');
             
-            if (!questionId) {
+            // 如果是管理员，显示删除按钮
+            if (currentUser && currentUser.role === 'admin') {
+                document.getElementById('deleteQuestionBtn').style.display = 'inline-block';
+            }
+
+            if (!currentQuestionId) {
                 document.getElementById('error').textContent = '未指定问题ID';
                 return;
             }
             
             try {
-                const question = await apiRequest(`/api/questions/${questionId}`);
+                // 加载问题详情
+                await loadQuestionDetail();
                 
-                document.getElementById('questionDetail').innerHTML = `
-                    <div class="question-title">${question.title}</div>
-                    <div class="question-content">${question.content}</div>
-                    <div class="question-meta">
-                        <span class="status status-${question.status}">${getStatusText(question.status)}</span>
-                        · 创建于 ${formatDate(question.created_at)}
-                    </div>
-                `;
+                // 加载回答列表
+                await loadAnswers();
                 
-                // 如果是农户且问题是开放状态，显示关闭按钮
-                if (currentUser.role === 'farmer' && question.status === 'pending') {
-                    document.getElementById('actions').style.display = 'block';
+                // 如果是专家且问题状态是pending，显示回答表单
+                if (currentUser && currentUser.role === 'expert') {
+                    const question = await apiRequest(`/api/questions/${currentQuestionId}`);
+                    if (question.status === 'pending') {
+                        document.getElementById('answerForm').style.display = 'block';
+                    }
                 }
             } catch (error) {
                 document.getElementById('error').textContent = error.message;
             }
         });
+                
+
+        // 添加管理员删除问题的函数
+document.getElementById('deleteQuestionBtn')?.addEventListener('click', async function() {
+    if (!confirm('确定要删除这个问题吗？此操作将同时删除所有相关回答和图片，且不可恢复。')) {
+        return;
+    }
+    
+    try {
+        await apiRequest(`/api/questions/${currentQuestionId}`, 'DELETE');
+        alert('问题删除成功');
+        window.location.href = '/questions/list.html';
+    } catch (error) {
+        document.getElementById('error').textContent = error.message;
+    }
+});
+
+// 添加管理员删除回答的函数
+window.adminDeleteAnswer = async function(answerId) {
+    if (!confirm('确定要以管理员身份删除这个回答吗？此操作不可恢复。')) {
+        return;
+    }
+    
+    try {
+        await apiRequest(`/api/answers/${answerId}`, 'DELETE');
+        alert('回答删除成功');
+        await loadAnswers();
         
-        document.getElementById('closeBtn')?.addEventListener('click', async function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const questionId = urlParams.get('id');
+        // 检查是否还有回答，如果没有，更新问题状态
+        const answers = await apiRequest(`/api/questions/${currentQuestionId}/answers`);
+        if (answers.length === 0) {
+            await loadQuestionDetail();
+        }
+    } catch (error) {
+        document.getElementById('error').textContent = error.message;
+    }
+};
+                // 加载问题详情
+        async function loadQuestionDetail() {
+            const question = await apiRequest(`/api/questions/${currentQuestionId}`);
+            
+            // 构建图片HTML
+            let imagesHtml = '';
+            if (question.images && question.images.length > 0) {
+                imagesHtml = `
+                    <div class="question-images">
+                        ${question.images.map(img => `
+                            <div class="question-image" onclick="openModal('${img.url}')">
+                                <img src="${img.url}" alt="问题图片">
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            document.getElementById('questionDetail').innerHTML = `
+                <div class="question-title">${question.title}</div>
+                <div class="question-content">${question.content}</div>
+                ${imagesHtml}
+                <div class="question-meta">
+                    <span class="status status-${question.status}">${getStatusText(question.status)}</span>
+                    · 创建于 ${formatDate(question.created_at)}
+                </div>
+            `;
+            
+            // 如果是农户且问题是开放状态，显示关闭按钮
+            if (currentUser && currentUser.role === 'farmer' && question.status === 'pending') {
+                document.getElementById('actions').style.display = 'block';
+            }
+        }
+        
+        // 加载回答列表
+        async function loadAnswers() {
+            const response = await apiRequest(`/api/questions/${currentQuestionId}/answers`);
+            const answers = response.answers || [];
+            
+            if (answers.length === 0) {
+                document.getElementById('answerList').innerHTML = '<p>暂无回答</p>';
+                return;
+            }
+            
+            document.getElementById('answerList').innerHTML = answers.map(answer => `
+                <div class="answer-item">
+                    <div class="answer-header">
+                        <img src="${answer.expert_avatar || '/images/default-avatar.png'}" 
+                             alt="${answer.expert_name}" 
+                             class="answer-avatar">
+                        <div class="answer-meta">
+                            <div class="answer-expert">${answer.expert_name || '匿名专家'}</div>
+                            <div class="answer-title">${answer.expert_title || ''} ${answer.expert_institution || ''}</div>
+                        </div>
+                        <div class="answer-date">${formatDate(answer.answered_at)}</div>
+                    </div>
+                    <div class="answer-content">${answer.content}</div>
+                    <div class="answer-actions">
+    <button class="upvote-btn" onclick="upvoteAnswer(${answer.answer_id})">
+        👍 <span class="upvote-count">${answer.upvotes || 0}</span>
+    </button>
+    ${currentUser && currentUser.userId === answer.expert_id ? `
+        <button onclick="editAnswer(${answer.answer_id})">编辑</button>
+        <button onclick="deleteAnswer(${answer.answer_id})" style="background: #e74c3c;">删除</button>
+    ` : ''}
+    ${currentUser && currentUser.role === 'admin' ? `
+        <button onclick="adminDeleteAnswer(${answer.answer_id})" style="background: #e74c3c;">管理员删除</button>
+    ` : ''}
+</div>
+                </div>
+            `).join('');
+        }
+
+        // 提交回答
+        document.getElementById('submitAnswer')?.addEventListener('click', async function() {
+            const content = document.getElementById('answerContent').value.trim();
+            
+            if (!content) {
+                alert('回答内容不能为空');
+                return;
+            }
             
             try {
-                const response = await apiRequest(`/api/questions/${questionId}/status`, 'PATCH', {
+                const response = await apiRequest(`/api/questions/${currentQuestionId}/answers`, 'POST', {
+                    content: content
+                });
+                
+                alert('回答提交成功');
+                document.getElementById('answerContent').value = '';
+                
+                // 刷新回答列表
+                await loadAnswers();
+                
+                // 刷新问题状态
+                await loadQuestionDetail();
+                
+                // 隐藏回答表单（问题状态已变为answered）
+                document.getElementById('answerForm').style.display = 'none';
+            } catch (error) {
+                document.getElementById('error').textContent = error.message;
+            }
+        });
+
+        // 点赞回答
+        window.upvoteAnswer = async function(answerId) {
+            try {
+                const response = await apiRequest(`/api/answers/${answerId}/upvote`, 'POST');
+                
+                // 更新点赞数
+                const upvoteBtn = document.querySelector(`.upvote-btn[onclick="upvoteAnswer(${answerId})"]`);
+                if (upvoteBtn) {
+                    const countSpan = upvoteBtn.querySelector('.upvote-count');
+                    if (countSpan) {
+                        countSpan.textContent = response.upvotes;
+                    }
+                }
+            } catch (error) {
+                document.getElementById('error').textContent = error.message;
+            }
+        };
+
+        // 编辑回答
+        window.editAnswer = async function(answerId) {
+            const answer = await apiRequest(`/api/answers/${answerId}`);
+            
+            // 创建编辑表单
+            const editForm = document.createElement('div');
+            editForm.className = 'answer-form';
+            editForm.innerHTML = `
+                <h3>编辑回答</h3>
+                <textarea id="editAnswerContent">${answer.content}</textarea>
+                <button onclick="saveEditAnswer(${answerId})">保存</button>
+                <button onclick="cancelEditAnswer(${answerId})" style="background: #95a5a6;">取消</button>
+            `;
+            
+            // 替换原回答
+            const answerItem = document.querySelector(`.answer-item [onclick="editAnswer(${answerId})"]`).closest('.answer-item');
+            answerItem.innerHTML = '';
+            answerItem.appendChild(editForm);
+        };
+        
+        // 保存编辑
+        window.saveEditAnswer = async function(answerId) {
+            const content = document.getElementById('editAnswerContent').value.trim();
+            
+            if (!content) {
+                alert('回答内容不能为空');
+                return;
+            }
+            
+            try {
+                await apiRequest(`/api/answers/${answerId}`, 'PATCH', {
+                    content: content
+                });
+                
+                // 重新加载回答列表
+                await loadAnswers();
+            } catch (error) {
+                document.getElementById('error').textContent = error.message;
+            }
+        };
+
+        // 取消编辑
+        window.cancelEditAnswer = async function(answerId) {
+            // 重新加载回答列表
+            await loadAnswers();
+        };
+        
+        // 删除回答
+        window.deleteAnswer = async function(answerId) {
+            if (!confirm('确定要删除这个回答吗？')) {
+                return;
+            }
+            
+            try {
+                await apiRequest(`/api/answers/${answerId}`, 'DELETE');
+                
+                // 重新加载回答列表
+                await loadAnswers();
+                
+                // 如果删除的是最后一个回答，可能需要更新问题状态
+                await loadQuestionDetail();
+            } catch (error) {
+                document.getElementById('error').textContent = error.message;
+            }
+        };
+
+        // 关闭问题
+        document.getElementById('closeBtn')?.addEventListener('click', async function() {
+            try {
+                const response = await apiRequest(`/api/questions/${currentQuestionId}/status`, 'PATCH', {
                     status: 'closed'
                 });
                 
@@ -128,7 +544,27 @@
                 document.getElementById('error').textContent = error.message;
             }
         });
-        
+
+       // 打开图片模态框
+        window.openModal = function(imageUrl) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            modal.style.display = 'flex';
+            modalImg.src = imageUrl;
+        };
+
+        // 关闭图片模态框
+        window.closeModal = function() {
+            document.getElementById('imageModal').style.display = 'none';
+        };
+
+        // 点击模态框外部关闭
+        document.getElementById('imageModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
         function getStatusText(status) {
             const statusMap = {
                 'pending': '待回答',
@@ -145,3 +581,7 @@
     </script>
 </body>
 </html>
+        
+        
+        
+       

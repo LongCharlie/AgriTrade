@@ -3,33 +3,6 @@ const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-//上传头像 更新用户信息
-const updateUserAvatar = async (userId, avatarUrl) => {
-  try {
-    // 删除旧头像
-    const oldAvatarResult = await pool.query(
-      'SELECT avatar_url FROM users WHERE user_id = $1',
-      [userId]
-    );
-    if (oldAvatarResult.rows[0]?.avatar_url) {
-      const oldFilePath = path.join(__dirname, 'uploads', 'avatars', oldAvatarResult.rows[0].avatar_url);
-      if (fs.existsSync(oldFilePath)) {
-        fs.unlinkSync(oldFilePath);
-      }
-    }
-    // 更新数据库
-    const result = await pool.query(
-      'UPDATE users SET avatar_url = $1 WHERE user_id = $2 RETURNING avatar_url',
-      [avatarUrl, userId]
-    );
-    if (!result.rows.length) {
-      throw new Error('用户不存在');
-    }
-    return `/uploads/avatars/${result.rows[0].avatar_url}`;
-  } catch (error) {
-    throw new Error(`更新头像失败: ${error.message}`);
-  }
-};
 
 // 数据库连接配置
 const pool = new Pool({
@@ -37,7 +10,7 @@ const pool = new Pool({
   host: '22.tcp.cpolar.top',
   database: 'agriculture db',
   password: '12345678',
-  port: 10275,
+  port: 14065,
   ssl: false,
 });
 
@@ -49,6 +22,35 @@ pool.query('SELECT NOW()', (err) => {
     console.log('数据库连接成功');
   }
 });
+
+// 新增的更新用户头像函数
+const updateUserAvatar = async (userId, avatarFilename) => {
+  try {
+    // 获取旧头像文件名
+    const oldAvatarResult = await pool.query(
+      'SELECT avatar_url FROM users WHERE user_id = $1',
+      [userId]
+    );
+    
+    const oldAvatar = oldAvatarResult.rows[0]?.avatar_url;
+    
+    // 更新数据库中的头像URL
+    const result = await pool.query(
+      'UPDATE users SET avatar_url = $1 WHERE user_id = $2 RETURNING avatar_url',
+      [avatarFilename, userId]
+    );
+    
+    if (!result.rows.length) {
+      throw new Error('用户不存在');
+    }
+    
+    // 返回新的头像URL路径
+    return `/uploads/avatars/${result.rows[0].avatar_url}`;
+  } catch (error) {
+    throw new Error(`更新头像失败: ${error.message}`);
+  }
+};
+
 
 // 数据库操作方法
 const checkUserExists = async (username) => {
@@ -139,6 +141,90 @@ const getExpertById = async (expertId) => {
   return result.rows[0];
 };
 
+// 创建回答
+const createAnswer = async (questionId, expertId, content) => {
+  const result = await pool.query(
+    `INSERT INTO answers (
+      question_id,
+      expert_id,
+      content
+    ) VALUES ($1, $2, $3) RETURNING *`,
+    [questionId, expertId, content]
+  );
+  return result.rows[0];
+};
+
+// 获取问题的所有回答
+const getAnswersByQuestionId = async (questionId) => {
+  const result = await pool.query(
+    `SELECT 
+      a.*,
+      u.username as expert_name,
+      u.avatar_url as expert_avatar,
+      e.title as expert_title,
+      e.institution as expert_institution
+    FROM answers a
+    LEFT JOIN users u ON a.expert_id = u.user_id
+    LEFT JOIN experts e ON a.expert_id = e.expert_id
+    WHERE a.question_id = $1
+    ORDER BY a.answered_at DESC`,
+    [questionId]
+  );
+  return result.rows;
+};
+
+// 获取单个回答详情
+const getAnswerById = async (answerId) => {
+  const result = await pool.query(
+    `SELECT 
+      a.*,
+      u.username as expert_name,
+      u.avatar_url as expert_avatar,
+      e.title as expert_title,
+      e.institution as expert_institution
+    FROM answers a
+    LEFT JOIN users u ON a.expert_id = u.user_id
+    LEFT JOIN experts e ON a.expert_id = e.expert_id
+    WHERE a.answer_id = $1`,
+    [answerId]
+  );
+  return result.rows[0];
+};
+
+// 更新回答内容
+const updateAnswer = async (answerId, expertId, content) => {
+  const result = await pool.query(
+    `UPDATE answers 
+     SET content = $1 
+     WHERE answer_id = $2 AND expert_id = $3
+     RETURNING *`,
+    [content, answerId, expertId]
+  );
+  return result.rows[0];
+};
+
+// 删除回答
+const deleteAnswer = async (answerId, expertId) => {
+  const { rowCount } = await pool.query(
+    `DELETE FROM answers 
+     WHERE answer_id = $1 AND expert_id = $2`,
+    [answerId, expertId]
+  );
+  return rowCount > 0;
+};
+
+// 点赞回答
+const upvoteAnswer = async (answerId) => {
+  const result = await pool.query(
+    `UPDATE answers 
+     SET upvotes = upvotes + 1 
+     WHERE answer_id = $1
+     RETURNING upvotes`,
+    [answerId]
+  );
+  return result.rows[0]?.upvotes;
+};
+
 //更新专家信息
 const updateExpertProfile = async (expertId, updates) => {
   const fields = Object.keys(updates);
@@ -220,6 +306,36 @@ const getQuestions = async (filter = {}) => {
   
   const result = await pool.query(query, values);
   return result.rows;
+};
+
+// 添加问题图片
+const addQuestionImages = async (questionId, imageUrls) => {
+  const query = `
+    INSERT INTO question_images (question_id, image_url)
+    VALUES ${imageUrls.map((_, i) => `($1, $${i + 2})`).join(', ')}
+    RETURNING *
+  `;
+  const values = [questionId, ...imageUrls];
+  const result = await pool.query(query, values);
+  return result.rows;
+};
+
+// 获取问题图片
+const getQuestionImages = async (questionId) => {
+  const result = await pool.query(
+    'SELECT * FROM question_images WHERE question_id = $1 AND is_deleted = false ORDER BY created_at',
+    [questionId]
+  );
+  return result.rows;
+};
+
+// 删除问题图片
+const deleteQuestionImage = async (imageId, questionId) => {
+  const result = await pool.query(
+    'UPDATE question_images SET is_deleted = 1 WHERE image_id = $1 AND question_id = $2 RETURNING *',
+    [imageId, questionId]
+  );
+  return result.rows[0];
 };
 
 // 获取单个问题详情
@@ -426,6 +542,91 @@ const updateApplication = async (applicationId, farmerId, data) => {
   return rows[0];
 };
 
+// 删除证书
+const deleteCertificate = async (certificateId) => {
+  await pool.query(
+    'DELETE FROM certificates WHERE certificate_id = $1',
+    [certificateId]
+  );
+};
+
+// 获取管理员视图问题列表
+const getAdminQuestions = async () => {
+  const query = `
+    SELECT q.*, u.username 
+    FROM questions q
+    LEFT JOIN users u ON q.farmer_id = u.user_id
+  `;
+  const { rows } = await pool.query(query);
+  return rows;
+};
+
+// 获取带用户信息的问题详情
+const getQuestionWithUser = async (questionId) => {
+  const query = `
+    SELECT q.*, u.username 
+    FROM questions q
+    LEFT JOIN users u ON q.farmer_id = u.user_id
+    WHERE q.question_id = $1
+  `;
+  const { rows } = await pool.query(query, [questionId]);
+  return rows[0];
+};
+
+// 获取问题的所有回答（关联专家信息）
+const getAnswersByQuestion = async (questionId) => {
+  const query = `
+    SELECT a.*, e.real_name 
+    FROM answers a
+    LEFT JOIN experts e ON a.expert_id = e.expert_id
+    WHERE a.question_id = $1
+  `;
+  const { rows } = await pool.query(query, [questionId]);
+  return rows;
+};
+
+// 管理员更新问题状态
+const updateQuestionStatusAdmin = async ({
+  questionId,
+  is_deleted,
+  delete_reason,
+  adminId
+}) => {
+  const query = `
+    UPDATE questions 
+    SET 
+      is_deleted = $1,
+      delete_reason = $2,
+      deleted_by = $3,
+      deleted_at = NOW()
+    WHERE question_id = $4
+  `;
+  await pool.query(query, [
+    is_deleted,
+    delete_reason,
+    adminId,
+    questionId
+  ]);
+};
+
+// // 删除回答
+// const deleteAnswer = async (answerId) => {
+//   await pool.query(
+//     'DELETE FROM answers WHERE answer_id = $1',
+//     [answerId]
+//   );
+// };
+
+const getCertificatesWithExpertInfo = async () => {
+  const query = `
+    SELECT c.*, e.real_name, e.title, e.institution 
+    FROM certificates c
+    LEFT JOIN experts e ON c.expert_id = e.expert_id
+  `;
+  const { rows } = await pool.query(query);
+  return rows;
+};
+
 // 导出所有数据库操作方法
 module.exports = {
   checkUserExists,
@@ -454,7 +655,24 @@ module.exports = {
   deletePlantingRecord,
   getPurchaseDemands,
   getFarmerApplications,
+  updatePlantingRecordStatus,
+  addQuestionImages,
+  getQuestionImages,
+  deleteQuestionImage,
+  createAnswer,
+  getAnswersByQuestionId,
+  getAnswerById,
+  updateAnswer,
+  deleteAnswer,
+  upvoteAnswer,
   updateApplication,
+  deleteCertificate,
+  getAdminQuestions,
+  getQuestionWithUser,
+  getAnswersByQuestion,
+  updateQuestionStatusAdmin,
+  deleteAnswer,
+  getCertificatesWithExpertInfo,
   // 也可以导出原始的query方法以便特殊查询使用
   query: (text, params) => pool.query(text, params),
 };

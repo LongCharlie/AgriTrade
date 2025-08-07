@@ -8,6 +8,10 @@ import App from './App.vue'
 import router from './router'
 import store from './stores'
 
+// 引入全局覆盖样式
+import '@/assets/element-overrides2.css'
+import '@/assets/element-overrides.css'
+
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
 

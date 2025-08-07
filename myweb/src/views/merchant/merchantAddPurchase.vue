@@ -1,127 +1,86 @@
 <template>
   <div class="container">
-    <header>
-      <h1><i class="fas fa-file-contract"></i> 采购发布</h1>
-      <p>发布您的采购需求，获取市场最新价格预测与分析</p>
-    </header>
-
     <div class="content-wrapper">
       <section class="form-section">
         <h2><i class="fas fa-edit"></i> 需求信息</h2>
 
         <div class="form-group">
-          <label for="productName">产品名称</label>
-          <input type="text" id="productName" placeholder="请输入产品名称">
+          <label for="crop">作物种类:</label>
+          <el-select
+              v-model="formData.crop"
+              placeholder="请选择作物种类"
+              clearable
+              filterable
+          >
+            <!-- 为el-option添加唯一key（使用作物名称+索引确保唯一性） -->
+            <el-option
+                v-for="(product, index) in crops"
+                :key="product + index"
+                :label="product"
+                :value="product"
+            />
+          </el-select>
         </div>
 
         <div class="form-group">
-          <label for="quantity">需求数量</label>
-          <input type="number" id="quantity" placeholder="请输入采购数量">
+          <label for="quantity">需求数量 (公斤)</label>
+          <input type="number" id="quantity" v-model="formData.quantity" placeholder="请输入采购数量">
         </div>
 
         <div class="form-group">
-          <label>发货位置限制</label>
-          <div class="radio-group">
-            <div class="radio-option">
-              <input type="radio" id="limitYes" name="locationLimit" value="yes">
-              <label for="limitYes">是</label>
-            </div>
-            <div class="radio-option">
-              <input type="radio" id="limitNo" name="locationLimit" value="no" checked>
-              <label for="limitNo">否</label>
-            </div>
-          </div>
+          <label for="deliveryAddress">收货地址</label>
+          <el-cascader
+          class="custom-cascader"
+          :options="areaOptions"
+          v-model="selectedLocation"
+          @change="handleLocationChange"
+          placeholder="请选择省、市、区"
+          clearable
+        />
+       <div class="form-group" style="grid-column: span 2;">
+          <label>详细地址</label>
+          <input type="text" class="form-control">
         </div>
 
-        <div class="form-group">
-          <label for="deliveryDate">期望交付日期</label>
-          <input type="date" id="deliveryDate">
         </div>
 
-        <div class="form-group">
-          <label for="notes">补充说明</label>
-          <textarea id="notes" rows="4" placeholder="其他需求说明..."></textarea>
+        <div class="button-group">
+          <button id="submitBtn" @click="submitForm">
+            <i class="fas fa-paper-plane"></i> 发布采购
+          </button>
+          <button id="cancelBtn" @click="resetForm">
+            <i class="fas fa-times"></i> 取消
+          </button>
         </div>
-
-        <button id="submitBtn">
-          <i class="fas fa-paper-plane"></i> 发布采购
-        </button>
       </section>
 
       <section class="prediction-section">
         <div class="prediction-header">
-          <h2><i class="fas fa-chart-line"></i> 价格预测分析</h2>
-          <select id="productFilter">
-            <option value="all">所有产品</option>
-            <option value="apple" selected>苹果</option>
-            <option value="orange">橙子</option>
-            <option value="banana">香蕉</option>
+          <h2><i class="fas fa-chart-line"></i> 价格参考</h2>
+          <select id="productFilter" v-model="selectedCrop">
+            <!-- 为option添加唯一key -->
+            <option v-for="(crop, index) in crops" :key="crop + index" :value="crop">{{ crop }}</option>
           </select>
         </div>
-
-        <div class="info-box">
-          <p><i class="fas fa-info-circle"></i> 价格预测基于历史数据和市场趋势分析，数据每日更新，供采购决策参考。</p>
-        </div>
+        
+        <p class="update-info">最近更新: {{ lastUpdate }}</p>
 
         <div class="table-container">
           <table>
             <thead>
               <tr>
-                <th>日期</th>
-                <th class="province-header">北京</th>
-                <th class="province-header">上海</th>
-                <th class="province-header">广东</th>
-                <th class="province-header">浙江</th>
-                <th class="province-header">四川</th>
+                <th>省份</th>
+                <th>今日价格 (元/公斤)</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>2025-07-10</td>
-                <td>¥5.80 <span class="price-down">↓3%</span></td>
-                <td>¥6.20 <span class="price-down">↓2%</span></td>
-                <td class="highlight">¥5.50 <span class="price-down">↓4%</span></td>
-                <td>¥5.90 <span class="price-down">↓1%</span></td>
-                <td>¥5.40 <span class="price-down">↓2%</span></td>
-              </tr>
-              <tr>
-                <td>2025-07-17</td>
-                <td>¥5.75 <span class="price-down">↓1%</span></td>
-                <td>¥6.15 <span class="price-down">↓1%</span></td>
-                <td>¥5.45 <span class="price-down">↓1%</span></td>
-                <td>¥5.85 <span class="price-down">↓1%</span></td>
-                <td class="highlight">¥5.35 <span class="price-down">↓1%</span></td>
-              </tr>
-              <tr>
-                <td>2025-07-24</td>
-                <td>¥5.85 <span class="price-up">↑2%</span></td>
-                <td>¥6.30 <span class="price-up">↑2%</span></td>
-                <td>¥5.60 <span class="price-up">↑3%</span></td>
-                <td>¥6.00 <span class="price-up">↑3%</span></td>
-                <td>¥5.45 <span class="price-up">↑2%</span></td>
-              </tr>
-              <tr>
-                <td>2025-07-31</td>
-                <td class="highlight">¥6.00 <span class="price-up">↑3%</span></td>
-                <td>¥6.45 <span class="price-up">↑2%</span></td>
-                <td>¥5.75 <span class="price-up">↑3%</span></td>
-                <td>¥6.15 <span class="price-up">↑3%</span></td>
-                <td>¥5.60 <span class="price-up">↑3%</span></td>
-              </tr>
-              <tr>
-                <td>2025-08-07</td>
-                <td>¥6.15 <span class="price-up">↑3%</span></td>
-                <td class="highlight">¥6.60 <span class="price-up">↑2%</span></td>
-                <td>¥5.90 <span class="price-up">↑3%</span></td>
-                <td>¥6.30 <span class="price-up">↑2%</span></td>
-                <td>¥5.75 <span class="price-up">↑3%</span></td>
+              <!-- 使用省份名称作为key（天然唯一） -->
+              <tr v-for="row in priceData" :key="row.province" :class="{highlight: row.highlight}">
+                <td>{{ row.province }}</td>
+                <td>{{ row.price }}</td>
               </tr>
             </tbody>
           </table>
-        </div>
-
-        <div class="info-box">
-          <p><i class="fas fa-lightbulb"></i> 采购建议：根据预测，未来两周价格呈下降趋势，建议把握采购窗口期。广东地区价格最优。</p>
         </div>
       </section>
     </div>
@@ -129,40 +88,102 @@
 </template>
 
 <script>
+
+import { pcaTextArr } from "element-china-area-data";
 export default {
-  name: 'DemandPlatform',
+  data() {
+    return {
+      areaOptions: pcaTextArr,  // 使用导入的数据
+      selectedLocation: [],     // 用于绑定级联选择器的值
+
+      crops: [
+        '辣椒', '白菜', '菠菜', '葱', '豆角', 
+        '番茄', '黄瓜', '萝卜', '南瓜', '茄子', 
+        '山药', '蒜', '土豆', '莴苣'
+      ],
+      formData: {
+        crop: '辣椒',
+        quantity: '',
+        address: ''
+      },
+      selectedCrop: '辣椒',
+      lastUpdate: '2025-08-02 10:30',
+      priceData: []
+    };
+  },
+  watch: {
+    selectedCrop(newCrop) {
+      this.updatePriceData(newCrop);
+    }
+  },
   mounted() {
-    // 设置默认日期为3天后
-    const deliveryDate = document.getElementById('deliveryDate');
-    const today = new Date();
-    const threeDaysLater = new Date(today);
-    threeDaysLater.setDate(today.getDate() + 3);
-
-    const formattedDate = threeDaysLater.toISOString().split('T')[0];
-    deliveryDate.value = formattedDate;
-    deliveryDate.min = formattedDate;
-
-    // 提交按钮事件
-    const submitBtn = document.getElementById('submitBtn');
-    submitBtn.addEventListener('click', function() {
-      const productName = document.getElementById('productName').value;
-      const quantity = document.getElementById('quantity').value;
-
-      if (!productName || !quantity) {
-        alert('请填写产品名称和需求数量');
+    this.updatePriceData('辣椒');
+  },
+  methods: {
+    updatePriceData(crop) {
+      // 模拟不同作物的价格数据
+      const mockData = {
+        '辣椒': [
+          { province: '北京', price: '¥6.80', weekChange: 1.2, monthChange: 5.4, highlight: true },
+          { province: '上海', price: '¥7.20', weekChange: 0.8, monthChange: 4.8 },
+          { province: '广东', price: '¥6.50', weekChange: -0.5, monthChange: 3.7 },
+          { province: '浙江', price: '¥6.90', weekChange: 1.5, monthChange: 5.1 },
+          { province: '四川', price: '¥6.20', weekChange: -1.2, monthChange: 2.9 }
+        ],
+        '白菜': [
+          { province: '北京', price: '¥2.50', weekChange: 0.4, monthChange: 3.2 },
+          { province: '上海', price: '¥2.80', weekChange: -0.3, monthChange: 2.7, highlight: true },
+          { province: '广东', price: '¥2.30', weekChange: 0.7, monthChange: 4.1 },
+          { province: '浙江', price: '¥2.60', weekChange: -0.8, monthChange: 1.9 },
+          { province: '四川', price: '¥2.20', weekChange: 1.1, monthChange: 3.5 }
+        ],
+        '番茄': [
+          { province: '北京', price: '¥5.20', weekChange: 2.1, monthChange: 8.3 },
+          { province: '上海', price: '¥5.60', weekChange: 1.8, monthChange: 7.5, highlight: true },
+          { province: '广东', price: '¥4.90', weekChange: -0.4, monthChange: 5.2 },
+          { province: '浙江', price: '¥5.30', weekChange: 1.2, monthChange: 6.8 },
+          { province: '四川', price: '¥4.80', weekChange: 0.9, monthChange: 6.1 }
+        ],
+        '土豆': [
+          { province: '北京', price: '¥3.20', weekChange: 0.5, monthChange: 2.1 },
+          { province: '上海', price: '¥3.50', weekChange: 0.3, monthChange: 1.8 },
+          { province: '广东', price: '¥2.90', weekChange: -0.2, monthChange: 1.2, highlight: true },
+          { province: '浙江', price: '¥3.30', weekChange: 0.7, monthChange: 2.3 },
+          { province: '四川', price: '¥2.80', weekChange: 0.9, monthChange: 2.5 }
+        ]
+      };
+      
+      // 如果没有特定作物的数据，使用辣椒的数据
+      this.priceData = mockData[crop] || mockData['辣椒'];
+      
+      // 更新最后更新时间
+      const now = new Date();
+      this.lastUpdate = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    },
+    submitForm() {
+      if (!this.formData.crop) {
+        this.$message.error('请选择作物种类');
         return;
       }
-      alert(`需求发布成功！\n产品：${productName}\n数量：${quantity}`);
-      this.$router.push('/purchases');
-    });
-
-    // 产品筛选事件
-    const productFilter = document.getElementById('productFilter');
-    productFilter.addEventListener('change', function() {
-      alert(`已切换到产品: ${this.options[this.selectedIndex].text}`);
-    });
+      
+      if (!this.formData.quantity || isNaN(this.formData.quantity) || this.formData.quantity <= 0) {
+        this.$message.error('请输入有效的需求数量');
+        return;
+      }
+      
+      if (!this.formData.address) {
+        this.$message.error('请输入收货地址');
+        return;
+      }
+      
+      this.$message.success(`采购需求发布成功！作物：${this.formData.crop}，数量：${this.formData.quantity}公斤`);
+      this.resetForm();
+    },
+    resetForm() {
+       this.$router.push('/merchant/purchases');
+    }
   }
-}
+};
 </script>
 
 <style scoped>
@@ -298,6 +319,16 @@ input:focus, select:focus, textarea:focus {
   width: auto;
 }
 
+.button-group {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.button-group button {
+  flex: 1;
+}
+
 button {
   background: #3498db;
   color: white;
@@ -308,14 +339,27 @@ button {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
-  width: 100%;
-  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 button:hover {
   background: #2980b9;
   transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+}
+
+#cancelBtn {
+  background: #95a5a6;
+}
+
+#cancelBtn:hover {
+  background: #7f8c8d;
+}
+
+button i {
+  margin-right: 8px;
 }
 
 .table-container {
@@ -327,7 +371,7 @@ button:hover {
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 600px;
+  min-width: 350px;
 }
 
 th {
@@ -378,18 +422,16 @@ tr:hover {
 }
 
 .prediction-header select {
-  width: 200px;
+  width: 100px;
   padding: 10px;
 }
 
-@media (max-width: 768px) {
-  .content-wrapper {
-    flex-direction: column;
-  }
-
-  header h1 {
-    font-size: 2.2rem;
-  }
+.update-info {
+  margin-top: 10px;
+  text-align: right;
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  font-style: italic;
 }
 
 .info-box {
@@ -404,5 +446,19 @@ tr:hover {
 .info-box i {
   color: #3498db;
   margin-right: 10px;
+}
+
+@media (max-width: 768px) {
+  .content-wrapper {
+    flex-direction: column;
+  }
+
+  header h1 {
+    font-size: 2.2rem;
+  }
+  
+  .button-group {
+    flex-direction: column;
+  }
 }
 </style>
