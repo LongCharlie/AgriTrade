@@ -29,8 +29,13 @@ router.post('/applications', authMiddleware.authenticateToken, authMiddleware.ch
 router.get('/demands/all', authMiddleware.authenticateToken, async (req, res) => {
   try {
     const demands = await require('../model').getPurchaseDemands();
-    res.json(demands);
+    const formattedDemands = demands.map(d => ({
+      ...d,
+      location: d.location.replace('POINT(', '').replace(')', '').split(' ')
+    }));
+    res.json(formattedDemands);
   } catch (error) {
+    console.error('获取采购需求失败:', error);
     res.status(500).json({ error: '获取采购需求失败' });
   }
 });
