@@ -23,13 +23,13 @@
     </div>
 
     <!-- 证书列表 -->
-    <el-table :data="certificates" style="width: 100%">
-      <el-table-column prop="certificateId" label="证书ID" width="100"></el-table-column>
-      <el-table-column prop="expertId" label="专家ID" width="100"></el-table-column>
-      <el-table-column prop="authorizingUnit" label="授权单位"></el-table-column>
-      <el-table-column prop="obtainTime" label="获得时间" width="120"></el-table-column>
+    <el-table :data="filteredCertificates" style="width: 100%">
+    <el-table-column prop="certificate_id" label="证书ID" width="100"></el-table-column>
+      <el-table-column prop="expert_id" label="专家ID" width="100"></el-table-column>
+      <el-table-column prop="authorizing_unit" label="授权单位"></el-table-column>
+      <el-table-column prop="obtain_time" label="获得时间" width="120"></el-table-column>
       <el-table-column prop="level" label="等级" width="80"></el-table-column>
-      <el-table-column prop="validPeriod" label="有效期(年)" width="100"></el-table-column>
+      <el-table-column prop="valid_period" label="有效期(年)" width="100"></el-table-column>
       <el-table-column label="审核状态" width="120">
         <template #default="{row}">
           <el-tag :type="getStatusTagType(row.status)">
@@ -69,16 +69,16 @@
     <el-dialog title="证书审核" v-model="auditDialogVisible" width="50%">
       <el-form label-width="120px">
         <el-form-item label="证书ID">
-          <span>{{ currentCert.certificateId }}</span>
+          <span>{{ currentCert.certificate_id }}</span>
         </el-form-item>
         <el-form-item label="专家ID">
-          <span>{{ currentCert.expertId }}</span>
+          <span>{{ currentCert.expert_id }}</span>
         </el-form-item>
         <el-form-item label="授权单位">
-          <span>{{ currentCert.authorizingUnit }}</span>
+          <span>{{ currentCert.authorizing_unit }}</span>
         </el-form-item>
         <el-form-item label="获得时间">
-          <span>{{ currentCert.obtainTime }}</span>
+          <span>{{ currentCert.obtain_time }}</span>
         </el-form-item>
         <el-form-item label="审核结果">
           <el-radio-group v-model="auditForm.decision">
@@ -104,33 +104,42 @@
     <!-- 详情对话框 -->
     <el-dialog title="证书详情" v-model="detailDialogVisible" width="60%">
       <el-descriptions :column="2" border>
-        <el-descriptions-item label="证书ID">{{ detailData.certificateId }}</el-descriptions-item>
-        <el-descriptions-item label="专家ID">{{ detailData.expertId }}</el-descriptions-item>
-        <el-descriptions-item label="授权单位">{{ detailData.authorizingUnit }}</el-descriptions-item>
-        <el-descriptions-item label="获得时间">{{ detailData.obtainTime }}</el-descriptions-item>
+        <el-descriptions-item label="证书ID">{{ detailData.certificate_id }}</el-descriptions-item>
+        <el-descriptions-item label="专家ID">{{ detailData.expert_id }}</el-descriptions-item>
+        <el-descriptions-item label="授权单位">{{ detailData.authorizing_unit }}</el-descriptions-item>
+        <el-descriptions-item label="获得时间">{{ detailData.obtain_time }}</el-descriptions-item>
         <el-descriptions-item label="等级">{{ detailData.level }}</el-descriptions-item>
-        <el-descriptions-item label="有效期">{{ detailData.validPeriod }}年</el-descriptions-item>
+        <el-descriptions-item label="有效期">{{ detailData.valid_period }}年</el-descriptions-item>
         <el-descriptions-item label="描述" :span="2">{{ detailData.description }}</el-descriptions-item>
         <el-descriptions-item label="审核状态">
           <el-tag :type="getStatusTagType(detailData.status)">
             {{ getStatusText(detailData.status) }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="审核人" v-if="detailData.auditedBy">{{ detailData.auditedBy }}</el-descriptions-item>
-        <el-descriptions-item label="审核时间" v-if="detailData.auditedAt">{{ detailData.auditedAt }}</el-descriptions-item>
-        <el-descriptions-item label="审核意见" :span="2" v-if="detailData.auditedReason">{{ detailData.auditedReason }}</el-descriptions-item>
+        <el-descriptions-item label="审核人" v-if="detailData.audited_by">{{ detailData.audited_by }}</el-descriptions-item>
+        <el-descriptions-item label="审核时间" v-if="detailData.audited_at">{{ detailData.audited_at }}</el-descriptions-item>
+        <el-descriptions-item label="审核意见" :span="2" v-if="detailData.audited_reason">{{ detailData.audited_reason }}</el-descriptions-item>
       </el-descriptions>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import { getCertificatesForAudit, auditCertificate } from '@/views/admin/adminApi.js';
+// import { getCertificatesForAudit, auditCertificate } from '@/views/admin/adminApi.js';
+import axios from "axios";
+import {useUserStore} from "@/stores/user";
 
 export default {
+  setup() {
+    const userStore = useUserStore();
+    return {
+      userStore
+    };
+  },
   data() {
     return {
-      certificates: [],
+      allCertificates: [], // 存储所有从后端获取的数据
+      certificates: [],    // 存储当前页显示的数据
       filter: {
         status: '',
         expertId: ''
@@ -153,16 +162,44 @@ export default {
   created() {
     this.fetchCertificates();
   },
+  computed: {
+    filteredCertificates() {
+      let filtered = [...this.allCertificates];
+
+      // 根据审核状态筛选
+      if (this.filter.status) {
+        filtered = filtered.filter(cert => cert.status === this.filter.status);
+      }
+
+      // 根据专家ID筛选
+      if (this.filter.expert_id) {
+        filtered = filtered.filter(cert =>
+            cert.expert_id && cert.expert_id.toString().includes(this.filter.expert_id)
+        );
+      }
+
+      // 更新分页总数
+      this.pagination.total = filtered.length;
+
+      // 实现分页
+      const start = (this.pagination.current - 1) * this.pagination.size;
+      const end = start + this.pagination.size;
+      this.certificates = filtered.slice(start, end);
+
+      return this.certificates;
+    }
+  },
   methods: {
     async fetchCertificates() {
       try {
-        const params = {
-          ...this.filter,
-          page: this.pagination.current,
-          size: this.pagination.size
-        };
-        const res = await getCertificatesForAudit(params);
-        this.certificates = res.data.records;
+        const token = this.userStore.token;
+        //改
+        const res = await axios.get('http://localhost:3000/api/certificates/all', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        this.allCertificates = res.data.records;
         this.pagination.total = res.data.total;
       } catch (error) {
         console.error('获取证书列表失败:', error);
@@ -200,11 +237,18 @@ export default {
     async submitAudit() {
       try {
         const payload = {
-          certificateId: this.currentCert.certificateId,
+          certificateId: this.currentCert.certificate_id,
           decision: this.auditForm.decision,
-          reason: this.auditForm.reason
+          reason: this.auditForm.reason,
+          auditedBy: this.userStore.userId
         };
-        await auditCertificate(payload);
+        const token = this.userStore.token;
+        //改
+        await axios.post('http://localhost:3000/api/auditcert', payload, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
 
         this.$message.success('审核提交成功');
         this.auditDialogVisible = false;
@@ -214,21 +258,26 @@ export default {
         this.$message.error('审核提交失败');
       }
     },
+    // 修改分页处理方法
+    handleSizeChange(size) {
+      this.pagination.size = size;
+      this.pagination.current = 1; // 重置到第一页
+      // 触发重新计算
+      this.filteredCertificates;
+    },
+    handleCurrentChange(current) {
+      this.pagination.current = current;s
+      // 触发重新计算
+      this.filteredCertificates;
+    },
     resetFilter() {
       this.filter = {
         status: '',
         expertId: ''
       };
       this.pagination.current = 1;
-      this.fetchCertificates();
-    },
-    handleSizeChange(size) {
-      this.pagination.size = size;
-      this.fetchCertificates();
-    },
-    handleCurrentChange(current) {
-      this.pagination.current = current;
-      this.fetchCertificates();
+      // 触发重新计算
+      this.filteredCertificates;
     }
   }
 };
