@@ -87,6 +87,7 @@ const routes = [
             { path: 'ques/:id/answer', component: () => import("../views/farmer/farmerAnswer.vue") },
             { path: 'profile', component: () => import("../views/farmer/farmerProfile.vue"),meta: { requiresAuth: true, role: ['farmer'] } },
             { path: 'answer/:id', component: () => import("../views/farmer/farmerAnswerDetail.vue") },
+            { path: 'post-question', component: () => import("../views/farmer/farmerPostQuestion.vue"),meta: { requiresAuth: true, role: ['farmer'] } },
 
         ]
 },

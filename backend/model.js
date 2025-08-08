@@ -10,7 +10,7 @@ const pool = new Pool({
   host: '22.tcp.cpolar.top',
   database: 'agriculture db',
   password: '12345678',
-  port: 14065,
+  port: 12568,
   ssl: false,
 });
 
@@ -553,7 +553,7 @@ const deleteCertificate = async (certificateId) => {
 // 获取管理员视图问题列表
 const getAdminQuestions = async () => {
   const query = `
-    SELECT q.*, u.username 
+    SELECT q.*, u.user_id
     FROM questions q
     LEFT JOIN users u ON q.farmer_id = u.user_id
   `;
@@ -564,7 +564,7 @@ const getAdminQuestions = async () => {
 // 获取带用户信息的问题详情
 const getQuestionWithUser = async (questionId) => {
   const query = `
-    SELECT q.*, u.username 
+    SELECT q.*, u.username, u.user_id
     FROM questions q
     LEFT JOIN users u ON q.farmer_id = u.user_id
     WHERE q.question_id = $1
