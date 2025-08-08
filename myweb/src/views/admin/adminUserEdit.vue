@@ -79,12 +79,11 @@ const user = ref({
   district: '',
   phone: '',
   address_detail: '',
-  avatar_url: profile  // 使用默认头像
+  avatar_url: ''  // 使用默认头像
 });
 
 const selectedLocation = ref([]);
 const token = adminEditUserStore.token; // 获取 token
-// const uploadUrl = 'http://localhost:3000/api/upload'; // 上传头像的接口 URL
 
 onMounted(async () => {
   // 从 adminEditUserStore 中获取用户数据
