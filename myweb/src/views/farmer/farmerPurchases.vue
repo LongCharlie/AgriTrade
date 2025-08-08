@@ -112,6 +112,7 @@ const fetchData = async () => {
         'Authorization': `Bearer ${token}` // 设置 Authorization 头
       }
     });
+    console.log('成功获取已报价数据');
     moquotedIds.value = quotedResponse.data; // 假设 API 返回的数据就是我们需要的格式
   } catch (error) {
     console.error('获取已报价数据失败，使用模拟数据', error);

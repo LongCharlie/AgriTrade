@@ -1,5 +1,6 @@
 //Create an instance of the router
 import {createWebHistory, createRouter } from 'vue-router'
+import { useUserStore } from './stores/user';  // 导入 Pinia store
 
 import visitor from '@/views/visitor.vue';
 
@@ -23,7 +24,6 @@ import MerchantAddPurchase from '@/views/merchant/merchantAddPurchase.vue';
 import MerchantMain from '@/views/merchant/merchantMain.vue'
 import MerchantHome from '@/views/merchant/merchantHome.vue'
 import MerchantMessage from '@/views/merchant/merchantMessage.vue'
-import { componentSizeMap } from 'element-plus';
 
 
 
@@ -69,6 +69,7 @@ const routes = [
         path: "/farmer",
         redirect: '/farmer/home',
         component: () => import("../views/farmer.vue"),
+        // meta: { requiresAuth: true, role: ['farmer'] },
         children: [ // 子路由
             { path: 'home', component: () => import("../views/farmer/farmerMain.vue") },  // 默认子路由
             { path: 'purchases', component: () => import("../views/farmer/farmerPurchases.vue") },
@@ -94,6 +95,7 @@ const routes = [
         path: "/admin",
         redirect: '/admin/home',
         component: () => import("../views/admin/admin.vue"),
+        // meta: { requiresAuth: true, role: ['admin'] },
         children: [ // 子路由
             { path: 'home',  component: () => import("../views/admin/adminHome.vue") },
             { path: 'user', component: () => import("../views/admin/adminUser.vue") },
@@ -113,41 +115,13 @@ const routes = [
       redirect: 'merchant/Main',
       component: MainLayout,
       children: [
-        {
-          path: '',
-          name: 'Main',
-          component: MerchantMain
-        },
-        {
-          path: 'order',
-          name: 'Order',
-          component: MerchantOrder
-        },
-        {
-          path: 'purchases',
-          name: 'Purchases',
-          component: MerchantPurchase
-        },
-        {
-          path: 'purchaseDetail',
-          name: 'PurchaseDetail',
-          component: merchantPurchaseDetails
-        },
-        {
-          path: 'addPurchase',
-          name: 'AddPurchase',
-          component: MerchantAddPurchase
-        },
-        {
-          path: 'merchantHome',
-          name: 'MerchantHome',
-          component: MerchantHome
-        },
-        {
-          path: 'merchantMessage',
-          name: 'MerchantMessage',
-          component: MerchantMessage
-        }
+        { path: '', name: 'Main', component: MerchantMain },
+        { path: 'order', name: 'Order', component: MerchantOrder },
+        { path: 'purchases', name: 'Purchases', component: MerchantPurchase },
+        { path: 'purchaseDetail', name: 'PurchaseDetail', component: merchantPurchaseDetails },
+        { path: 'addPurchase', name: 'AddPurchase', component: MerchantAddPurchase },
+        { path: 'merchantHome', name: 'MerchantHome', component: MerchantHome },
+        { path: 'merchantMessage', name: 'MerchantMessage', component: MerchantMessage }
       ]
   }
 ]
@@ -156,5 +130,29 @@ const router = createRouter({
     history: createWebHistory(),
     routes,
 })
+
+
+// 添加路由守卫
+router.beforeEach((to, from, next) => {
+    const userStore = useUserStore();  // 获取 Pinia store 的实例
+    const token = userStore.token;      // 获取 token
+    const userRole = userStore.role;    // 获取用户角色
+
+    if (to.meta.requiresAuth) {
+        if (!token) {
+            // 如果没有 token，重定向到登录页面
+            next('/login');
+        } else if (to.meta.role && !to.meta.role.includes(userRole)) {
+            next('/login');
+            // 如果角色不匹配，重定向到403页面或首页
+            // next('/403'); // 或者 next('/')
+        } else {
+            next(); // 允许访问目标页面
+        }
+    } else {
+        next(); // 不需要验证，直接允许访问
+    }
+});
+
 
 export default router
