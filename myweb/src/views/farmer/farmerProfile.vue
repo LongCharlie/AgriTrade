@@ -7,17 +7,9 @@
 
       <!-- 头像显示 -->
       <div class="avatar-container">
-        <img v-if="user.avatar_url" :src="user.avatar_url" class="avatar" alt="用户头像" />
-        <el-upload
-            class="avatar-uploader"
-            :action="uploadUrl"
-            :show-file-list="false"
-            :on-change="handleAvatarChange"
-            :before-upload="beforeAvatarUpload"
-            :headers="{ Authorization: `Bearer ${token}` }"
-        >
-          <el-button type="primary">上传头像</el-button>
-        </el-upload>
+<!--        <img v-if="user.avatar_url" :src="user.avatar_url" class="avatar" alt="用户头像" id="userAvatar" />-->
+        <el-button class="btn-change-avatar" @click="handleAvatarClick">更换头像</el-button>
+        <input type="file" ref="avatarUpload" accept="image/*" style="display: none;" @change="handleAvatarChange" />
       </div>
 
       <!-- 用户信息 -->
@@ -84,12 +76,12 @@ const user = ref({
   district: '',
   phone: '',
   address_detail: '',
-  avatar_url: profile  // 使用默认头像
+  avatar_url: ''
 });
 
 const selectedLocation = ref([]);
 const token = userStore.token;
-const uploadUrl = 'http://localhost:3000/api/upload'; // 上传头像的接口 URL
+const uploadUrl = 'http://localhost:3000/api/user/avatar'; // 上传头像的接口 URL
 
 onMounted(async () => {
   user.value.id = userStore.userId;
@@ -100,37 +92,68 @@ onMounted(async () => {
   user.value.phone = userStore.phone;
   user.value.address_detail = userStore.address_detail;
   user.value.avatar_url = userStore.avatar_url;
-
   selectedLocation.value = user.value.id ? [user.value.province, user.value.city, user.value.district] : [];
 });
 
-// 处理头像上传
-const handleAvatarChange = async (file) => {
-  console.log(file);
-  console.log(file.status);
-  console.log(file.response);
-  // 上传成功直接更新头像 URL
-  if (file.status === 'success' && file.response && file.response.avatarUrl) {
-    const avatarUrl = file.response.avatarUrl; // 从响应中获取头像 URL
-    user.value.avatar_url = avatarUrl; // 更新用户信息中的头像 URL
-    // 更新 Pinia 中的用户信息
-    userStore.avatar_url = avatarUrl;
-    ElMessage.success('头像上传成功');
-  } else if (file.status === 'fail') {
-    ElMessage.error('头像上传失败');
-  }
+// 打开文件选择对话框
+const handleAvatarClick = () => {
+  const avatarUpload = document.querySelector('input[type=file]');
+  avatarUpload.click();
 };
 
-// 头像上传前的验证
-const beforeAvatarUpload = (file) => {
+// 处理头像上传
+const handleAvatarChange = async (event) => {
+  const file = event.target.files[0];
+
+  if (!file) return;
+
+  // 文件大小限制
+  if (file.size > 5 * 1024 * 1024) {
+    ElMessage.error('头像大小不能超过5MB');
+    return;
+  }
+
   const isImage = file.type.startsWith('image/');
   if (!isImage) {
     ElMessage.error('只能上传图片格式的文件!');
-    return false;
+    return;
   }
-  // ElMessage.success('格式正确!');
-  // console.log(file);
-  return true;
+
+  // 使用 fetch API 上传头像
+  try {
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    const response = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || '上传失败');
+    }
+
+    const result = await response.json();
+    if (result && result.avatarUrl) {
+      const newAvatarUrl = "http://localhost:3000/uploads/avatars/" + result.avatarUrl; // 计算新头像 URL
+
+      // 更新用户信息中的头像 URL，确保是响应式的
+      user.value.avatar_url = newAvatarUrl; // 更新 local state user
+      userStore.avatar_url = newAvatarUrl; // 更新 Pinia 中的用户信息，确保状态一致
+
+      ElMessage.success('头像上传成功');
+      location.reload(); // 刷新页面
+    } else {
+      throw new Error('上传失败');
+    }
+  } catch (error) {
+    console.error('头像上传失败:', error);
+    ElMessage.error(`头像上传失败: ${error.message}`);
+  }
 };
 
 // 处理位置变化
@@ -186,6 +209,7 @@ const saveProfile = async () => {
 .avatar-container {
   display: flex;
   align-items: center;
+  gap: 15px; /* Add some gap between avatar and button */
   margin-bottom: 20px;
 }
 .avatar {
@@ -195,5 +219,16 @@ const saveProfile = async () => {
   margin-right: 10px;
   border: 1px solid #D0D0D0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+.btn-change-avatar {
+  background: #2196F3;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.btn-change-avatar:hover {
+  background: #0b7dda;
 }
 </style>

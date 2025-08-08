@@ -68,34 +68,36 @@ const userStore = useUserStore();
 
 Chart.register(...registerables);
 
+// 订单数据
+const orders = [];
 // 模拟的订单数据结构
-const orders = [
-  { order_id: 1, product_name: '黄豆', quantity: 80, price: 20, created_at: '2024-11-05', status: 'completed' },
-  { order_id: 2, product_name: '黄豆', quantity: 60, price: 19, created_at: '2023-11-05', status: 'completed' },
-  { order_id: 3, product_name: '黄豆', quantity: 100, price: 22, created_at: '2022-11-05', status: 'completed' },
-  { order_id: 4, product_name: '番茄', quantity: 50, price: 15, created_at: '2024-10-01', status: 'completed' },
-  { order_id: 5, product_name: '番茄', quantity: 30, price: 12, created_at: '2023-10-01', status: 'pending_shipment' },
-  { order_id: 6, product_name: '番茄', quantity: 40, price: 14, created_at: '2022-10-01', status: 'completed' },
-  { order_id: 7, product_name: '青椒', quantity: 30, price: 10, created_at: '2024-09-15', status: 'completed' },
-  { order_id: 8, product_name: '青椒', quantity: 15, price: 8, created_at: '2023-09-15', status: 'shipped' },
-  { order_id: 9, product_name: '青椒', quantity: 25, price: 11, created_at: '2022-09-15', status: 'completed' },
-  { order_id: 10, product_name: '胡萝卜', quantity: 20, price: 5, created_at: '2024-08-20', status: 'shipped' },
-  { order_id: 11, product_name: '胡萝卜', quantity: 15, price: 6, created_at: '2023-08-20', status: 'completed' },
-  { order_id: 12, product_name: '黄豆', quantity: 120, price: 25, created_at: '2022-08-20', status: 'after_sale_resolved' },
-  { order_id: 1, product_name: '黄豆2', quantity: 80, price: 20, created_at: '2024-11-05', status: 'completed' },
-  { order_id: 2, product_name: '黄豆2', quantity: 60, price: 19, created_at: '2023-11-05', status: 'completed' },
-  { order_id: 3, product_name: '黄豆2', quantity: 100, price: 22, created_at: '2022-11-05', status: 'completed' },
-  { order_id: 4, product_name: '番茄2', quantity: 50, price: 15, created_at: '2024-10-01', status: 'completed' },
-  { order_id: 5, product_name: '番茄2', quantity: 30, price: 12, created_at: '2023-10-01', status: 'pending_shipment' },
-  { order_id: 6, product_name: '番茄2', quantity: 40, price: 14, created_at: '2022-10-01', status: 'completed' },
-  { order_id: 7, product_name: '青椒2', quantity: 30, price: 10, created_at: '2024-09-15', status: 'completed' },
-  { order_id: 8, product_name: '青椒2', quantity: 15, price: 8, created_at: '2023-09-15', status: 'shipped' },
-  { order_id: 9, product_name: '青椒2', quantity: 25, price: 11, created_at: '2022-09-15', status: 'completed' },
-  { order_id: 10, product_name: '胡萝卜2', quantity: 20, price: 5, created_at: '2024-08-20', status: 'shipped' },
-  { order_id: 11, product_name: '胡萝卜2', quantity: 15, price: 6, created_at: '2023-08-20', status: 'completed' },
-  { order_id: 12, product_name: '黄豆2', quantity: 120, price: 25, created_at: '2022-08-20', status: 'after_sale_resolved' },
-
-];
+// const orders = [
+//   { order_id: 1, product_name: '黄豆', quantity: 80, price: 20, created_at: '2024-11-05', status: 'completed' },
+//   { order_id: 2, product_name: '黄豆', quantity: 60, price: 19, created_at: '2023-11-05', status: 'completed' },
+//   { order_id: 3, product_name: '黄豆', quantity: 100, price: 22, created_at: '2022-11-05', status: 'completed' },
+//   { order_id: 4, product_name: '番茄', quantity: 50, price: 15, created_at: '2024-10-01', status: 'completed' },
+//   { order_id: 5, product_name: '番茄', quantity: 30, price: 12, created_at: '2023-10-01', status: 'pending_shipment' },
+//   { order_id: 6, product_name: '番茄', quantity: 40, price: 14, created_at: '2022-10-01', status: 'completed' },
+//   { order_id: 7, product_name: '青椒', quantity: 30, price: 10, created_at: '2024-09-15', status: 'completed' },
+//   { order_id: 8, product_name: '青椒', quantity: 15, price: 8, created_at: '2023-09-15', status: 'shipped' },
+//   { order_id: 9, product_name: '青椒', quantity: 25, price: 11, created_at: '2022-09-15', status: 'completed' },
+//   { order_id: 10, product_name: '胡萝卜', quantity: 20, price: 5, created_at: '2024-08-20', status: 'shipped' },
+//   { order_id: 11, product_name: '胡萝卜', quantity: 15, price: 6, created_at: '2023-08-20', status: 'completed' },
+//   { order_id: 12, product_name: '黄豆', quantity: 120, price: 25, created_at: '2022-08-20', status: 'after_sale_resolved' },
+//   { order_id: 1, product_name: '黄豆2', quantity: 80, price: 20, created_at: '2024-11-05', status: 'completed' },
+//   { order_id: 2, product_name: '黄豆2', quantity: 60, price: 19, created_at: '2023-11-05', status: 'completed' },
+//   { order_id: 3, product_name: '黄豆2', quantity: 100, price: 22, created_at: '2022-11-05', status: 'completed' },
+//   { order_id: 4, product_name: '番茄2', quantity: 50, price: 15, created_at: '2024-10-01', status: 'completed' },
+//   { order_id: 5, product_name: '番茄2', quantity: 30, price: 12, created_at: '2023-10-01', status: 'pending_shipment' },
+//   { order_id: 6, product_name: '番茄2', quantity: 40, price: 14, created_at: '2022-10-01', status: 'completed' },
+//   { order_id: 7, product_name: '青椒2', quantity: 30, price: 10, created_at: '2024-09-15', status: 'completed' },
+//   { order_id: 8, product_name: '青椒2', quantity: 15, price: 8, created_at: '2023-09-15', status: 'shipped' },
+//   { order_id: 9, product_name: '青椒2', quantity: 25, price: 11, created_at: '2022-09-15', status: 'completed' },
+//   { order_id: 10, product_name: '胡萝卜2', quantity: 20, price: 5, created_at: '2024-08-20', status: 'shipped' },
+//   { order_id: 11, product_name: '胡萝卜2', quantity: 15, price: 6, created_at: '2023-08-20', status: 'completed' },
+//   { order_id: 12, product_name: '黄豆2', quantity: 120, price: 25, created_at: '2022-08-20', status: 'after_sale_resolved' },
+//
+// ];
 
 // 定义图表引用
 const pieChartRef = ref(null);
@@ -359,6 +361,7 @@ const fetchData = async () => {
         'Authorization': `Bearer ${token}` // 设置 Authorization 头
       }
     });
+    console.log('成功获取农户地区订单数据', response);
     orders.value = response.data || []; // 假设 API 返回的数据就是我们需要的格式
   } catch (error) {
     console.error('获取农户地区订单数据失败，使用模拟数据', error);

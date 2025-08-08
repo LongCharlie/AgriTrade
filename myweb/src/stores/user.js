@@ -13,6 +13,13 @@ export const useUserStore = defineStore('user', {
         city: '',          // 用户城市
         district: '',      // 用户区县
         address_detail: '', // 用户详细地址
+        real_name: '',
+        title: '',
+        institution: '',
+        expertise: '',
+        answer_count: 0,
+        expert_rank: 0,
+        bio: ''
     }),
     persist: true,  // 启用持久化
     actions: {

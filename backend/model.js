@@ -456,13 +456,14 @@ const getProvinceOrders = async (province) => {
     SELECT 
       o.order_id,
       d.product_name,
-      o.quantity,
-      o.price,
+      pa.quantity,
+      pa.price,
       TO_CHAR(o.created_at, 'YYYY-MM-DD') AS created_at,
       o.status
-    FROM purchase_applications o
-    JOIN purchase_demands d ON o.demand_id = d.demand_id
-    WHERE o.province = $1
+    FROM orders o
+    JOIN purchase_applications pa ON o.application_id = pa.application_id
+    JOIN purchase_demands d ON pa.demand_id = d.demand_id
+    WHERE pa.province = $1
     ORDER BY o.created_at DESC
   `, [province]);
   return rows;
@@ -488,7 +489,8 @@ const getPurchaseDemands = async () => {
       d.quantity,
       d.buyer_id,
       u.username AS buyerName,
-      d.delivery_city AS address,
+      d.delivery_province AS address,  
+      ST_AsText(d.delivery_location) AS location,  
       TO_CHAR(d.updated_at, 'YYYY-MM-DD HH24:MI:SS') AS updated_at
     FROM purchase_demands d
     JOIN users u ON d.buyer_id = u.user_id
@@ -505,10 +507,12 @@ const getFarmerApplications = async (farmerId) => {
       record_id,
       quantity,
       price,
-      province
+      province,
+      status,
+      TO_CHAR(applied_at, 'YYYY-MM-DD HH24:MI:SS') AS applied_at
     FROM purchase_applications
     WHERE farmer_id = $1
-    ORDER BY created_at DESC
+    ORDER BY applied_at DESC
   `, [farmerId]);
   return rows;
 };
@@ -553,7 +557,7 @@ const deleteCertificate = async (certificateId) => {
 // 获取管理员视图问题列表
 const getAdminQuestions = async () => {
   const query = `
-    SELECT q.*, u.username 
+    SELECT q.*, u.user_id
     FROM questions q
     LEFT JOIN users u ON q.farmer_id = u.user_id
   `;
@@ -564,7 +568,7 @@ const getAdminQuestions = async () => {
 // 获取带用户信息的问题详情
 const getQuestionWithUser = async (questionId) => {
   const query = `
-    SELECT q.*, u.username 
+    SELECT q.*, u.username, u.user_id
     FROM questions q
     LEFT JOIN users u ON q.farmer_id = u.user_id
     WHERE q.question_id = $1
@@ -609,13 +613,13 @@ const updateQuestionStatusAdmin = async ({
   ]);
 };
 
-// 删除回答
-//const deleteAnswer = async (answerId) => {
-  //await pool.query(
-    //'DELETE FROM answers WHERE answer_id = $1',
-    //[answerId]
-  //);
-//};
+// // 删除回答
+// const deleteAnswer = async (answerId) => {
+//   await pool.query(
+//     'DELETE FROM answers WHERE answer_id = $1',
+//     [answerId]
+//   );
+// };
 
 const getCertificatesWithExpertInfo = async () => {
   const query = `

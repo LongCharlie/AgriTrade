@@ -214,7 +214,7 @@ async function loadUserAvatar() {
     try {
         const avatarUrl = await getUserAvatar();
         document.getElementById('userAvatar').src = avatarUrl;
-        
+        console.log(avatarUrl)
         // 头像上传处理
         document.getElementById('avatarUpload').addEventListener('change', async function(e) {
             if (e.target.files.length > 0) {

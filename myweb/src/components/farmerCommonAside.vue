@@ -45,11 +45,9 @@ export default {
     }
   },
   computed: {
-    // 计算当前活动菜单项
     activeMenuItem() {
-      const currentPath = this.$route.path.split('/farmer')[1]; // 获取当前路径
+      const currentPath = this.$route.path.split('/farmer')[1];
 
-      // 进行匹配
       if (currentPath === '' || currentPath === '/') {
         return '首页';
       } else if (currentPath.startsWith('/purchases')) {
@@ -67,49 +65,69 @@ export default {
       } else if (currentPath.startsWith('/profile')) {
         return '';
       }
-      return '首页'; // 默认值
+      return '首页';
     },
-    // 根据当前活动菜单项确定 active-text-color
     activeTextColor() {
       return this.activeMenuItem === '' ? '#000000' : '#FFA500';
     }
   },
   mounted() {
     this.calculateMenuHeight();
-    window.addEventListener('resize', this.calculateMenuHeight);
+    window.addEventListener('resize', this.throttle(this.calculateMenuHeight, 100));
   },
   beforeUnmount() {
-    window.removeEventListener('resize', this.calculateMenuHeight);
+    window.removeEventListener('resize', this.throttle(this.calculateMenuHeight, 100));
   },
   methods: {
     calculateMenuHeight() {
-      const headerElement = this.$refs.header;
-      const headerHeight = headerElement ? headerElement.clientHeight : 0;
-      this.menuHeight = window.innerHeight - headerHeight;
+      requestAnimationFrame(() => {
+        const headerElement = this.$refs.header;
+        const headerHeight = headerElement ? headerElement.clientHeight : 0;
+        this.menuHeight = window.innerHeight - headerHeight; // 仅在必要时计算
+      });
     },
     handleOpen(key, keyPath) {
       console.log(key, keyPath);
     },
     handleClose(key, keyPath) {
       console.log(key, keyPath);
+    },
+    throttle(func, limit) {
+      let lastFunc;
+      let lastRan;
+      return function() {
+        const context = this;
+        const args = arguments;
+        if (!lastRan) {
+          func.apply(context, args);
+          lastRan = Date.now();
+        } else {
+          clearTimeout(lastFunc);
+          lastFunc = setTimeout(function() {
+            if ((Date.now() - lastRan) >= limit) {
+              func.apply(context, args);
+              lastRan = Date.now();
+            }
+          }, limit - (Date.now() - lastRan));
+        }
+      };
     }
   }
 }
 </script>
-
 
 <style scoped>
 .full-height-container {
   height: 100vh; /* 全屏高度 */
   margin: 0;
   padding: 0;
-  position: relative; /* 为绝对定位的子元素提供基准 */
+  position: relative;
 }
 
 .el-menu-vertical-demo {
   border-right: none;
   overflow-y: auto; /* 允许滚动 */
-  /* 自定义滚动条样式 */
+  min-height: calc(100vh - 60px); /* 设置菜单的最小高度 */
 }
 
 /* 隐藏滚动条 */
@@ -136,6 +154,4 @@ export default {
 .el-menu-vertical-demo {
   font-size: 18px; /* 设置菜单项字体大小 */
 }
-
-
 </style>

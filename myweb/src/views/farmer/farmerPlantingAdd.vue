@@ -266,7 +266,7 @@ const finishPlanting = async () => {
       }
     });
     ElMessage.success('成功结束种植活动');
-    router.push('/farmer/activities'); // 跳转到活动页面
+    router.push('/farmer/planting'); // 跳转到活动页面
   } catch (error) {
     console.error('结束种植失败:', error);
     ElMessage.error('结束种植失败，请重试！');

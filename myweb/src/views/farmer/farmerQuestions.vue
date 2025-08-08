@@ -1,6 +1,11 @@
 <template>
   <div class="questions-container">
-    <h2>问题列表</h2>
+    <h1>问题列表</h1>
+
+    <!-- 添加发布问题按钮 -->
+    <div class="header-actions">
+      <el-button type="primary" @click="goToPostQuestion">发布问题</el-button>
+    </div>
 
     <!-- 搜索和筛选区域 -->
     <div class="search-filter-container">
@@ -346,6 +351,9 @@ export default {
         this.$message.error('删除提问失败');
         console.error('删除问题失败:', error);
       }
+    },
+    goToPostQuestion() {
+      this.$router.push('/farmer/post-question');
     }
   }
 };
@@ -395,8 +403,12 @@ export default {
 
 /* 确保内容区域有足够空间 */
 .questions-container {
-  padding: 20px;
+  //padding: 20px;
   min-height: calc(100vh - 120px); /* 根据实际布局调整 */
+}
+
+.header-actions{
+  padding-top: 20px;
 }
 
 .filter-buttons {

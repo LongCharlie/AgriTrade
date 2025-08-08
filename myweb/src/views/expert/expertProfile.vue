@@ -1,25 +1,16 @@
 <template>
   <div class="expert-profile-container">
-<!--    <el-card class="profile-card">-->
+    <el-card class="profile-card">
       <div slot="header">
         <h3>个人信息</h3>
       </div>
 
       <!-- 用户信息 -->
       <div class="user-info">
+        <!-- 头像显示 -->
         <div class="avatar-container">
-          <img v-if="user.avatar_url" :src="user.avatar_url" class="avatar" alt="用户头像" />
-          <el-upload
-              class="avatar-uploader"
-              :action="uploadUrl"
-              :show-file-list="false"
-              :on-change="handleAvatarChange"
-              :before-upload="beforeAvatarUpload"
-              :headers="{ Authorization: `Bearer ${token}` }"
-              name="avatar"
-          >
-            <el-button type="primary">上传头像</el-button>
-          </el-upload>
+          <el-button class="btn-change-avatar" @click="handleAvatarClick">更换头像</el-button>
+          <input type="file" ref="avatarUpload" accept="image/*" style="display: none;" @change="handleAvatarChange" />
         </div>
         <p><strong>用户名：</strong>{{ user.username }}</p>
         <p><strong>手机号：</strong>{{ user.phone }}</p>
@@ -28,7 +19,7 @@
       </div>
 
       <!-- 专家信息表单 -->
-      <el-form ref="form" :model="user" label-width="100px" @submit.prevent="submitExpertInfo">
+      <el-form :model="user" label-width="100px" @submit.prevent="submitExpertInfo">
         <el-form-item label="真实姓名">
           <el-input v-model="user.real_name" placeholder="请输入真实姓名"></el-input>
         </el-form-item>
@@ -57,150 +48,192 @@
           <el-input type="textarea" v-model="user.bio" placeholder="请填写个人简介"></el-input>
         </el-form-item>
 
-        <el-button type="primary" native-type="submit">保存修改</el-button>
+        <el-form-item>
+          <el-button type="primary" @click="submitExpertInfo">保存修改</el-button>
+        </el-form-item>
       </el-form>
+    </el-card>
   </div>
 </template>
 
-<script>
-// import {
-//   getExpertById,
-//   getMyCertificates,
-//   uploadCertificate as uploadCertApi,
-//   updateExpertProfile
-// } from '@/views/expert/expertApi';
-import axios from "axios";
+<script setup>
+import { ref, onMounted } from 'vue';
+import { useUserStore } from '@/stores/user';
 import { ElMessage } from 'element-plus';
-import { useUserStore } from '../../stores/user';
+import axios from 'axios';
 
-export default {
-  setup() {
-    const userStore = useUserStore();
-    const token = userStore.token;
-    const uploadUrl = 'http://localhost:3000/api/upload';
+const userStore = useUserStore();
+const user = ref({
+  id: null,
+  username: '',
+  phone: '',
+  province: '',
+  city: '',
+  district: '',
+  address_detail: '',
+  avatar_url: '',
+  real_name: '',
+  title: '',
+  institution: '',
+  expertise: '',
+  answer_count: 0,
+  expert_rank: 0,
+  bio: ''
+});
 
-    // 处理头像上传
-    const handleAvatarChange = async (file) => {
-      // 上传成功直接更新头像 URL
-      if (file.status === 'success' && file.response && file.response.avatarUrl) {
-        const avatarUrl = file.response.avatarUrl; // 从响应中获取头像 URL
-        user.value.avatar_url = avatarUrl; // 更新用户信息中的头像 URL
-        // 更新 Pinia 中的用户信息
-        userStore.avatar_url = avatarUrl;
-        ElMessage.success('头像上传成功');
-      } else if (file.status === 'fail') {
-        ElMessage.error('头像上传失败');
-      }
-    };
+const token = userStore.token;
+const uploadUrl = 'http://localhost:3000/api/user/avatar';
 
-// 头像上传前的验证
-    const beforeAvatarUpload = (file) => {
-      const isImage = file.type.startsWith('image/');
-      if (!isImage) {
-        ElMessage.error('只能上传图片格式的文件!');
-        return false;
-      }
-      return true;
-    };
+// 打开文件选择对话框
+const handleAvatarClick = () => {
+  const avatarUpload = document.querySelector('input[type=file]');
+  avatarUpload.click();
+};
 
-    return { userStore, token, uploadUrl, handleAvatarChange, beforeAvatarUpload };
-  },
-  data() {
-    return {
-      user: {},
-      expert: {},
-      certificates: []
-    };
-  },
-  mounted() {
-    this.initData();
-  },
-  methods: {
-    async initData() {
-      try {
-        // 获取用户信息
-        const token = this.userStore.token;
-        console.log('Token:', 111);
-        const response = await axios.get('http://localhost:3000/api/user/profile', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        this.user = response.data;
-        console.log('加载个人信息成功');
+// 处理头像上传
+const handleAvatarChange = async (event) => {
+  const file = event.target.files[0];
 
-        // 获取专家信息
-        // const expertDetails = await getExpertById(userId);
-        // this.expert = {
-        //   realName: expertDetails.real_name,
-        //   title: expertDetails.title || '',
-        //   institution: expertDetails.institution || '',
-        //   expertise: expertDetails.expertise || '',
-        //   bio: expertDetails.bio || ''
-        // };
+  if (!file) return;
 
-        // 获取证书
-        // this.certificates = await getMyCertificates();
-      } catch (error) {
-        console.error('加载个人信息失败:', error);
-        this.$message.error('加载数据失败，请刷新重试');
-      }
-    },
+  // 文件大小限制
+  if (file.size > 5 * 1024 * 1024) {
+    ElMessage.error('头像大小不能超过5MB');
+    return;
+  }
 
-    async submitExpertInfo() {
-      try {
-        const token = this.userStore.token;
-        console.log('Token:', token);
+  const isImage = file.type.startsWith('image/');
+  if (!isImage) {
+    ElMessage.error('只能上传图片格式的文件!');
+    return;
+  }
 
-        const payload = {
-          real_name: this.expert.real_name,
-          title: this.expert.title,
-          institution: this.expert.institution,
-          expertise: this.expert.expertise,
-          bio: this.expert.bio
-        };
-        const response = await axios.patch('http://localhost:3000/api/expert/profile', payload,{
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        this.$message.success('信息更新成功');
-        this.initData();
-      } catch (error) {
-        console.error('更新专家信息失败:', error);
-        this.$message.error('更新失败，请稍后再试');
-      }
-    },
+  // 使用 fetch API 上传头像
+  try {
+    const formData = new FormData();
+    formData.append('avatar', file);
 
+    const response = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || '上传失败');
+    }
+
+    const result = await response.json();
+    if (result && result.avatarUrl) {
+      const newAvatarUrl = "http://localhost:3000/uploads/avatars/" + result.avatarUrl;
+
+      // 更新用户信息中的头像 URL
+      user.value.avatar_url = newAvatarUrl;
+      userStore.avatar_url = newAvatarUrl;
+
+      ElMessage.success('头像上传成功');
+      location.reload();
+    } else {
+      throw new Error('上传失败');
+    }
+  } catch (error) {
+    console.error('头像上传失败:', error);
+    ElMessage.error(`头像上传失败: ${error.message}`);
   }
 };
+
+// 初始化数据 - 全部从 userStore 获取
+const initData = () => {
+  // 从 userStore 获取所有用户和专家信息
+  user.value.id = userStore.userId;
+  user.value.username = userStore.username;
+  user.value.phone = userStore.phone;
+  user.value.province = userStore.province;
+  user.value.city = userStore.city;
+  user.value.district = userStore.district;
+  user.value.address_detail = userStore.address_detail;
+  user.value.avatar_url = userStore.avatar_url;
+
+  // 专家信息
+  user.value.real_name = userStore.real_name || '';
+  user.value.title = userStore.title || '';
+  user.value.institution = userStore.institution || '';
+  user.value.expertise = userStore.expertise || '';
+  user.value.answer_count = userStore.answer_count || 0;
+  user.value.expert_rank = userStore.expert_rank || 0;
+  user.value.bio = userStore.bio || '';
+};
+
+// 提交专家信息
+const submitExpertInfo = async () => {
+  try {
+    const payload = {
+      real_name: user.value.real_name,
+      title: user.value.title,
+      institution: user.value.institution,
+      expertise: user.value.expertise,
+      bio: user.value.bio
+    };
+
+    const response = await axios.patch('http://localhost:3000/api/expert/profile', payload, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    // 更新 userStore 中的专家信息
+    userStore.real_name = user.value.real_name;
+    userStore.title = user.value.title;
+    userStore.institution = user.value.institution;
+    userStore.expertise = user.value.expertise;
+    userStore.bio = user.value.bio;
+
+    ElMessage.success('信息更新成功');
+  } catch (error) {
+    console.error('更新专家信息失败:', error);
+    ElMessage.error('更新失败，请稍后再试');
+  }
+};
+
+onMounted(() => {
+  initData();
+});
 </script>
 
 <style scoped>
 .expert-profile-container {
   padding: 20px;
 }
+
 .profile-card {
-  //max-width: 800px;
-  //margin: auto;
+  width: 100%;
+  margin: auto;
 }
+
 .user-info {
   margin-bottom: 20px;
 }
-.certificates-section {
-  margin-top: 30px;
-}
-.avatar {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  margin-right: 10px;
-  border: 1px solid #D0D0D0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
+
 .avatar-container {
   display: flex;
   align-items: center;
+  gap: 15px;
   margin-bottom: 20px;
+}
+
+.btn-change-avatar {
+  background: #2196F3;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-change-avatar:hover {
+  background: #0b7dda;
 }
 </style>

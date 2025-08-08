@@ -148,14 +148,14 @@ export default {
         const userId = this.userStore.userId; //用户id
 
         const payload = {
-          question_id: this.question.question_id,
-          expert_id: userId,
+          //question_id: this.question.question_id,
+          //expert_id: userId,
           content: this.answerContent
           //answered_at, upvotes后端补齐
         };
 
         //改
-        await axios.post('http://localhost:3000/api/answers', payload, {
+        await axios.post(`http://localhost:3000/api/questions/${this.question.question_id}/answers`, payload, {
           headers: {
             Authorization: `Bearer ${token}`
           }

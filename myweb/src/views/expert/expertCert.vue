@@ -109,7 +109,6 @@
 </template>
 
 <script>
-//import { getMyCertificates, uploadCertificate, deleteCertificate, updateCertificate } from '../../views/expert/expertApi';
 import axios from "axios";
 import { useUserStore } from '@/stores/user';
 
@@ -123,15 +122,23 @@ export default {
   data() {
     return {
       certifications: [],
-      editingCert: null,
+      editingCert: {
+        certificate_id: null,
+        certificate_name: '',
+        obtain_time: '',
+        level: 1,
+        valid_period: 1,
+        authorizing_unit: '',
+        description: '',
+        certificate_image: ''
+      },
       dialogVisible: false,
       filter: 'all',
       // 审核未通过理由相关数据
       reasonDialogVisible: false,
       rejectionReason: {},
       // 上传相关属性
-      uploadUrl: 'http://localhost:3000/api/upload' // 改
-
+      uploadUrl: 'http://localhost:3000/api/upload'
     };
   },
   computed: {
@@ -155,54 +162,6 @@ export default {
   methods: {
     async fetchCertificates() {
       try {
-        //mock
-        // const mockData = [
-        //   {
-        //     certificate_id: 1,
-        //     obtain_time: '2020-05-15',
-        //     level: 3,
-        //     valid_period: 5,
-        //     authorizing_unit: '中国农业协会',
-        //     description: '高级农业技术专家认证',
-        //     status: 'valid'
-        //   },
-        //   {
-        //     certificate_id: 2,
-        //     obtain_time: '2018-10-20',
-        //     level: 4,
-        //     valid_period: 10,
-        //     authorizing_unit: '农业农村部',
-        //     description: '作物栽培与管理专家资格证',
-        //     status: 'expired'
-        //   },
-        //   {
-        //     certificate_id: 3,
-        //     obtain_time: '2021-03-12',
-        //     level: 2,
-        //     valid_period: 5,
-        //     authorizing_unit: '国家农科院',
-        //     description: '植物病虫害防治专业认证',
-        //     status: 'valid'
-        //   },
-        //   {
-        //     certificate_id: 4,
-        //     obtain_time: '2019-07-01',
-        //     level: 5,
-        //     valid_period: 3,
-        //     authorizing_unit: '国际农业合作组织',
-        //     description: '有机农业国际认证',
-        //     status: 'valid'
-        //   },
-        //   {
-        //     certificate_id: 5,
-        //     obtain_time: '2022-01-10',
-        //     level: 1,
-        //     valid_period: 2,
-        //     authorizing_unit: '中国农业大学',
-        //     description: '农业可持续发展研究认证',
-        //     status: 'valid'
-        //   }
-        // ];
         const token = this.userStore.token;
         const response = await axios.get('http://localhost:3000/api/certificates/my', {
           headers: {
@@ -210,15 +169,6 @@ export default {
           }
         })
         this.certifications = response.data;
-        // this.certifications = mockData.map(cert => ({ //mock
-        //   certificateId: cert.certificate_id,
-        //   obtainTime: cert.obtain_time,
-        //   level: cert.level,
-        //   validPeriod: cert.valid_period,
-        //   authorizingUnit: cert.authorizing_unit,
-        //   description: cert.description,
-        //   status: cert.status
-        // }));
       } catch (error) {
         console.error('获取证书失败:', error);
         this.certifications = [];
@@ -320,7 +270,8 @@ export default {
 };
 </script>
 
-<style scoped>.certifications-container {
+<style scoped>
+.certifications-container {
   padding: 20px;
 }
 
@@ -330,9 +281,11 @@ export default {
 
 .crop-card {
   width: 100%;
-  height: 260px;
+  min-height: 300px; /* 增加最小高度 */
   margin: 20px 0;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
 }
 
 .crop-card:hover {
@@ -354,12 +307,14 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 10px;
 }
 
 .card-body {
   padding: 10px 0;
   font-size: 14px;
   color: #666;
+  flex: 1; /* 占据剩余空间 */
 }
 
 .card-footer {
@@ -368,6 +323,8 @@ export default {
   font-size: 13px;
   color: #999;
   margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
 }
 
 .reason-btn,
@@ -375,6 +332,14 @@ export default {
 .edit-btn {
   cursor: pointer;
   color: #409EFF;
+  padding: 2px 5px;
+}
+
+.reason-btn:hover,
+.delete-btn:hover,
+.edit-btn:hover {
+  opacity: 0.8;
+  text-decoration: underline;
 }
 
 .reason-btn {
@@ -387,9 +352,11 @@ export default {
 
 .filter-buttons {
   margin-top: 20px;
+  margin-bottom: 20px;
   display: flex;
   justify-content: flex-end;
 }
+
 /* 证书图片上传样式 */
 .certificate-uploader .el-upload {
   border: 1px dashed #d9d9d9;

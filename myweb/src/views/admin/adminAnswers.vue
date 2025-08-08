@@ -135,7 +135,13 @@ export default {
 
     // 格式化日期
     const formatDate = (dateString) => {
-      return new Date(dateString).toLocaleString()
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+      //return new Date(dateString).toLocaleString()
     }
 
     // 返回问题列表
@@ -149,7 +155,7 @@ export default {
         loading.value = true
         const id = route.params.id;
         const token = userStore.token;
-        const response = await axios.get(`http://localhost:3000/api/questions/${id}`, {
+        const response = await axios.get(`http://localhost:3000/api/admin/questions/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -169,12 +175,13 @@ export default {
         loading.value = true
         const id = route.params.id;
         const token = userStore.token;
-        const response = await axios.get(`http://localhost:3000/api/questions/${id}/answers`, {
+        const response = await axios.get(`http://localhost:3000/api/admin/questions/${id}/answers`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
         })
         answers.value = response.data
+        //ElMessage.success('获取回答列表成功')
       } catch (error) {
         ElMessage.error('获取回答列表失败')
         console.error('获取回答列表失败:', error)
@@ -193,7 +200,7 @@ export default {
         try {
           const token = userStore.token;
 
-          await axios.delete(`http://localhost:3000/api/answers/${answerId}`, {
+          await axios.delete(`http://localhost:3000/api/admin/answers/${answerId}`, {
             headers: {
               Authorization: `Bearer ${token}`
             }

@@ -3,7 +3,7 @@
     <el-row class="tac full-height">
       <el-col :span="24" class="full-height">
         <header class="header" ref="header">
-          <img src="../assets/platform_logo2.png" alt="Logo" class="logo"/>
+          <img src="../assets/platform_logo2.png" alt="Logo" class="logo" />
         </header>
         <el-menu
             :default-active="activeMenuItem"
@@ -13,7 +13,8 @@
             @close="handleClose"
             background-color="#D9EEDD"
             text-color="#3A5D3D"
-            :active-text-color="activeTextColor">
+            :active-text-color="activeTextColor"
+        >
           <template v-for="item in menuData" :key="item.name">
             <router-link :to="'/admin' + item.path" style="text-decoration: none;">
               <el-menu-item :index="item.name">
@@ -32,17 +33,17 @@ export default {
   data() {
     return {
       menuData: [
-        { path: "", name: "首页"},
-        { path: "/user", name: "用户管理"},
-        { path: "/data", name: "数据统计"},
+        { path: "", name: "首页" },
+        { path: "/user", name: "用户管理" },
+        { path: "/data", name: "数据统计" },
         { path: "/orders", name: "售后审核" },
         { path: "/cert", name: "证书审核" },
-        { path: "/ques", name: "提问/回答删除"},
-        { path: "/share", name: "经验分享审核"},
-        { path: "/sharecomment", name: "经验分享评论审核"}
+        { path: "/ques", name: "提问/回答删除" },
+        { path: "/share", name: "经验分享审核" },
+        { path: "/sharecomment", name: "经验分享评论审核" }
       ],
       menuHeight: 0 // 初始化菜单高度
-    }
+    };
   },
   computed: {
     // 计算当前活动菜单项
@@ -61,7 +62,7 @@ export default {
       } else if (currentPath.startsWith('/cert')) {
         return '证书审核';
       } else if (currentPath.startsWith('/ques')) {
-        return '提问审核';
+        return '提问/回答删除';
       } else if (currentPath.startsWith('/share')) {
         return '经验分享审核';
       }
@@ -74,10 +75,10 @@ export default {
   },
   mounted() {
     this.calculateMenuHeight();
-    window.addEventListener('resize', this.calculateMenuHeight);
+    window.addEventListener('resize', this.throttle(this.calculateMenuHeight, 100));
   },
   beforeUnmount() {
-    window.removeEventListener('resize', this.calculateMenuHeight);
+    window.removeEventListener('resize', this.throttle(this.calculateMenuHeight, 100));
   },
   methods: {
     calculateMenuHeight() {
@@ -90,11 +91,30 @@ export default {
     },
     handleClose(key, keyPath) {
       console.log(key, keyPath);
+    },
+    throttle(func, limit) {
+      let lastFunc;
+      let lastRan;
+      return function() {
+        const context = this;
+        const args = arguments;
+        if (!lastRan) {
+          func.apply(context, args);
+          lastRan = Date.now();
+        } else {
+          clearTimeout(lastFunc);
+          lastFunc = setTimeout(function() {
+            if ((Date.now() - lastRan) >= limit) {
+              func.apply(context, args);
+              lastRan = Date.now();
+            }
+          }, limit - (Date.now() - lastRan));
+        }
+      };
     }
   }
 }
 </script>
-
 
 <style scoped>
 .full-height-container {
@@ -134,6 +154,4 @@ export default {
 .el-menu-vertical-demo {
   font-size: 18px; /* 设置菜单项字体大小 */
 }
-
-
 </style>
