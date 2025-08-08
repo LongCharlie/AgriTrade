@@ -1,6 +1,6 @@
 //Create an instance of the router
 import {createWebHistory, createRouter } from 'vue-router'
-import { useUserStore } from './stores/user';  // 导入 Pinia store
+import { useUserStore } from '@/stores/user';  // 导入 Pinia store
 
 import visitor from '@/views/visitor.vue';
 
