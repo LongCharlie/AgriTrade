@@ -111,28 +111,22 @@ router.post('/orders/:order_id/resolved-reason',
     }
 });
 
-// 获取订单对应的买家数量
-router.get('/orders/:order_id/buyer-count', 
+// 获取全平台买家总数
+router.get('/statistics/buyer-count', 
   authMiddleware.authenticateToken,
   checkAdmin,
   async (req, res) => {
     try {
-      const orderId = req.params.order_id;
-      
-      if (!orderId) {
-        return res.status(400).json({ error: '必须提供订单ID' });
-      }
-
-      const result = await model.getOrderBuyerCount(orderId);
+      const result = await model.getTotalBuyerCount();
       
       res.json({
         success: true,
         data: result
       });
     } catch (error) {
-      console.error('获取订单买家数量失败:', error);
+      console.error('获取买家总数失败:', error);
       res.status(500).json({ 
-        error: error.message || '获取订单买家数量失败' 
+        error: error.message || '获取买家总数失败' 
       });
     }
 });
@@ -354,6 +348,120 @@ router.get('/users/:id',
     } catch (error) {
       console.error('获取用户详情错误:', error);
       res.status(500).json({ error: '获取用户详情失败' });
+    }
+});
+
+// 获取所有经验帖（可按状态筛选）
+router.get('/experiences', 
+  authMiddleware.authenticateToken,
+  checkAdmin,
+  async (req, res) => {
+    try {
+      const { status } = req.query;
+      const experiences = await model.getAllExperiences(status);
+      res.json(experiences);
+    } catch (error) {
+      console.error('获取经验帖失败:', error);
+      res.status(500).json({ error: error.message || '获取经验帖失败' });
+    }
+});
+
+// 更新经验帖审核状态
+router.patch('/experiences/:id/status', 
+  authMiddleware.authenticateToken,
+  checkAdmin,
+  async (req, res) => {
+    try {
+      const { status } = req.body;
+      const experienceId = req.params.id;
+      
+      if (!status) {
+        return res.status(400).json({ error: '必须提供状态值' });
+      }
+
+      const updatedExperience = await model.updateExperienceStatus(
+        experienceId, 
+        status, 
+        req.user.userId
+      );
+      
+      res.json({
+        success: true,
+        experience: {
+          experience_id: updatedExperience.experience_id,
+          audit_status: updatedExperience.audit_status,
+          reviewed_at: updatedExperience.reviewed_at
+        }
+      });
+    } catch (error) {
+      console.error('更新经验帖状态失败:', error);
+      res.status(500).json({ 
+        error: error.message || '更新经验帖状态失败' 
+      });
+    }
+});
+
+// 获取经验帖评论（管理员可查看所有状态）
+router.get('/experiences/:id/comments', 
+  authMiddleware.authenticateToken,
+  checkAdmin,
+  async (req, res) => {
+    try {
+      const { status } = req.query;
+      const comments = await model.getExperienceComments(req.params.id, status);
+      res.json(comments);
+    } catch (error) {
+      console.error('获取评论失败:', error);
+      res.status(500).json({ error: error.message || '获取评论失败' });
+    }
+});
+
+// 获取所有待审核评论
+router.get('/comments/pending', 
+  authMiddleware.authenticateToken,
+  checkAdmin,
+  async (req, res) => {
+    try {
+      const comments = await model.getPendingComments();
+      res.json(comments);
+    } catch (error) {
+      console.error('获取待审核评论失败:', error);
+      res.status(500).json({ error: error.message || '获取待审核评论失败' });
+    }
+});
+
+// 更新评论审核状态
+router.patch('/comments/:id/status', 
+  authMiddleware.authenticateToken,
+  checkAdmin,
+  async (req, res) => {
+    try {
+      const { status } = req.body;
+      const commentId = req.params.id;
+      
+      if (!status) {
+        return res.status(400).json({ error: '必须提供状态值' });
+      }
+
+      const updatedComment = await model.updateCommentStatus(
+        commentId, 
+        status, 
+        req.user.userId
+      );
+      
+      res.json({
+        success: true,
+        comment: {
+          comment_id: updatedComment.comment_id,
+          status: updatedComment.status,
+          reviewed_at: updatedComment.reviewed_at
+        }
+      });
+    } catch (error) {
+      console.error('更新评论状态失败:', error);
+      res.status(500).json({ 
+        error: error.message || '更新评论状态失败' 
+      });
     }
 });
 module.exports = router;
