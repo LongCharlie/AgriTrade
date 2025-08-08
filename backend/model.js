@@ -554,6 +554,57 @@ const deleteCertificate = async (certificateId) => {
   );
 };
 
+// 获取所有经验帖（可筛选状态）
+const getAllExperiences = async (auditStatus = null) => {
+  let query = `
+    SELECT 
+      e.*,
+      u.username as author_name,
+      u.avatar_url as author_avatar
+    FROM experiences e
+    LEFT JOIN users u ON e.user_id = u.user_id
+  `;
+  
+  const params = [];
+  
+  if (auditStatus) {
+    query += ' WHERE e.audit_status = $1';
+    params.push(auditStatus);
+  }
+  
+  query += ' ORDER BY e.created_at DESC';
+  
+  const { rows } = await pool.query(query, params);
+  return rows;
+};
+
+// 更新经验帖审核状态
+const updateExperienceStatus = async (experienceId, status, adminId) => {
+  // 验证状态值是否有效
+  const validStatuses = ['pending', 'approved', 'rejected'];
+  if (!validStatuses.includes(status)) {
+    throw new Error('无效的审核状态');
+  }
+
+  const query = `
+    UPDATE experiences
+    SET 
+      audit_status = $1,
+      reviewed_by = $2,
+      reviewed_at = NOW()
+    WHERE experience_id = $3
+    RETURNING *
+  `;
+  
+  const { rows } = await pool.query(query, [status, adminId, experienceId]);
+  
+  if (rows.length === 0) {
+    throw new Error('经验帖不存在');
+  }
+  
+  return rows[0];
+};
+
 // 获取管理员视图问题列表
 const getAdminQuestions = async () => {
   const query = `
@@ -831,9 +882,91 @@ const getYearlyOrderSummary = async () => {
   return rows;
 };
 
+// 获取经验帖评论（带审核状态过滤）
+const getExperienceComments = async (experienceId, status = 'approved') => {
+  const query = `
+    SELECT 
+      c.*,
+      u.username as commenter_name,
+      u.avatar_url as commenter_avatar
+    FROM experience_comments c
+    LEFT JOIN users u ON c.user_id = u.user_id
+    WHERE c.experience_id = $1
+    ${status ? 'AND c.status = $2' : ''}
+    ORDER BY c.created_at DESC
+  `;
+  
+  const params = [experienceId];
+  if (status) params.push(status);
+  
+  const { rows } = await pool.query(query, params);
+  return rows;
+};
+
+// 更新评论审核状态
+const updateCommentStatus = async (commentId, status, adminId) => {
+  // 验证状态值是否有效
+  const validStatuses = ['pending', 'approved', 'rejected'];
+  if (!validStatuses.includes(status)) {
+    throw new Error('无效的审核状态');
+  }
+
+  const query = `
+    UPDATE experience_comments
+    SET 
+      status = $1,
+      reviewed_by = $2,
+      reviewed_at = NOW()
+    WHERE comment_id = $3
+    RETURNING *
+  `;
+  
+  const { rows } = await pool.query(query, [status, adminId, commentId]);
+  
+  if (rows.length === 0) {
+    throw new Error('评论不存在');
+  }
+  
+  return rows[0];
+};
+
+// 获取所有待审核评论（管理员用）
+const getPendingComments = async () => {
+  const query = `
+    SELECT 
+      c.*,
+      u.username as commenter_name,
+      e.title as experience_title
+    FROM experience_comments c
+    LEFT JOIN users u ON c.user_id = u.user_id
+    LEFT JOIN experiences e ON c.experience_id = e.experience_id
+    WHERE c.status = 'pending'
+    ORDER BY c.created_at DESC
+  `;
+  
+  const { rows } = await pool.query(query);
+  return rows;
+};
+
+// 获取全平台买家总数
+const getTotalBuyerCount = async () => {
+  const query = `
+    SELECT 
+      COUNT(DISTINCT buyer_id) AS total_buyer_count
+    FROM orders
+  `;
+  
+  const { rows } = await pool.query(query);
+  
+  return {
+    total_buyer_count: parseInt(rows[0].total_buyer_count)
+  };
+};
+
 // 导出所有数据库操作方法
 module.exports = {
   checkUserExists,
+  getTotalBuyerCount,
    getWeeklyOrderSummary,
    getMonthlyOrderSummary,
    getYearlyOrderSummary,
@@ -853,11 +986,16 @@ module.exports = {
   getUserByUsername,
   comparePassword,
   resolveAfterSaleOrder,
+  getExperienceComments,
+  updateCommentStatus,
+  getPendingComments,
   generateToken,
+  updateExperienceStatus,
   checkFieldNeedsUpdate,
   getExpertDetails,
   getExpertById,
   getUserById,
+  getAllExperiences,
   updateUserAvatar,
   getAgricultureCount,
   getFarmerCount,
