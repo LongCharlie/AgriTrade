@@ -65,6 +65,181 @@ router.get('/questions/:id/answers',
     }
 });
 
+// 获取所有有售后原因的订单
+router.get('/orders/after-sale', 
+  authMiddleware.authenticateToken,
+  checkAdmin,
+  async (req, res) => {
+    try {
+      const orders = await model.getAfterSaleOrders();
+      res.json(orders);
+    } catch (error) {
+      console.error('获取售后订单失败:', error);
+      res.status(500).json({ error: '获取售后订单失败' });
+    }
+});
+
+// 管理员提交售后订单审核理由
+router.post('/orders/:order_id/resolved-reason', 
+  authMiddleware.authenticateToken,
+  checkAdmin,
+  async (req, res) => {
+    try {
+      const { decision, reason } = req.body;
+      const orderId = req.params.order_id;
+      
+      if (!decision || !reason) {
+        return res.status(400).json({ error: '必须提供decision和reason' });
+      }
+
+      const updatedOrder = await model.resolveAfterSaleOrder(orderId, decision, reason);
+      
+      res.json({
+        success: true,
+        order: {
+          order_id: updatedOrder.order_id,
+          status: updatedOrder.status,
+          admin_reason: updatedOrder.admin_reason,
+          resolved_at: updatedOrder.resolved_at
+        }
+      });
+    } catch (error) {
+      console.error('处理售后订单失败:', error);
+      res.status(500).json({ 
+        error: error.message || '处理售后订单失败' 
+      });
+    }
+});
+
+// 获取订单对应的买家数量
+router.get('/orders/:order_id/buyer-count', 
+  authMiddleware.authenticateToken,
+  checkAdmin,
+  async (req, res) => {
+    try {
+      const orderId = req.params.order_id;
+      
+      if (!orderId) {
+        return res.status(400).json({ error: '必须提供订单ID' });
+      }
+
+      const result = await model.getOrderBuyerCount(orderId);
+      
+      res.json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      console.error('获取订单买家数量失败:', error);
+      res.status(500).json({ 
+        error: error.message || '获取订单买家数量失败' 
+      });
+    }
+});
+
+// 按周统计订单金额
+router.get('/week-order-sum', 
+  authMiddleware.authenticateToken,
+  checkAdmin,
+  async (req, res) => {
+    try {
+      const summary = await model.getWeeklyOrderSummary();
+      
+      res.json({
+        success: true,
+        data: summary.map(item => ({
+          period: item.week_start,
+          total_amount: parseFloat(item.total_amount),
+          order_count: parseInt(item.order_count)
+        }))
+      });
+    } catch (error) {
+      console.error('获取周订单统计失败:', error);
+      res.status(500).json({ 
+        error: error.message || '获取周订单统计失败' 
+      });
+    }
+});
+
+// 按月统计订单金额
+router.get('/month-order-sum', 
+  authMiddleware.authenticateToken,
+  checkAdmin,
+  async (req, res) => {
+    try {
+      const summary = await model.getMonthlyOrderSummary();
+      
+      res.json({
+        success: true,
+        data: summary.map(item => ({
+          period: item.month_start,
+          total_amount: parseFloat(item.total_amount),
+          order_count: parseInt(item.order_count)
+        }))
+      });
+    } catch (error) {
+      console.error('获取月订单统计失败:', error);
+      res.status(500).json({ 
+        error: error.message || '获取月订单统计失败' 
+      });
+    }
+});
+
+// 按年统计订单金额
+router.get('/year-order-sum', 
+  authMiddleware.authenticateToken,
+  checkAdmin,
+  async (req, res) => {
+    try {
+      const summary = await model.getYearlyOrderSummary();
+      
+      res.json({
+        success: true,
+        data: summary.map(item => ({
+          period: item.year_start,
+          total_amount: parseFloat(item.total_amount),
+          order_count: parseInt(item.order_count)
+        }))
+      });
+    } catch (error) {
+      console.error('获取年订单统计失败:', error);
+      res.status(500).json({ 
+        error: error.message || '获取年订单统计失败' 
+      });
+    }
+});
+
+// 管理员更新订单状态
+router.patch('/orders/:id/status', 
+  authMiddleware.authenticateToken,
+  checkAdmin,
+  async (req, res) => {
+    try {
+      const { status, reason } = req.body;
+      const orderId = req.params.id;
+      
+      if (!status) {
+        return res.status(400).json({ error: '必须提供状态值' });
+      }
+
+      const updatedOrder = await model.updateOrderStatus(orderId, status, reason);
+      
+      res.json({
+        success: true,
+        order: {
+          order_id: updatedOrder.order_id,
+          status: updatedOrder.status,
+          updated_at: updatedOrder.updated_at
+        }
+      });
+    } catch (error) {
+      console.error('更新订单状态失败:', error);
+      res.status(500).json({ 
+        error: error.message || '更新订单状态失败' 
+      });
+    }
+});
+
 // 删除回答
 router.delete('/answers/:id', 
   authMiddleware.authenticateToken,
@@ -97,6 +272,39 @@ router.patch('/questions/:id/status',
     }
 });
 
+// 获取所有用户列表（不包括管理员）
+router.get('/users', 
+  authMiddleware.authenticateToken,
+  checkAdmin,
+  async (req, res) => {
+    try {
+      const users = await model.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+});
+
+// 删除用户
+router.delete('/users/:id', 
+  authMiddleware.authenticateToken,
+  checkAdmin,
+  async (req, res) => {
+    try {
+      const userId = req.params.id;
+      // 检查要删除的用户是否是管理员
+      const user = await model.getUserById(userId);
+      if (user && user.role === 'admin') {
+        return res.status(403).json({ error: '不能删除管理员用户' });
+      }
+      
+      await model.deleteUser(userId);
+      res.sendStatus(204);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+});
+
 // 获取所有证书
 router.get('/certificates', 
   authMiddleware.authenticateToken,
@@ -110,4 +318,42 @@ router.get('/certificates',
     }
 });
 
+// 获取单个用户详情
+router.get('/users/:id', 
+  authMiddleware.authenticateToken,
+  checkAdmin,
+  async (req, res) => {
+    try {
+      const userId = req.params.id;
+      const user = await model.getUserById(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: '用户不存在' });
+      }
+      
+      // 如果是管理员用户，且请求者不是超级管理员，则拒绝访问
+      if (user.role === 'admin' && req.user.role !== 'superadmin') {
+        return res.status(403).json({ error: '无权查看管理员信息' });
+      }
+      
+      // 格式化返回数据
+      const userData = {
+        user_id: user.user_id,
+        username: user.username,
+        role: user.role,
+        phone: user.phone,
+        province: user.province,
+        city: user.city,
+        district: user.district,
+        address_detail: user.address_detail,
+        avatar_url: user.avatar_url,
+        join_date: user.join_date
+      };
+      
+      res.json(userData);
+    } catch (error) {
+      console.error('获取用户详情错误:', error);
+      res.status(500).json({ error: '获取用户详情失败' });
+    }
+});
 module.exports = router;

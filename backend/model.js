@@ -10,7 +10,7 @@ const pool = new Pool({
   host: '22.tcp.cpolar.top',
   database: 'agriculture db',
   password: '12345678',
-  port: 14065,
+  port: 12568,
   ssl: false,
 });
 
@@ -627,20 +627,228 @@ const getCertificatesWithExpertInfo = async () => {
   return rows;
 };
 
+// 处理售后订单审核理由
+const resolveAfterSaleOrder = async (orderId, decision, reason) => {
+  // 验证decision是否有效
+  const validDecisions = ['approve', 'reject'];
+  if (!validDecisions.includes(decision)) {
+    throw new Error('无效的审核决定，必须是approve或reject');
+  }
+
+  // 根据decision设置订单状态
+  const newStatus = decision === 'approve' ? 'after_sale_resolved' : 'after_sale_rejected';
+
+  const query = `
+    UPDATE orders
+    SET 
+      status = $1,
+      admin_reason = $2,
+      resolved_at = NOW(),
+      updated_at = NOW()
+    WHERE order_id = $3 AND status = 'after_sale_requested'
+    RETURNING *
+  `;
+
+  const { rows } = await pool.query(query, [newStatus, reason, orderId]);
+  
+  if (rows.length === 0) {
+    throw new Error('订单不存在或当前状态不允许此操作');
+  }
+
+  return rows[0];
+};
+
+// 获取所有有售后原因的订单详情
+const getAfterSaleOrders = async () => {
+  const query = `
+    SELECT 
+      o.order_id,
+      d.product_name,
+      o.quantity,
+      o.price,
+      o.farmer_id,
+      farmer.username AS farmer_name,
+      d.delivery_city AS delivery_location,
+      o.buyer_id,
+      buyer.username AS buyer_name,
+      buyer.phone,
+      TO_CHAR(o.created_at, 'YYYY-MM-DD') AS created_at,
+      o.status,
+      o.after_sale_reason,
+      o.after_sale_reason_images,
+      o.admin_reason
+    FROM orders o
+    JOIN purchase_applications a ON o.application_id = a.application_id
+    JOIN purchase_demands d ON a.demand_id = d.demand_id
+    JOIN users farmer ON o.farmer_id = farmer.user_id
+    JOIN users buyer ON o.buyer_id = buyer.user_id
+    WHERE o.after_sale_reason IS NOT NULL
+    ORDER BY o.created_at DESC
+  `;
+  
+  const { rows } = await pool.query(query);
+  return rows;
+};
+
+// 获取所有非管理员用户
+const getAllUsers = async () => {
+  const { rows } = await pool.query(`
+    SELECT 
+      user_id,
+      username,
+      role,
+      phone,
+      province,
+      city,
+      district,
+      address_detail,
+      avatar_url,
+      TO_CHAR(join_date, 'YYYY-MM-DD HH24:MI:SS') AS join_date
+    FROM users
+    WHERE role != 'admin'
+    ORDER BY join_date DESC
+  `);
+  return rows;
+};
+
+// 删除用户
+const deleteUser = async (userId) => {
+  // 先检查用户是否存在且不是管理员
+  const user = await getUserById(userId);
+  if (!user) {
+    throw new Error('用户不存在');
+  }
+  if (user.role === 'admin') {
+    throw new Error('不能删除管理员用户');
+  }
+  
+  // 删除用户
+  await pool.query('DELETE FROM users WHERE user_id = $1', [userId]);
+};
+
+// 管理员更新订单状态
+const updateOrderStatus = async (orderId, status, adminReason = null) => {
+  // 验证状态值是否有效
+  const validStatuses = ['pending_shipment', 'shipped', 'completed', 'after_sale_requested', 'after_sale_resolved'];
+  if (!validStatuses.includes(status)) {
+    throw new Error('无效的订单状态');
+  }
+
+  const query = `
+    UPDATE orders
+    SET 
+      status = $1,
+      ${status === 'shipped' ? 'shipment_time = NOW(),' : ''}
+      ${status === 'completed' ? 'buyer_confirm_time = NOW(),' : ''}
+      ${adminReason ? 'admin_reason = $3,' : ''}
+      updated_at = NOW()
+    WHERE order_id = $2
+    RETURNING *
+  `;
+
+  const params = [status, orderId];
+  if (adminReason) params.push(adminReason);
+
+  const { rows } = await pool.query(query, params);
+  
+  if (rows.length === 0) {
+    throw new Error('订单不存在');
+  }
+
+  return rows[0];
+};
+
+// 获取订单对应的买家数量
+const getOrderBuyerCount = async (orderId) => {
+  const query = `
+    SELECT 
+      COUNT(DISTINCT buyer_id) AS buyer_count
+    FROM orders
+    WHERE order_id = $1
+  `;
+  
+  const { rows } = await pool.query(query, [orderId]);
+  
+  if (rows.length === 0) {
+    throw new Error('订单不存在');
+  }
+
+  return {
+    order_id: orderId,
+    buyer_count: parseInt(rows[0].buyer_count)
+  };
+};
+
+// 按周统计订单金额
+const getWeeklyOrderSummary = async () => {
+  const query = `
+    SELECT 
+      DATE_TRUNC('week', created_at) AS week_start,
+      SUM(price * quantity) AS total_amount,
+      COUNT(*) AS order_count
+    FROM orders
+    GROUP BY week_start
+    ORDER BY week_start DESC
+  `;
+  
+  const { rows } = await pool.query(query);
+  return rows;
+};
+
+// 按月统计订单金额
+const getMonthlyOrderSummary = async () => {
+  const query = `
+    SELECT 
+      DATE_TRUNC('month', created_at) AS month_start,
+      SUM(price * quantity) AS total_amount,
+      COUNT(*) AS order_count
+    FROM orders
+    GROUP BY month_start
+    ORDER BY month_start DESC
+  `;
+  
+  const { rows } = await pool.query(query);
+  return rows;
+};
+
+// 按年统计订单金额
+const getYearlyOrderSummary = async () => {
+  const query = `
+    SELECT 
+      DATE_TRUNC('year', created_at) AS year_start,
+      SUM(price * quantity) AS total_amount,
+      COUNT(*) AS order_count
+    FROM orders
+    GROUP BY year_start
+    ORDER BY year_start DESC
+  `;
+  
+  const { rows } = await pool.query(query);
+  return rows;
+};
+
 // 导出所有数据库操作方法
 module.exports = {
   checkUserExists,
+   getWeeklyOrderSummary,
+   getMonthlyOrderSummary,
+   getYearlyOrderSummary,
   createUser,
+  updateOrderStatus,
   createQuestion,
   getQuestions,
   updateUserProfile,
   getQuestionById,
+  getAllUsers,
+  deleteUser,
+  getOrderBuyerCount,
   updateQuestionStatus,
   updateExpertProfile,
   createExpert,
   getProductPrice,
   getUserByUsername,
   comparePassword,
+  resolveAfterSaleOrder,
   generateToken,
   checkFieldNeedsUpdate,
   getExpertDetails,
@@ -671,6 +879,7 @@ module.exports = {
   getAnswersByQuestion,
   updateQuestionStatusAdmin,
   deleteAnswer,
+  getAfterSaleOrders,
   getCertificatesWithExpertInfo,
   // 也可以导出原始的query方法以便特殊查询使用
   query: (text, params) => pool.query(text, params),
