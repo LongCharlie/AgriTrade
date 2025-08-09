@@ -990,6 +990,45 @@ const createFarmingActivity = async (data) => {
   return result.rows[0];
 };
 
+const createComment = async (experienceId, userId, content) => {
+  const result = await pool.query(
+    `INSERT INTO experience_comments (
+      experience_id, 
+      user_id, 
+      content
+    ) VALUES ($1, $2, $3) RETURNING *`,
+    [experienceId, userId, content]
+  );
+  return result.rows[0];
+};
+
+// 通过经验ID获取作者信息
+const getAuthorInfoByExperience = async (experienceId) => {
+  const result = await pool.query(
+    `SELECT u.username, u.avatar_url
+     FROM experiences e
+     LEFT JOIN users u ON e.user_id = u.user_id
+     WHERE e.experience_id = $1`,
+    [experienceId]
+  );
+  return result.rows[0];
+};
+
+// 获取所有经验分享（含作者信息）
+const getAllExperiencesWithAuthor = async () => {
+  const result = await pool.query(
+    `SELECT 
+      e.*,
+      u.username AS author_name,
+      u.avatar_url AS author_avatar
+     FROM experiences e
+     LEFT JOIN users u ON e.user_id = u.user_id
+     WHERE e.audit_status = 'approved'
+     ORDER BY e.created_at DESC`
+  );
+  return result.rows;
+};
+
 // 导出所有数据库操作方法
 module.exports = {
   checkUserExists,
@@ -1052,6 +1091,9 @@ module.exports = {
   getCertificatesWithExpertInfo,
   getFarmingActivitiesByRecordId,
   createFarmingActivity,
+  createComment,
+  getAuthorInfoByExperience,
+  getAllExperiencesWithAuthor,
   // 也可以导出原始的query方法以便特殊查询使用
   query: (text, params) => pool.query(text, params),
 };

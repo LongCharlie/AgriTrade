@@ -52,4 +52,56 @@ router.patch('/experiences/:id/approve', authMiddleware.authenticateToken, authM
   }
 });
 
+// 发布评论
+router.post('/experiences/:id/comments', 
+  authMiddleware.authenticateToken,
+  async (req, res) => {
+    try {
+      const { content } = req.body;
+      const userId = req.user.userId;
+      const experienceId = req.params.id;
+
+      // 验证内容非空
+      if (!content) {
+        return res.status(400).json({ error: '评论内容不能为空' });
+      }
+
+      const newComment = await require('../model').createComment(
+        experienceId,
+        userId,
+        content
+      );
+      res.status(201).json(newComment);
+    } catch (error) {
+      res.status(500).json({ error: '发布评论失败' });
+    }
+  }
+);
+
+// 获取经验分享作者信息
+router.get('/experiences/:id/author', async (req, res) => {
+  try {
+    const author = await require('../model').getAuthorInfoByExperience(req.params.id);
+    if (!author) {
+      return res.status(404).json({ error: '未找到该经验分享' });
+    }
+    res.json({
+      username: author.username,
+      avatarUrl: author.avatar_url
+    });
+  } catch (error) {
+    res.status(500).json({ error: '获取作者信息失败' });
+  }
+});
+
+// 获取所有经验分享（带作者信息）
+router.get('/experiences', async (req, res) => {
+  try {
+    const experiences = await require('../model').getAllExperiencesWithAuthor();
+    res.json(experiences);
+  } catch (error) {
+    res.status(500).json({ error: '获取经验列表失败' });
+  }
+});
+
 module.exports = router;
