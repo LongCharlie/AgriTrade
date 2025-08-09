@@ -101,6 +101,27 @@ const createUser = async (userData) => {
   return result.rows[0];
 };
 
+// 添加回答图片
+const addAnswerImages = async (answerId, imageUrls) => {
+  const query = `
+    INSERT INTO answer_images (answer_id, image_url)
+    VALUES ${imageUrls.map((_, i) => `($1, $${i + 2})`).join(', ')}
+    RETURNING *
+  `;
+  const values = [answerId, ...imageUrls];
+  const result = await pool.query(query, values);
+  return result.rows;
+};
+
+// 获取回答图片
+const getAnswerImages = async (answerId) => {
+  const result = await pool.query(
+    'SELECT * FROM answer_images WHERE answer_id = $1 AND is_deleted = false ORDER BY created_at',
+    [answerId]
+  );
+  return result.rows;
+};
+
 const createExpert = async (expertId) => {
   await pool.query(
     'INSERT INTO experts (expert_id) VALUES ($1)',
@@ -159,10 +180,13 @@ const getAnswersByQuestionId = async (questionId) => {
   const result = await pool.query(
     `SELECT 
       a.*,
-      u.username as expert_name,
-      u.avatar_url as expert_avatar,
+      e.real_name as expert_real_name,
       e.title as expert_title,
-      e.institution as expert_institution
+      u.avatar_url as expert_avatar,
+      CASE WHEN u.avatar_url IS NOT NULL 
+           THEN CONCAT('/uploads/avatars/', u.avatar_url) 
+           ELSE NULL 
+      END as expert_avatar_url
     FROM answers a
     LEFT JOIN users u ON a.expert_id = u.user_id
     LEFT JOIN experts e ON a.expert_id = e.expert_id
@@ -170,7 +194,14 @@ const getAnswersByQuestionId = async (questionId) => {
     ORDER BY a.answered_at DESC`,
     [questionId]
   );
-  return result.rows;
+  return result.rows.map(row => ({
+    ...row,
+    expert_info: {
+      real_name: row.expert_real_name,
+      title: row.expert_title,
+      avatar_url: row.expert_avatar_url
+    }
+  }));
 };
 
 // 获取单个回答详情
@@ -283,18 +314,24 @@ const createQuestion = async (farmerId, title, content) => {
 
 // 获取问题列表
 const getQuestions = async (filter = {}) => {
-  let query = 'SELECT * FROM questions';
+  let query = `
+    SELECT 
+      q.*,
+      u.username as farmer_name
+    FROM questions q
+    LEFT JOIN users u ON q.farmer_id = u.user_id
+  `;
   const values = [];
   const conditions = [];
   
   // 添加过滤条件
   if (filter.farmerId) {
-    conditions.push(`farmer_id = $${values.length + 1}`);
+    conditions.push(`q.farmer_id = $${values.length + 1}`);
     values.push(filter.farmerId);
   }
   
   if (filter.status) {
-    conditions.push(`status = $${values.length + 1}`);
+    conditions.push(`q.status = $${values.length + 1}`);
     values.push(filter.status);
   }
   
@@ -302,7 +339,7 @@ const getQuestions = async (filter = {}) => {
     query += ' WHERE ' + conditions.join(' AND ');
   }
   
-  query += ' ORDER BY created_at DESC';
+  query += ' ORDER BY q.created_at DESC';
   
   const result = await pool.query(query, values);
   return result.rows;
@@ -995,6 +1032,76 @@ const updateUserProfileAdmin = async (userId, updates) => {
   return result.rows[0];
 };
 
+// 获取所有待审核的证书
+const getPendingCertificates = async () => {
+  const { rows } = await pool.query(`
+    SELECT 
+      c.*,
+      e.real_name,
+      e.title,
+      e.institution,
+      u.username
+    FROM certificates c
+    JOIN experts e ON c.expert_id = e.expert_id
+    JOIN users u ON c.expert_id = u.user_id
+    WHERE c.is_audited = 'pending'
+    ORDER BY c.created_at DESC
+  `);
+  return rows;
+};
+
+// 更新证书审核状态
+const updateCertificateStatus = async (certificateId, status, adminId, rejectReason = null) => {
+  // 验证状态值是否有效
+  const validStatuses = ['pending', 'approved', 'rejected'];
+  if (!validStatuses.includes(status)) {
+    throw new Error('无效的审核状态');
+  }
+
+  const query = `
+    UPDATE certificates
+    SET 
+      is_audited = $1,
+      audited_by = $2,
+      audited_at = NOW(),
+    WHERE certificate_id = $3
+    RETURNING *
+  `;
+  
+  const params = [status, adminId, certificateId];
+  if (status === 'rejected') params.push(rejectReason);
+  
+  const { rows } = await pool.query(query, params);
+  
+  if (rows.length === 0) {
+    throw new Error('证书不存在');
+  }
+  
+  return rows[0];
+};
+
+// 获取单个证书详情（带专家信息）
+const getCertificateWithExpertInfo = async (certificateId) => {
+  const { rows } = await pool.query(`
+    SELECT 
+      c.*,
+      e.real_name,
+      e.title,
+      e.institution,
+      u.username
+    FROM certificates c
+    JOIN experts e ON c.expert_id = e.expert_id
+    JOIN users u ON c.expert_id = u.user_id
+    WHERE c.certificate_id = $1
+  `, [certificateId]);
+  
+  if (rows.length === 0) {
+    throw new Error('证书不存在');
+  }
+  
+  return rows[0];
+};
+
 // 获取种植记录的所有农事活动
 const getFarmingActivitiesByRecordId = async (recordId) => {
   const result = await pool.query(
@@ -1069,6 +1176,9 @@ module.exports = {
    getMonthlyOrderSummary,
    getYearlyOrderSummary,
   createUser,
+  getPendingCertificates,
+  updateCertificateStatus,
+  getCertificateWithExpertInfo,
   updateOrderStatus,
   updateUserProfileAdmin,
   createQuestion,
@@ -1099,6 +1209,8 @@ module.exports = {
   getAgricultureCount,
   getFarmerCount,
   getExpertCount,
+  addAnswerImages,
+  getAnswerImages,
   getPlantingRecordsByFarmerId,
   getProvinceOrders,
   deletePlantingRecord,

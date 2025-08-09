@@ -170,8 +170,12 @@ router.get('/questions/:id', authMiddleware.authenticateToken, async (req, res) 
     // 获取问题图片
     const images = await require('../model').getQuestionImages(questionId);
     
+    // 获取提问者信息
+    const farmer = await require('../model').getUserById(question.farmer_id);
+    
     res.json({
       ...question,
+      farmer_name: farmer.username, // 添加提问者用户名
       images: images.map(img => ({
         id: img.image_id,
         url: `/uploads/question_images/${img.image_url}`

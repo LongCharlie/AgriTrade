@@ -533,4 +533,71 @@ router.patch('/comments/:id/status',
       });
     }
 });
+
+// 获取所有待审核证书
+router.get('/certificates/pending', 
+  authMiddleware.authenticateToken,
+  checkAdmin,
+  async (req, res) => {
+    try {
+      const certificates = await model.getPendingCertificates();
+      res.json(certificates);
+    } catch (error) {
+      console.error('获取待审核证书失败:', error);
+      res.status(500).json({ error: error.message || '获取待审核证书失败' });
+    }
+});
+
+// 获取单个证书详情
+router.get('/certificates/:id', 
+  authMiddleware.authenticateToken,
+  checkAdmin,
+  async (req, res) => {
+    try {
+      const certificate = await model.getCertificateWithExpertInfo(req.params.id);
+      res.json(certificate);
+    } catch (error) {
+      console.error('获取证书详情失败:', error);
+      res.status(500).json({ error: error.message || '获取证书详情失败' });
+    }
+});
+
+// 更新证书审核状态
+router.patch('/certificates/:id/status', 
+  authMiddleware.authenticateToken,
+  checkAdmin,
+  async (req, res) => {
+    try {
+      const { status, rejectReason } = req.body;
+      const certificateId = req.params.id;
+      
+      if (!status) {
+        return res.status(400).json({ error: '必须提供状态值' });
+      }
+
+      const updatedCertificate = await model.updateCertificateStatus(
+        certificateId, 
+        status, 
+        req.user.userId,
+        rejectReason
+      );
+      
+      res.json({
+        success: true,
+        certificate: {
+          certificate_id: updatedCertificate.certificate_id,
+          audit_status: updatedCertificate.audit_status,
+          reviewed_at: updatedCertificate.reviewed_at,
+          ...(status === 'rejected' && { 
+            reject_reason: updatedCertificate.reject_reason 
+          })
+        }
+      });
+    } catch (error) {
+      console.error('更新证书状态失败:', error);
+      res.status(500).json({ 
+        error: error.message || '更新证书状态失败' 
+      });
+    }
+});
 module.exports = router;
