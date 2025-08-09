@@ -85,7 +85,7 @@ const expertCount = ref(0);
 const weekOrderSum = ref(0);
 const monthOrderSum = ref(0);
 const yearOrderSum = ref(0);
-const agricultureCount = ref(0);
+const agricultureCount = ref(14);
 
 // 新增蔬菜列表
 const vegetables = ref([
@@ -99,16 +99,16 @@ const fetchData = async () => {
 
   try {
     const [buyerRes, farmerRes, expertRes, weekSumRes, monthSumRes, yearSumRes, agriRes] = await Promise.all([
-      axios.get('http://localhost:3000/api/admin/buyer-count', { headers: { 'Authorization': `Bearer ${token}` } }),
-      axios.get('http://localhost:3000/api/admin/farmer-count', { headers: { 'Authorization': `Bearer ${token}` } }),
-      axios.get('http://localhost:3000/api/admin/expert-count', { headers: { 'Authorization': `Bearer ${token}` } }),
-      axios.get('http://localhost:3000/api/admin/week-order-sum', { headers: { 'Authorization': `Bearer ${token}` } }),
-      axios.get('http://localhost:3000/api/admin/month-order-sum', { headers: { 'Authorization': `Bearer ${token}` } }),
-      axios.get('http://localhost:3000/api/admin/year-order-sum', { headers: { 'Authorization': `Bearer ${token}` } }),
-      axios.get('http://localhost:3000/api/admin/agriculture-count', { headers: { 'Authorization': `Bearer ${token}` } }),
+      axios.get('http://localhost:3000/api/admin/statistics/buyer-count', { headers: { 'Authorization': `Bearer ${token}` } }),
+      axios.get('http://localhost:3000/api/farmer-count', { headers: { 'Authorization': `Bearer ${token}` } }),
+      axios.get('http://localhost:3000/api/expert-count', { headers: { 'Authorization': `Bearer ${token}` } }),
+      // axios.get('http://localhost:3000/api/admin/week-order-sum', { headers: { 'Authorization': `Bearer ${token}` } }),
+      // axios.get('http://localhost:3000/api/admin/month-order-sum', { headers: { 'Authorization': `Bearer ${token}` } }),
+      // axios.get('http://localhost:3000/api/admin/year-order-sum', { headers: { 'Authorization': `Bearer ${token}` } }),
+      axios.get('http://localhost:3000/api/agriculture-count', { headers: { 'Authorization': `Bearer ${token}` } }),
     ]);
 
-    buyerCount.value = buyerRes.data.count;
+    buyerCount.value = buyerRes.data.data;
     farmerCount.value = farmerRes.data.count;
     expertCount.value = expertRes.data.count;
     weekOrderSum.value = weekSumRes.data.sum;
@@ -118,13 +118,13 @@ const fetchData = async () => {
     agricultureCount.value = 14;
   } catch (error) {
     console.error('获取管理员统计数据失败，使用模拟数据:', error);
-    buyerCount.value = 5;
-    farmerCount.value = 5;
-    expertCount.value = 5;
-    weekOrderSum.value = 7000;
-    monthOrderSum.value = 12000;
-    yearOrderSum.value = 365000;
-    agricultureCount.value = 14;
+    // buyerCount.value = 5;
+    // farmerCount.value = 5;
+    // expertCount.value = 5;
+    // weekOrderSum.value = 7000;
+    // monthOrderSum.value = 12000;
+    // yearOrderSum.value = 365000;
+    // agricultureCount.value = 14;
   }
 };
 

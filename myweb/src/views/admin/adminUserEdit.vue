@@ -65,12 +65,16 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useAdminEditUserStore } from '@/stores/adminEditUser'; // 引入 Pinia adminEditUser 存储
+import { useUserStore } from '../../stores/user';
 import { ElMessage } from 'element-plus';
 import axios from 'axios';
 import { pcaTextArr } from 'element-china-area-data'; // 引入省市区数据
-import profile from '../../assets/logo.png'; // 引入默认头像
+import profile from '../../assets/logo.png';
+import {useRouter} from "vue-router";
 
 const adminEditUserStore = useAdminEditUserStore();
+const userStore = useUserStore();
+const router = useRouter();
 const user = ref({
   user_id: null,
   username: '',
@@ -83,7 +87,7 @@ const user = ref({
 });
 
 const selectedLocation = ref([]);
-const token = adminEditUserStore.token; // 获取 token
+const token = userStore.token;
 
 onMounted(async () => {
   // 从 adminEditUserStore 中获取用户数据
@@ -123,13 +127,14 @@ const saveProfile = async () => {
       city: user.value.city,
       district: user.value.district,
       address_detail: user.value.address_detail,
-      avatar_url: user.value.avatar_url // 直接保存头像 URL
+      avatar_url: user.value.avatar_url
     }, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
     });
     ElMessage.success('保存成功');
+    router.push('/admin/user');
   } catch (error) {
     console.error('保存失败:', error);
     ElMessage.error('保存失败，请重试');
