@@ -33,8 +33,6 @@ router.get('/expert-count', async (req, res) => {
 
 // 获取全平台买家总数
 router.get('/statistics/buyer-count', 
-  authMiddleware.authenticateToken,
-  checkAdmin,
   async (req, res) => {
     try {
       const result = await model.getTotalBuyerCount();
