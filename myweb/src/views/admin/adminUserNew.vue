@@ -54,6 +54,7 @@ import { useRouter, onBeforeRouteLeave } from 'vue-router';
 import { useRegisterStore } from '@/stores/register';
 import axios from 'axios';
 import { pcaTextArr } from 'element-china-area-data';
+import { ElMessage } from 'element-plus';
 
 export default {
   setup() {
@@ -94,7 +95,8 @@ export default {
           district: registerStore.district,
           address_detail: registerStore.address_detail
         });
-        alert('注册成功');
+        // alert('注册成功');
+        ElMessage.success('注册成功');
         router.push('/admin/user');
       } catch (err) {
         error.value = err.response?.data || '注册失败';

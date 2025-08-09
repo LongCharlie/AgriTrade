@@ -200,7 +200,7 @@ const simulatedUserData = [
 const fetchData = async () => {
   const token = userStore.token; // 从用户存储中获取 token
   try {
-    const response = await axios.get('http://localhost:3000/api/users/all', {
+    const response = await axios.get('http://localhost:3000/api/admin/users', {
       headers: {
         'Authorization': `Bearer ${token}` // 设置 Authorization 头
       }
@@ -277,13 +277,13 @@ const handleEdit = (row) => {
 const handleDelete = async (userId) => {
   const token = userStore.token; // 获取用户的 Token
   try {
-    await axios.delete(`http://localhost:3000/api/user/delete`, {
+    await axios.delete(`http://localhost:3000/api/admin/users/${userId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
-      data: {
-        user_id: userId, // 发送需要删除的用户ID
-      }
+      // data: {
+      //   user_id: userId, // 发送需要删除的用户ID
+      // }
     });
     ElMessage.success('用户删除成功'); // 删除成功的提示
     await fetchData(); // 重新获取用户列表以更新显示

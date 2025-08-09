@@ -162,7 +162,7 @@ const filteredTableData = ref([]); // 初始化过滤后的数据
 const fetchData = async () => {
   const token = userStore.token; // 从用户存储中获取 token
   try {
-    const response = await axios.get('http://localhost:3000/api/orders/after-sale', {
+    const response = await axios.get('http://localhost:3000/api/admin/orders/after-sale', {
       headers: {
         'Authorization': `Bearer ${token}` // 设置 Authorization 头
       }
@@ -253,14 +253,14 @@ const handleApproval = async () => {
 
   try {
     // 1: 调用接口更新订单状态
-    await axios.post(`http://localhost:3000/api/orders/${orderId}/status`, {
+    await axios.patch(`http://localhost:3000/api/admin/orders/${orderId}/status`, {
       status: 'after_sale_resolved'
     }, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
 
     // 2:提交审核成功理由
-    await axios.post(`http://localhost:3000/api/orders/${orderId}/resolved-reason`, {
+    await axios.post(`http://localhost:3000/api/admin/orders/${orderId}/resolved-reason`, {
       decision: 'approve',
       reason: reviewReason.value
     }, {
@@ -290,14 +290,14 @@ const handleRejection = async () => {
 
   try {
     // 1: 调用接口更新订单状态
-    await axios.post(`http://localhost:3000/api/orders/${orderId}/status`, {
+    await axios.post(`http://localhost:3000/api/admin/orders/${orderId}/status`, {
       status: 'completed'
     }, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
 
     // 2: 提交审核拒绝理由
-    await axios.post(`http://localhost:3000/api/orders/${orderId}/resolved-reason`, {
+    await axios.post(`http://localhost:3000/api/admin/orders/${orderId}/resolved-reason`, {
       decision: 'reject',
       reason: reviewReason.value,
     }, {
