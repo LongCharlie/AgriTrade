@@ -327,6 +327,7 @@
     >
       <el-table-column prop="question_id" label="ID" width="80" />
       <el-table-column prop="title" label="标题" min-width="200" />
+      <el-table-column prop="content" label="内容" min-width="300" />
       <el-table-column prop="user_id" label="农户ID" width="100" />
       <el-table-column label="状态" width="120">
         <template #default="{ row }">
@@ -512,7 +513,7 @@ export default {
     const confirmDelete = async () => {
       try {
         const questionId = currentActionQuestion.value.question_id;
-        await axios.delete(`http://localhost:3000/api/admin/answers/${questionId}`, {
+        await axios.delete(`http://localhost:3000/api/questions/${questionId}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }

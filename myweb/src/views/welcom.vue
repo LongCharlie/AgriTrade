@@ -21,7 +21,7 @@
 <!--        </div>-->
         <nav class="nav-links">
           <a @click="goToWelcom" class="nav-link active">首页</a>
-          <a @click="goToVisitor" class="nav-link">采购</a>
+<!--          <a @click="goToVisitor" class="nav-link">采购</a>-->
           <a @click="goToNotice" class="nav-link">须知</a>
 <!--          <a href="#" class="nav-link">更多</a>-->
         </nav>
@@ -55,12 +55,12 @@
             都符合高标准品质要求，让您足不出户即可享受田间地头的自然美味。
           </p>
           <div class="hero-actions">
-            <el-button @click="goToVisitor" type="success" size="large" round class="primary-action">
-              预览采购信息
-              <template #icon>
-                <el-icon><Search /></el-icon>
-              </template>
-            </el-button>
+<!--            <el-button @click="goToVisitor" type="success" size="large" round class="primary-action">-->
+<!--              预览采购信息-->
+<!--              <template #icon>-->
+<!--                <el-icon><Search /></el-icon>-->
+<!--              </template>-->
+<!--            </el-button>-->
 <!--            <el-button type="text" size="large" class="secondary-action">-->
 <!--              视频介绍-->
 <!--              <el-icon><VideoPlay /></el-icon>-->
@@ -167,7 +167,7 @@
 * ref 函数，用于创建响应式数据。
 * 内容变化时，页面上使用它的部分会自动重新渲染。
 * */
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router';
 import {
@@ -248,19 +248,14 @@ const features = ref([
 ])
 
 const stats = ref([])
+let refreshInterval = null
 
-/*
-axios.get：发起 HTTP 请求获取数据
-Promise.all：同时请求多个接口，提升性能
-onMounted：在组件挂载后请求数据
-stats.value = [...]将接口数据赋值给响应式引用
-*/
-onMounted(async () => {
+const fetchStats = async () => {
   try {
     const [agricultureRes, farmerRes, expertRes] = await Promise.all([
-      axios.get('/api/agriculture-count'),
-      axios.get('/api/farmer-count'),
-      axios.get('/api/expert-count')
+      axios.get('http://localhost:3000/api/agriculture-count'),
+      axios.get('http://localhost:3000/api/farmer-count'),
+      axios.get('http://localhost:3000/api/expert-count')
     ])
 
     stats.value = [
@@ -270,12 +265,28 @@ onMounted(async () => {
     ]
   } catch (error) {
     console.error('获取统计数据失败:', error)
-    // 设置默认数据或空数据
-    stats.value = [
-      { value: "0", label: "农产品" },
-      { value: "0", label: "农户" },
-      { value: "0", label: "专家" },
-    ]
+  }
+}
+
+/*
+axios.get：发起 HTTP 请求获取数据
+Promise.all：同时请求多个接口，提升性能
+onMounted：在组件挂载后请求数据
+stats.value = [...]将接口数据赋值给响应式引用
+
+使用定时器定期刷新数据
+可以通过 setInterval 定期调用数据获取函数来更新统计数据
+需要注意在组件销毁时清除定时器
+*/
+onMounted(async () => {
+  await fetchStats()
+  // 每30秒刷新一次数据
+  refreshInterval = setInterval(fetchStats, 30000)
+})
+
+onUnmounted(() => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
   }
 })
 

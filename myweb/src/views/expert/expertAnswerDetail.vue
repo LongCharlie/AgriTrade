@@ -15,8 +15,8 @@
               <div class="answer-header">
                 <el-avatar @click="$router.push(`/expert/detail/${answer.expert_id}`)" :size="60" :src="answer.avatar_url || defaultAvatar"></el-avatar>
                 <div class="user-info">
-                  <h3>{{ answer.real_name }}</h3>
-                  <span class="expert-title">{{ answer.title }}</span>
+                  <h3>{{ answer.expert_name }}</h3>
+                  <span class="expert-title">{{ answer.expert_title }}</span>
                 </div>
                 <div class="answer-meta">
                   <span class="time">{{ formatDate(answer.answered_at) }}</span>
@@ -94,7 +94,7 @@ export default {
   methods: {
     async fetchAnswerDetail() {
       try {
-        const answerId = this.$route.params.answerId;
+        const answerId = this.$route.params.id;
         const token = this.userStore.token;
 
         // 实际API调用
