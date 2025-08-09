@@ -11,6 +11,34 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(express.static('public'));
+
+// 创建回答图片上传目录
+const answerImagesDir = path.join(__dirname, 'uploads', 'answer_images');
+if (!fs.existsSync(answerImagesDir)) {
+  fs.mkdirSync(answerImagesDir, { recursive: true });
+}
+
+// 配置multer
+const answerImageStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, answerImagesDir);
+  },
+  filename: (req, file, cb) => {
+    const cleanedName = file.originalname.replace(/[/\\?%*:|"<>]/g, '');
+    cb(null, `${uuidv4()}-${cleanedName}`);
+  }
+});
+
+const uploadAnswerImages = multer({ 
+  storage: answerImageStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('仅支持图片格式'), false);
+  }
+}).array('images', 5); // 最多5张图片
+
+
 // 创建上传目录
 const uploadDir = path.join(__dirname, 'uploads', 'avatars');
 if (!fs.existsSync(uploadDir)) {
@@ -68,7 +96,9 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/uploads/question_images', express.static(path.join(__dirname, 'uploads', 'question_images')));
 app.use('/uploads/avatars', express.static(path.join(__dirname, 'uploads', 'avatars')));
-
+app.use('/uploads/certificates', express.static(path.join(__dirname, 'uploads', 'certificates'))); //证书上传图片存储区
+// 添加静态文件服务
+app.use('/uploads/answer_images', express.static(path.join(__dirname, 'uploads', 'answer_images')));
 // 引入路由
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
