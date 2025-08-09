@@ -10,9 +10,9 @@
               <div class="card-header" slot="header">
                 <strong>{{ question.title }}</strong>
                 <div class="tag">
-                  <el-tag :type="question.answer_count > 0 ? 'success' : 'warning'">
-                    {{ question.answer_count > 0 ? '已回答' : '未回答' }}
-                  </el-tag>
+<!--                  <el-tag :type="question.answer_count > 0 ? 'success' : 'warning'">-->
+<!--                    {{ question.answer_count > 0 ? '已回答' : '未回答' }}-->
+<!--                  </el-tag>-->
                   <el-tag
                       v-if="question.user_id === userStore.userId"
                       :type="question.status === 'open' ? 'success' : 'info'"
@@ -152,7 +152,7 @@ export default {
             Authorization: `Bearer ${token}`
           }
         })
-        this.answers = response.data;
+        this.answers = response.data.answers;
       } catch (error) {
         console.error('获取回答失败:', error);
       }

@@ -4,7 +4,16 @@
 
     <!-- 问题基本信息 -->
     <div class="question-header">
-      <h2>{{ question.title }}</h2>
+      <div class="header-actions">
+        <h2>{{ question.title }}</h2>
+        <el-button
+            size="small"
+            type="danger"
+            @click="showDeleteDialog(question)"
+        >
+          删除提问
+        </el-button>
+      </div>
       <div class="meta">
         <span>提问农户: {{ question.username }} (ID: {{ question.user_id }})</span>
         <span>提问时间: {{ formatDate(question.created_at) }}</span>
@@ -13,6 +22,26 @@
         </el-tag>
       </div>
       <div class="content">{{ question.content }}</div>
+      <!-- 问题图片展示 -->
+      <div v-if="question.images && question.images.length > 0" class="question-images">
+        <p><strong>问题图片：</strong></p>
+        <div class="image-gallery">
+          <el-image
+              v-for="(image, index) in question.images"
+              :key="image.id"
+              :src="`http://localhost:3000${image.url}`"
+              :preview-src-list="getPreviewList(question.images)"
+              :initial-index="index"
+              class="question-image"
+              fit="cover"
+              lazy
+          >
+            <div slot="error" class="image-slot">
+              <i class="el-icon-picture-outline"></i>
+            </div>
+          </el-image>
+        </div>
+      </div>
     </div>
 
     <!-- 回答筛选区域 -->
@@ -55,8 +84,11 @@
           {{ formatDate(row.answered_at) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="120" fixed="right">
+      <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
+          <el-button size="small" @click="showAnswerDetail(row)">
+            详情
+          </el-button>
           <el-button
               type="danger"
               size="small"
@@ -80,6 +112,15 @@
           @size-change="handleSizeChange"
       />
     </div>
+
+    <!-- 删除确认对话框 -->
+    <el-dialog v-model="actionDialogVisible" title="确认删除" width="500px">
+      <p>确定要删除这个问题吗？</p>
+      <template #footer>
+        <el-button @click="actionDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmDelete">确认删除</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -95,6 +136,7 @@ export default {
     const route = useRoute()
     const router = useRouter()
     const userStore = useUserStore();
+    const token = userStore.token;
 
     // 状态管理
     const searchExpert = ref('')
@@ -107,6 +149,10 @@ export default {
     const loading = ref(false)
     const currentPage = ref(1)
     const pageSize = ref(10)
+
+    // 操作相关
+    const actionDialogVisible = ref(false)
+    const currentActionQuestion = ref(null)
 
     // 日期范围变更处理
     const handleDateChange = (dates) => {
@@ -155,7 +201,7 @@ export default {
         loading.value = true
         const id = route.params.id;
         const token = userStore.token;
-        const response = await axios.get(`http://localhost:3000/api/admin/questions/${id}`, {
+        const response = await axios.get(`http://localhost:3000/api/questions/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -166,6 +212,32 @@ export default {
         console.error('获取问题详情失败:', error)
       } finally {
         loading.value = false
+      }
+    }
+
+    // 显示删除对话框
+    const showDeleteDialog = (question) => {
+      currentActionQuestion.value = question
+      actionDialogVisible.value = true
+    }
+
+    // 确认删除
+    const confirmDelete = async () => {
+      try {
+        const questionId = currentActionQuestion.value.question_id;
+        await axios.delete(`http://localhost:3000/api/questions/${questionId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        ElMessage.success('问题已删除')
+        actionDialogVisible.value = false
+        //fetchQuestions() // 重新获取问题列表
+        router.push(`/admin/ques`)
+      } catch (error) {
+        ElMessage.error('删除失败: ' + (error.response?.data?.message || error.message))
+        console.error('删除失败:', error)
       }
     }
 
@@ -200,7 +272,7 @@ export default {
         try {
           const token = userStore.token;
 
-          await axios.delete(`http://localhost:3000/api/admin/answers/${answerId}`, {
+          await axios.delete(`http://localhost:3000/api/answers/${answerId}`, {
             headers: {
               Authorization: `Bearer ${token}`
             }
@@ -220,6 +292,16 @@ export default {
       }).catch(() => {
         // 用户取消
       })
+    }
+
+    // 显示问题详情
+    const showAnswerDetail = (answer) => {
+      router.push(`/admin/answer/${answer.answer_id}`);
+    }
+    
+    // 获取图片预览列表
+    const getPreviewList = (images) => {
+      return images.map(image => `http://localhost:3000${image.url}`);
     }
 
     // 计算属性 - 过滤回答
@@ -285,15 +367,20 @@ export default {
       formatDate,
       goBack,
       handleDeleteAnswer,
+      showAnswerDetail,
       handlePageChange,
       handleSizeChange,
       resetSearch,
       handleDateChange,
       handleSearch,
+      getPreviewList,
+      showDeleteDialog,
+      confirmDelete,
 
       // 计算属性
       filteredAnswers,
-      paginatedAnswers
+      paginatedAnswers,
+      actionDialogVisible
     }
   }
 }
@@ -338,5 +425,58 @@ export default {
   margin-top: 20px;
   display: flex;
   justify-content: center;
+}
+
+/* 问题图片样式 */
+.question-images {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.image-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.question-image {
+  width: 150px;
+  height: 150px;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid #eee;
+}
+
+.image-slot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background: #f5f5f5;
+  color: #999;
+  font-size: 24px;
+}
+
+/* 添加头部操作区域样式 */
+.header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  margin-right: 60px;
+}
+
+/* 调整标题样式 */
+.header-actions h2 {
+  margin: 0;
+  flex-grow: 1;
+}
+
+/* 确保删除按钮有足够间距 */
+.header-actions .el-button {
+  margin-left: 20px;
 }
 </style>

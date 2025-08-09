@@ -27,6 +27,27 @@
                 <p><strong>时间：</strong>{{ formatDate(question.created_at) }}</p>
                 <p><strong>内容：</strong>{{ question.content }}</p>
 
+                <!-- 问题图片展示 -->
+                <div v-if="question.images && question.images.length > 0" class="question-images">
+                  <p><strong>问题图片：</strong></p>
+                  <div class="image-gallery">
+                    <el-image
+                        v-for="(image, index) in question.images"
+                        :key="image.id"
+                        :src="`http://localhost:3000${image.url}`"
+                        :preview-src-list="getPreviewList(question.images)"
+                        :initial-index="index"
+                        class="question-image"
+                        fit="cover"
+                        lazy
+                    >
+                      <div slot="error" class="image-slot">
+                        <i class="el-icon-picture-outline"></i>
+                      </div>
+                    </el-image>
+                  </div>
+                </div>
+
                 <!-- 回答表单 -->
                 <el-form @submit.prevent="submitAnswer" label-width="80px">
                   <el-form-item label="回答">
@@ -90,7 +111,9 @@ export default {
   },
   data() {
     return {
-      question: {},
+      question: {
+        images: []
+      },
       answers: [],
       answerContent: '',
       defaultAvatar: require('@/assets/profile.jpg')
@@ -128,7 +151,8 @@ export default {
             Authorization: `Bearer ${token}`
           }
         })
-        this.answers = response.data;
+        this.answers = response.data.answers;
+        console.success('获取回答成功');
       } catch (error) {
         console.error('获取回答失败:', error);
       }
@@ -145,7 +169,7 @@ export default {
       try {
         //const id = this.$route.params.id; //问题id
         const token = this.userStore.token;
-        const userId = this.userStore.userId; //用户id
+        //const userId = this.userStore.userId; //用户id
 
         const payload = {
           //question_id: this.question.question_id,
@@ -157,7 +181,8 @@ export default {
         //改
         await axios.post(`http://localhost:3000/api/questions/${this.question.question_id}/answers`, payload, {
           headers: {
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
         });
 
@@ -169,6 +194,10 @@ export default {
         this.$message.error('回答失败，请重试');
         console.error('提交回答失败:', error);
       }
+    },
+    // 获取图片预览列表
+    getPreviewList(images) {
+      return images.map(image => `http://localhost:3000${image.url}`);
     }
   }
 };
@@ -278,5 +307,38 @@ export default {
   text-align: right;
   padding-top: 10px;
   border-top: 1px solid #f0f0f0;
+}
+
+/* 问题图片样式 */
+.question-images {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.image-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.question-image {
+  width: 150px;
+  height: 150px;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid #eee;
+}
+
+.image-slot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background: #f5f5f5;
+  color: #999;
+  font-size: 24px;
 }
 </style>

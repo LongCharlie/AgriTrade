@@ -62,7 +62,7 @@ router.get('/experts/:id', async (req, res) => {
 // 专家排名接口
 router.get('/expert-rankings', async (req, res) => {
   const rankings = await require('../model').query(`
-    SELECT e.*, u.avatar_url
+    SELECT e.*, u.avatar_url, u.username
     FROM experts e
     JOIN users u ON e.expert_id = u.user_id
     ORDER BY e.answer_count DESC;
