@@ -3,7 +3,7 @@ const router = express.Router();
 const { 
   getFarmingActivitiesByRecordId, 
   createFarmingActivity 
-} = require('./model');
+} = require('../model');
 
 // 获取种植记录历史活动
 router.get('/historical-activity/:recordId', async (req, res) => {

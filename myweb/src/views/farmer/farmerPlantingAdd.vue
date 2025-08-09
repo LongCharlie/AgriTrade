@@ -248,8 +248,9 @@ const submitActivity = async () => {
       }
     });
 
-    ElMessage.success('成功创建活动');
-    router.push('/farmer/activities');
+    ElMessage.success('成功提交活动');
+    router.push('/farmer/planting');
+    // location.reload(); // 刷新页面
   } catch (error) {
     console.error('提交失败:', error);
     ElMessage.error('提交失败，请重试！');
@@ -266,7 +267,7 @@ const finishPlanting = async () => {
       }
     });
     ElMessage.success('成功结束种植活动');
-    router.push('/farmer/planting'); // 跳转到活动页面
+    router.push('/farmer/planting');
   } catch (error) {
     console.error('结束种植失败:', error);
     ElMessage.error('结束种植失败，请重试！');
