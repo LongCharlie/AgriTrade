@@ -489,8 +489,7 @@ const getPurchaseDemands = async () => {
       d.quantity,
       d.buyer_id,
       u.username AS buyerName,
-      d.delivery_province AS address,  
-      ST_AsText(d.delivery_location) AS location,  
+      u.province AS address,   
       TO_CHAR(d.updated_at, 'YYYY-MM-DD HH24:MI:SS') AS updated_at
     FROM purchase_demands d
     JOIN users u ON d.buyer_id = u.user_id
@@ -720,10 +719,10 @@ const getAfterSaleOrders = async () => {
       o.order_id,
       d.product_name,
       d.quantity,
-      o.price,
+      a.price,
       o.farmer_id,
       farmer.username AS farmer_name,
-      d.delivery_city AS delivery_location,
+      buyer.province AS delivery_location,
       o.buyer_id,
       buyer.username AS buyer_name,
       buyer.phone,
