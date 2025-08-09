@@ -132,6 +132,11 @@ CREATE TABLE `experience_comments`  (
   `user_id` int NOT NULL COMMENT '评论者ID',
   `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '评论内容',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '评论时间',
+
+ADD COLUMN status VARCHAR(10) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+ADD COLUMN reviewed_by INTEGER REFERENCES users(user_id),
+ADD COLUMN reviewed_at TIMESTAMP;
+
   PRIMARY KEY (`comment_id`) USING BTREE,
   INDEX `user_id`(`user_id`) USING BTREE,
   INDEX `exp_created_idx`(`experience_id`, `created_at`) USING BTREE,
@@ -283,13 +288,10 @@ CREATE TABLE `purchase_demands`  (
   `buyer_id` int NOT NULL COMMENT '采购商ID',
   `product_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '产品名称',
   `quantity` decimal(10, 2) NOT NULL COMMENT '需求数量',
-  `delivery_province` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '全国' COMMENT '收货省份',
-  `is_nationwide` tinyint(1) NULL DEFAULT 0 COMMENT '是否全国范围',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `status` enum('open','closed') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT 'open' COMMENT '需求状态',
-  `delivery_location` point NOT NULL COMMENT '收货位置',
-  PRIMARY KEY (`demand_id`) USING BTREE,
+   PRIMARY KEY (`demand_id`) USING BTREE,
   INDEX `buyer_id`(`buyer_id`) USING BTREE,
   INDEX `status_idx`(`status`) USING BTREE,
   INDEX `nationwide_idx`(`is_nationwide`) USING BTREE,
@@ -309,10 +311,6 @@ CREATE TABLE `questions`  (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `status` enum('open','closed') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT 'open' COMMENT '问题状态',
   `answer_count` int NULL DEFAULT 0 COMMENT '回答数量',
- `deleted_by` INT NULL COMMENT '删除管理员ID' AFTER `answer_count`,
- `deleted_at` TIMESTAMP NULL COMMENT '删除时间' AFTER `deleted_by`,
- `is_deleted` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否删除' AFTER `deleted_at`,
- `delete_reason` VARCHAR(255) NULL COMMENT '删除原因' AFTER `is_deleted`;
   PRIMARY KEY (`question_id`) USING BTREE,
   INDEX `farmer_id`(`farmer_id`) USING BTREE,
   FULLTEXT INDEX `content_ft_idx`(`title`, `content`),
