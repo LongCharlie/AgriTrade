@@ -963,6 +963,33 @@ const getTotalBuyerCount = async () => {
   };
 };
 
+// 获取种植记录的所有农事活动
+const getFarmingActivitiesByRecordId = async (recordId) => {
+  const result = await pool.query(
+    'SELECT * FROM farming_activities WHERE record_id = $1 ORDER BY activity_date',
+    [recordId]
+  );
+  return result.rows;
+};
+
+// 创建新的农事活动
+const createFarmingActivity = async (data) => {
+  const { record_id, activity_date, activity_type, description, images } = data;
+  // 将图片数组转为逗号分隔字符串
+  const imageString = images.join(',');
+  const result = await pool.query(
+    `INSERT INTO farming_activities (
+      record_id, 
+      activity_date, 
+      activity_type, 
+      description, 
+      images
+    ) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+    [record_id, activity_date, activity_type, description, imageString]
+  );
+  return result.rows[0];
+};
+
 // 导出所有数据库操作方法
 module.exports = {
   checkUserExists,
@@ -1023,6 +1050,8 @@ module.exports = {
   deleteAnswer,
   getAfterSaleOrders,
   getCertificatesWithExpertInfo,
+  getFarmingActivitiesByRecordId,
+  createFarmingActivity,
   // 也可以导出原始的query方法以便特殊查询使用
   query: (text, params) => pool.query(text, params),
 };
