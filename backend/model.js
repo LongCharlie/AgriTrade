@@ -720,11 +720,11 @@ const getAfterSaleOrders = async () => {
     SELECT 
       o.order_id,
       d.product_name,
-      o.quantity,
-      o.price,
+      d.quantity,
+      a.price,
       o.farmer_id,
       farmer.username AS farmer_name,
-      d.delivery_city AS delivery_location,
+      buyer.province AS delivery_location,
       o.buyer_id,
       buyer.username AS buyer_name,
       buyer.phone,
@@ -839,10 +839,11 @@ const getOrderBuyerCount = async (orderId) => {
 const getWeeklyOrderSummary = async () => {
   const query = `
     SELECT 
-      DATE_TRUNC('week', created_at) AS week_start,
-      SUM(price * quantity) AS total_amount,
+      DATE_TRUNC('week', o.created_at) AS week_start,
+      SUM(pa.price * o.quantity) AS total_amount,
       COUNT(*) AS order_count
-    FROM orders
+    FROM orders o
+    JOIN purchase_applications pa ON o.application_id = pa.application_id
     GROUP BY week_start
     ORDER BY week_start DESC
   `;
@@ -855,10 +856,11 @@ const getWeeklyOrderSummary = async () => {
 const getMonthlyOrderSummary = async () => {
   const query = `
     SELECT 
-      DATE_TRUNC('month', created_at) AS month_start,
-      SUM(price * quantity) AS total_amount,
+      DATE_TRUNC('month', o.created_at) AS month_start,
+      SUM(pa.price * o.quantity) AS total_amount,
       COUNT(*) AS order_count
-    FROM orders
+    FROM orders o
+    JOIN purchase_applications pa ON o.application_id = pa.application_id
     GROUP BY month_start
     ORDER BY month_start DESC
   `;
@@ -871,10 +873,11 @@ const getMonthlyOrderSummary = async () => {
 const getYearlyOrderSummary = async () => {
   const query = `
     SELECT 
-      DATE_TRUNC('year', created_at) AS year_start,
-      SUM(price * quantity) AS total_amount,
+      DATE_TRUNC('year', o.created_at) AS year_start,
+      SUM(pa.price * o.quantity) AS total_amount,
       COUNT(*) AS order_count
-    FROM orders
+    FROM orders o
+    JOIN purchase_applications pa ON o.application_id = pa.application_id
     GROUP BY year_start
     ORDER BY year_start DESC
   `;
@@ -882,7 +885,6 @@ const getYearlyOrderSummary = async () => {
   const { rows } = await pool.query(query);
   return rows;
 };
-
 // 获取经验帖评论（带审核状态过滤）
 const getExperienceComments = async (experienceId, status = 'approved') => {
   const query = `
@@ -951,17 +953,46 @@ const getPendingComments = async () => {
 
 // 获取全平台买家总数
 const getTotalBuyerCount = async () => {
-  const query = `
-    SELECT 
-      COUNT(DISTINCT buyer_id) AS total_buyer_count
-    FROM orders
+  const { rows } = await pool.query(`
+    SELECT COUNT(*) AS count 
+    FROM users 
+    WHERE role = 'buyer'
+  `);
+  return parseInt(rows[0].count);
+};
+
+// 管理员更新用户信息
+const updateUserProfileAdmin = async (userId, updates) => {
+  const fields = Object.keys(updates);
+  if (fields.length === 0) {
+    throw new Error('没有可更新的字段');
+  }
+
+  const setClause = fields
+    .map((key, index) => `${key} = $${index + 1}`)
+    .join(', ');
+  
+  const values = fields.map(key => updates[key]);
+  values.push(userId);
+
+  const queryText = `
+    UPDATE users 
+    SET ${setClause}, updated_at = NOW() 
+    WHERE user_id = $${values.length} 
+    RETURNING 
+      user_id, 
+      username, 
+      phone, 
+      province, 
+      city, 
+      district, 
+      address_detail, 
+      avatar_url, 
+      updated_at
   `;
   
-  const { rows } = await pool.query(query);
-  
-  return {
-    total_buyer_count: parseInt(rows[0].total_buyer_count)
-  };
+  const result = await pool.query(queryText, values);
+  return result.rows[0];
 };
 
 // 获取种植记录的所有农事活动
@@ -1039,6 +1070,7 @@ module.exports = {
    getYearlyOrderSummary,
   createUser,
   updateOrderStatus,
+  updateUserProfileAdmin,
   createQuestion,
   getQuestions,
   updateUserProfile,

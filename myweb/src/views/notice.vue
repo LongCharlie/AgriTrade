@@ -21,7 +21,7 @@
         <!--        </div>-->
         <nav class="nav-links">
           <a @click="goToWelcom" class="nav-link">首页</a>
-          <a @click="goToVisitor" class="nav-link">采购</a>
+<!--          <a @click="goToVisitor" class="nav-link">采购</a>-->
           <a @click="goToNotice" class="nav-link active">须知</a>
           <!--          <a href="#" class="nav-link">更多</a>-->
         </nav>
@@ -62,7 +62,38 @@
 
     <!-- 页脚 -->
     <footer class="footer">
-      <!-- 保持与欢迎页相同的页脚结构 -->
+      <div class="footer-content">
+        <!--        <div class="footer-main">-->
+        <!--          <div class="footer-brand">-->
+        <!--            <div class="logo">-->
+        <!--              <span class="logo-text">耘联</span>-->
+        <!--              <span class="logo-dot"></span>-->
+        <!--            </div>-->
+        <!--            <p class="footer-description">-->
+        <!--              优质农产品直销平台-->
+        <!--            </p>-->
+        <!--            <div class="social-links">-->
+        <!--              <a href="#" class="social-link"><el-icon><ChatDotRound /></el-icon></a>-->
+        <!--              <a href="#" class="social-link"><el-icon><Share /></el-icon></a>-->
+        <!--              <a href="#" class="social-link"><el-icon><Star /></el-icon></a>-->
+        <!--            </div>-->
+        <!--          </div>-->
+        <!--          <div class="footer-links">-->
+        <!--            <div class="link-group" v-for="group in footerLinks" :key="group.title">-->
+        <!--              <h4 class="link-group-title">{{ group.title }}</h4>-->
+        <!--              <a v-for="link in group.links" :key="link" href="#" class="link-item">{{ link }}</a>-->
+        <!--            </div>-->
+        <!--          </div>-->
+        <!--        </div>-->
+        <div class="footer-bottom">
+          <div class="copyright">© 2025 上海大学 YunLink团队 | 让新鲜从田间直达您家</div>
+          <!--          <div class="legal-links">-->
+          <!--            <a href="#">隐私保护协议</a>-->
+          <!--            <a href="#">用户服务协议</a>-->
+          <!--            <a href="#">数据偏好设置</a>-->
+          <!--          </div>-->
+        </div>
+      </div>
     </footer>
   </div>
 </template>

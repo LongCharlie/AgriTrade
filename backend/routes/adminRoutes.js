@@ -79,6 +79,75 @@ router.get('/orders/after-sale',
     }
 });
 
+// 管理员更新用户信息
+router.patch('/users/:id', 
+  authMiddleware.authenticateToken,
+  checkAdmin,
+  async (req, res) => {
+    try {
+      const userId = req.params.id;
+      const updates = req.body;
+
+      // 检查要更新的用户是否存在
+      const user = await model.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ error: '用户不存在' });
+      }
+
+      // 如果是管理员用户，且请求者不是超级管理员，则拒绝访问
+      if (user.role === 'admin' && req.user.role !== 'superadmin') {
+        return res.status(403).json({ error: '无权修改管理员信息' });
+      }
+
+      // 不允许通过此接口修改密码和角色
+      if (updates.password || updates.role) {
+        return res.status(403).json({ error: '禁止修改密码或角色' });
+      }
+
+      // 定义允许更新的字段
+      const allowedFields = [
+        'username', 'phone', 'province', 'city', 
+        'district', 'address_detail', 'avatar_url'
+      ];
+      
+      // 过滤掉不允许的字段
+      const filteredUpdates = {};
+      for (const key in updates) {
+        if (allowedFields.includes(key)) {
+          filteredUpdates[key] = updates[key];
+        }
+      }
+
+      // 如果没有有效更新字段
+      if (Object.keys(filteredUpdates).length === 0) {
+        return res.status(400).json({ error: '没有提供有效的更新字段' });
+      }
+
+      // 更新用户信息
+      const updatedUser = await model.updateUserProfileAdmin(userId, filteredUpdates);
+
+      res.json({
+        success: true,
+        user: {
+          user_id: updatedUser.user_id,
+          username: updatedUser.username,
+          phone: updatedUser.phone,
+          province: updatedUser.province,
+          city: updatedUser.city,
+          district: updatedUser.district,
+          address_detail: updatedUser.address_detail,
+          avatar_url: updatedUser.avatar_url,
+          updated_at: updatedUser.updated_at
+        }
+      });
+    } catch (error) {
+      console.error('更新用户信息失败:', error);
+      res.status(500).json({ 
+        error: error.message || '更新用户信息失败' 
+      });
+    }
+});
+
 // 管理员提交售后订单审核理由
 router.post('/orders/:order_id/resolved-reason', 
   authMiddleware.authenticateToken,
