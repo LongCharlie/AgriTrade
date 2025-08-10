@@ -423,7 +423,7 @@ export default {
       try {
         loading.value = true
         // 修复：使用 userStore 而不是 this.userStore
-        const res = await axios.get('http://localhost:3000/api/admin/questions', {
+        const res = await axios.get('http://localhost:3000/api/questions', {
           headers: {
             Authorization: `Bearer ${userStore.token}` // 修复：使用 userStore.token
           }
