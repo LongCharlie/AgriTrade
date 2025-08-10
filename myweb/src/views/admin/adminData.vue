@@ -116,6 +116,8 @@ const fetchData = async () => {
     yearOrderSum.value = yearSumRes.data.sum;
     // agricultureCount.value = agriRes.data.count;
     agricultureCount.value = 14;
+
+    console.log(weekSumRes.data.sum);
   } catch (error) {
     console.error('获取管理员统计数据失败，使用模拟数据:', error);
     // buyerCount.value = 5;

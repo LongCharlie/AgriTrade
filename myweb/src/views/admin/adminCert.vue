@@ -503,7 +503,7 @@ export default {
       try {
         const token = this.userStore.token;
         //改
-        const res = await axios.get('http://localhost:3000/api/admin/certificates', {
+        const res = await axios.get('http://localhost:3000/api/certificates', {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -612,7 +612,7 @@ export default {
 
 }
 .filter-section {
-  //margin-bottom: 20px;
+  margin-bottom: 20px;
 }
 .el-pagination {
   margin-top: 20px;

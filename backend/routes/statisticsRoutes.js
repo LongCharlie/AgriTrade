@@ -32,14 +32,21 @@ router.get('/expert-count', async (req, res) => {
 });
 
 // 获取全平台买家总数
-router.get('/statistics/buyer-count', 
+router.get('/statistics/buyer-count',
   async (req, res) => {
     try {
-    const count = await require('../model').getTotalBuyerCount();
-    res.json({ count });
-  } catch (error) {
-    res.status(500).json({ error: '获取数据失败' });
-  }
+      const result = await require('../model').getTotalBuyerCount();
+      
+      res.json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      console.error('获取买家总数失败:', error);
+      res.status(500).json({ 
+        error: error.message || '获取买家总数失败' 
+      });
+    }
 });
 
 module.exports = router;
