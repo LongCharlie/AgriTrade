@@ -112,78 +112,6 @@ const currentPage = ref(1); // 当前页码
 
 const simulatedUserData = [
   {
-    user_id: 1,
-    username: 'zhangsan',
-    role: 'farmer',
-    phone: '13800000001',
-    province: '河南省',
-    city: '郑州市',
-    district: '二七区',
-    address_detail: '某某街道1号',
-    avatar_url: 'http://example.com/avatar1.png',
-    join_date: '2023-01-15 10:30:00',
-  },
-  {
-    user_id: 2,
-    username: 'lisi',
-    role: 'buyer',
-    phone: '13800000002',
-    province: '江苏省',
-    city: '南京市',
-    district: '鼓楼区',
-    address_detail: '某某街道2号',
-    avatar_url: 'http://example.com/avatar2.png',
-    join_date: '2023-02-20 14:45:00',
-  },
-  {
-    user_id: 3,
-    username: 'wangwu',
-    role: 'expert',
-    phone: '13800000003',
-    province: '浙江省',
-    city: '杭州市',
-    district: '西湖区',
-    address_detail: '某某街道3号',
-    avatar_url: 'http://example.com/avatar3.png',
-    join_date: '2022-11-05 09:15:00',
-  },
-  {
-    user_id: 4,
-    username: 'zhaoliu',
-    role: 'admin',
-    phone: '13800000004',
-    province: '广东省',
-    city: '广州市',
-    district: '天河区',
-    address_detail: '某某街道4号',
-    avatar_url: 'http://example.com/avatar4.png',
-    join_date: '2023-05-30 16:00:00',
-  },
-  {
-    user_id: 5,
-    username: 'sunqi',
-    role: 'farmer',
-    phone: '13800000005',
-    province: '山东省',
-    city: '青岛市',
-    district: '市南区',
-    address_detail: '某某街道5号',
-    avatar_url: 'http://example.com/avatar5.png',
-    join_date: '2023-08-10 11:00:00',
-  },
-  {
-    user_id: 6,
-    username: 'liangba',
-    role: 'buyer',
-    phone: '13800000006',
-    province: '湖北省',
-    city: '武汉市',
-    district: '江岸区',
-    address_detail: '某某街道6号',
-    avatar_url: 'http://example.com/avatar6.png',
-    join_date: '2023-09-01 12:00:00',
-  },
-  {
     user_id: 7,
     username: 'yangqi',
     role: 'expert',
@@ -200,7 +128,7 @@ const simulatedUserData = [
 const fetchData = async () => {
   const token = userStore.token; // 从用户存储中获取 token
   try {
-    const response = await axios.get('http://localhost:3000/api/admin/users', {
+    const response = await axios.get('http://localhost:3000/api/users', {
       headers: {
         'Authorization': `Bearer ${token}` // 设置 Authorization 头
       }
@@ -277,7 +205,7 @@ const handleEdit = (row) => {
 const handleDelete = async (userId) => {
   const token = userStore.token; // 获取用户的 Token
   try {
-    await axios.delete(`http://localhost:3000/api/admin/users/${userId}`, {
+    await axios.delete(`http://localhost:3000/api/users/${userId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },

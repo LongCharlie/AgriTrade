@@ -126,7 +126,7 @@ app.post('/api/uploads/activity-images',
       if (!req.files || req.files.length === 0) {
         return res.status(400).json({ error: '未上传图片' });
       }
-      const imageUrls = req.files.map(file => `/uploads/activity-images/${file.filename}`);
+      const imageUrls = req.files.map(file => `${file.filename}`); //  /uploads/activity-images/
       res.json({ images: imageUrls });
     } catch (error) {
       console.error('图片上传失败:', error);
@@ -143,6 +143,7 @@ app.use('/uploads/avatars', express.static(path.join(__dirname, 'uploads', 'avat
 app.use('/uploads/certificates', express.static(path.join(__dirname, 'uploads', 'certificates'))); //证书上传图片存储区
 // 添加静态文件服务
 app.use('/uploads/answer_images', express.static(path.join(__dirname, 'uploads', 'answer_images')));
+app.use('/uploads/activity-images', express.static(path.join(__dirname, 'uploads', 'activity-images')));
 // 引入路由
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
