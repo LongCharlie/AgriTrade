@@ -99,12 +99,12 @@ const fetchData = async () => {
 
   try {
     const [buyerRes, farmerRes, expertRes, weekSumRes, monthSumRes, yearSumRes, agriRes] = await Promise.all([
-      // axios.get('http://localhost:3000/api/statistics/buyer-count', { headers: { 'Authorization': `Bearer ${token}` } }),
+      axios.get('http://localhost:3000/api/statistics/buyer-count', { headers: { 'Authorization': `Bearer ${token}` } }),
       axios.get('http://localhost:3000/api/farmer-count', { headers: { 'Authorization': `Bearer ${token}` } }),
       axios.get('http://localhost:3000/api/expert-count', { headers: { 'Authorization': `Bearer ${token}` } }),
-      // axios.get('http://localhost:3000/api/week-order-sum', { headers: { 'Authorization': `Bearer ${token}` } }),
-      // axios.get('http://localhost:3000/api/month-order-sum', { headers: { 'Authorization': `Bearer ${token}` } }),
-      // axios.get('http://localhost:3000/api/year-order-sum', { headers: { 'Authorization': `Bearer ${token}` } }),
+      axios.get('http://localhost:3000/api/week-order-sum', { headers: { 'Authorization': `Bearer ${token}` } }),
+      axios.get('http://localhost:3000/api/month-order-sum', { headers: { 'Authorization': `Bearer ${token}` } }),
+      axios.get('http://localhost:3000/api/year-order-sum', { headers: { 'Authorization': `Bearer ${token}` } }),
       axios.get('http://localhost:3000/api/agriculture-count', { headers: { 'Authorization': `Bearer ${token}` } }),
     ]);
 
