@@ -877,7 +877,7 @@ const getWeeklyOrderSummary = async () => {
   const query = `
     SELECT 
       DATE_TRUNC('week', o.created_at) AS week_start,
-      SUM(pa.price * o.quantity) AS total_amount,
+      SUM(pa.price * pa.quantity) AS total_amount,
       COUNT(*) AS order_count
     FROM orders o
     JOIN purchase_applications pa ON o.application_id = pa.application_id
@@ -894,7 +894,7 @@ const getMonthlyOrderSummary = async () => {
   const query = `
     SELECT 
       DATE_TRUNC('month', o.created_at) AS month_start,
-      SUM(pa.price * o.quantity) AS total_amount,
+      SUM(pa.price * pa.quantity) AS total_amount,
       COUNT(*) AS order_count
     FROM orders o
     JOIN purchase_applications pa ON o.application_id = pa.application_id
@@ -911,7 +911,7 @@ const getYearlyOrderSummary = async () => {
   const query = `
     SELECT 
       DATE_TRUNC('year', o.created_at) AS year_start,
-      SUM(pa.price * o.quantity) AS total_amount,
+      SUM(pa.price * pa.quantity) AS total_amount,
       COUNT(*) AS order_count
     FROM orders o
     JOIN purchase_applications pa ON o.application_id = pa.application_id
@@ -1025,7 +1025,6 @@ const updateUserProfileAdmin = async (userId, updates) => {
       district, 
       address_detail, 
       avatar_url, 
-      updated_at
   `;
   
   const result = await pool.query(queryText, values);

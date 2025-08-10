@@ -136,8 +136,7 @@ router.patch('/users/:id',
           city: updatedUser.city,
           district: updatedUser.district,
           address_detail: updatedUser.address_detail,
-          avatar_url: updatedUser.avatar_url,
-          updated_at: updatedUser.updated_at
+          avatar_url: updatedUser.avatar_url
         }
       });
     } catch (error) {
