@@ -81,7 +81,6 @@ const user = ref({
 
 const selectedLocation = ref([]);
 const token = userStore.token;
-const uploadUrl = 'http://localhost:3000/api/user/avatar'; // 上传头像的接口 URL
 
 onMounted(async () => {
   user.value.id = userStore.userId;
@@ -124,7 +123,7 @@ const handleAvatarChange = async (event) => {
     const formData = new FormData();
     formData.append('avatar', file);
 
-    const response = await fetch(uploadUrl, {
+    const response = await fetch('http://localhost:3000/api/user/avatar', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`

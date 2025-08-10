@@ -121,7 +121,7 @@ const handleLocationChange = (value) => {
 // 保存数据
 const saveProfile = async () => {
   try {
-    await axios.patch('http://localhost:3000/api/user/profile', {
+    await axios.patch(`http://localhost:3000/api/users/${user.value.user_id}`, {
       phone: user.value.phone,
       province: user.value.province,
       city: user.value.city,

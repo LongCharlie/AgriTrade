@@ -102,9 +102,9 @@ const fetchData = async () => {
       axios.get('http://localhost:3000/api/statistics/buyer-count', { headers: { 'Authorization': `Bearer ${token}` } }),
       axios.get('http://localhost:3000/api/farmer-count', { headers: { 'Authorization': `Bearer ${token}` } }),
       axios.get('http://localhost:3000/api/expert-count', { headers: { 'Authorization': `Bearer ${token}` } }),
-       axios.get('http://localhost:3000/api/admin/week-order-sum', { headers: { 'Authorization': `Bearer ${token}` } }),
-      axios.get('http://localhost:3000/api/admin/month-order-sum', { headers: { 'Authorization': `Bearer ${token}` } }),
-       axios.get('http://localhost:3000/api/admin/year-order-sum', { headers: { 'Authorization': `Bearer ${token}` } }),
+      axios.get('http://localhost:3000/api/week-order-sum', { headers: { 'Authorization': `Bearer ${token}` } }),
+      axios.get('http://localhost:3000/api/month-order-sum', { headers: { 'Authorization': `Bearer ${token}` } }),
+      axios.get('http://localhost:3000/api/year-order-sum', { headers: { 'Authorization': `Bearer ${token}` } }),
       axios.get('http://localhost:3000/api/agriculture-count', { headers: { 'Authorization': `Bearer ${token}` } }),
     ]);
 
