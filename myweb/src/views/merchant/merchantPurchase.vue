@@ -6,7 +6,6 @@
       </div>
       <div class="header-buttons">
         <button class="toggle-btn" @click="toggleShowClosed">
-          <i class="fas fa-sync"></i>
           {{ showClosed ? '查看打开采购' : '查看已关闭采购' }}
         </button>
         <button class="add-btn" @click="addPurchase">
@@ -32,21 +31,19 @@
           <div class="card-meta">
             <div class="meta-row">
               <div class="meta-item">
-                <span class="label"><i class="fas fa-weight-hanging"></i> 采购量</span>
+                <span class="label"> 采购量</span>
                 <span class="value">{{ purchase.quantity }}</span>
               </div>
               <div class="meta-item">
-                <span class="label"><i class="far fa-calendar"></i> 创建时间</span>
+                <span class="label"> 创建时间</span>
                 <span class="value">{{ purchase.creationDate }}</span>
               </div>
             </div>
 
             <div class="meta-row">
-              <div class="meta-item-full">
-                <span class="label"><i class="fas fa-truck"></i> 收货地址</span>
-                <div class="delivery-info">
-                  {{ purchase.deliveryAddress }}
-                </div>
+              <div class="meta-item">
+                <span class="label"> 收货地址</span>
+                <span class="value">{{ purchase.deliveryAddress }}</span>
               </div>
             </div>
           </div>
@@ -54,10 +51,7 @@
 
         <div class="action-buttons">
           <button class="action-btn detail-btn" @click.stop="viewPurchase(purchase)">
-            <i class="fas fa-eye"></i> 查看申请
-          </button>
-          <button class="action-btn modify-btn" @click.stop="modifyPurchase(purchase)">
-            <i class="fas fa-edit"></i> 修改采购
+           查看申请
           </button>
         </div>
       </div>
@@ -462,7 +456,7 @@ header::before {
 }
 
 .delivery-info {
-  background: #f1f8e9;
+  background: #ffffff;
   border-radius: 10px;
   padding: 12px 15px;
   margin-top: 5px;

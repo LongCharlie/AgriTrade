@@ -7,18 +7,6 @@
       </div>
     </div>
     
-    <!-- 统计卡片 -->
-    <div class="stat-cards">
-      <div class="stat-card pending">
-        <div class="stat-title">待审核文章</div>
-        <div class="stat-value">{{ pendingCount }}</div>
-      </div>
-      <div class="stat-card total">
-        <div class="stat-title">总文章数</div>
-        <div class="stat-value">{{ totalArticles }}</div>
-      </div>
-    </div>
-    
     <!-- 主要内容区域 -->
     <div class="dashboard-content">
       <div class="section-title">

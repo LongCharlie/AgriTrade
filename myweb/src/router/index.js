@@ -15,7 +15,7 @@ import expertCertAdd from "@/views/expert/expertCertAdd.vue";
 import expertCertDetail from "@/views/expert/expertCertDetail.vue";
 import expertAnswerDetail from "@/views/expert/expertAnswerDetail.vue"
 
-import MainLayout from '@/views/merchant/MainLayout.vue'
+import Merchant from '@/views/merchant.vue'
 import MerchantOrder from '@/views/merchant/merchantOrder.vue'
 import merchantPurchaseDetails from '@/views/merchant/merchantPurchaseDetails.vue'
 import MerchantPurchase from '@/views/merchant/merchantPurchase.vue';
@@ -23,7 +23,6 @@ import MerchantAddPurchase from '@/views/merchant/merchantAddPurchase.vue';
 import MerchantMain from '@/views/merchant/merchantMain.vue'
 import MerchantHome from '@/views/merchant/merchantHome.vue'
 import MerchantMessage from '@/views/merchant/merchantMessage.vue'
-import { componentSizeMap } from 'element-plus';
 
 
 
@@ -111,7 +110,7 @@ const routes = [
       {
       path: '/merchant',
       redirect: 'merchant/Main',
-      component: MainLayout,
+      component: Merchant,
       children: [
         {
           path: '',
@@ -144,7 +143,7 @@ const routes = [
           component: MerchantHome
         },
         {
-          path: 'merchantMessage',
+          path: 'Message',
           name: 'MerchantMessage',
           component: MerchantMessage
         }

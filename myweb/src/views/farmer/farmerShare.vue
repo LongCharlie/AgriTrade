@@ -81,9 +81,6 @@
                 查看更多
               </router-link>
               <div class="post-actions">
-                <div class="post-action" @click="likePost(post.id)">
-                  <i class="far fa-thumbs-up"></i> {{ post.likes }}
-                </div>
                 <div class="post-action">
                   <i class="far fa-comment"></i> {{ post.comments }}
                 </div>
@@ -238,7 +235,6 @@ export default {
         author: this.newPost.author,
         date: this.getCurrentDate(),
         time: this.getCurrentTime(),
-        likes: 0,
         comments: 0
       };
       
@@ -252,13 +248,6 @@ export default {
       
       alert('分享发布成功！');
     },
-    // 点赞功能
-    likePost(postId) {
-      const post = this.posts.find(p => p.id === postId);
-      if (post) {
-        post.likes++;
-      }
-    }
   }
 };
 </script>
@@ -283,9 +272,9 @@ export default {
 }
 
 :root {
-  --primary-green: #2e7d32;
-  --light-green: #4caf50;
-  --lighter-green: #8bc34a;
+  --primary-green: #3d9e42be;
+  --light-green: #4caf4f75;
+  --lighter-green: #8bc34aaf;
   --background: #f5f9f5;
   --card-bg: #ffffff;
   --text-dark: #333333;

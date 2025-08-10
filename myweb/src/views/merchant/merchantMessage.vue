@@ -184,8 +184,8 @@ export default {
 }
 
 .users li.active {
-  background-color: #e8f4fd;
-  border-left: 3px solid #4a90e2;
+  background-color: #7b7b7b1d;
+  border-left: 3px solid #000000;
 }
 
 .chat-container {

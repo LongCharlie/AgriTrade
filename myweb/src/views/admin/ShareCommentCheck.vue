@@ -8,41 +8,11 @@
         </div>
       </div>
     </div>
-    
-    <!-- 统计卡片 -->
-    <div class="stat-cards">
-      <div class="stat-card pending">
-        <div class="stat-header">
-          <div class="stat-title">待审核评论</div>
-        </div>
-        <div class="stat-value">{{ pendingCount }}</div>
-      </div>
-      
-      <div class="stat-card rejected">
-        <div class="stat-header">
-          <div class="stat-title">违规评论</div>
-        </div>
-        <div class="stat-value">{{ rejectedCount }}</div>
-      </div>
-      
-      <div class="stat-card total">
-        <div class="stat-header">
-          <div class="stat-title">总评论数</div>
-        </div>
-        <div class="stat-value">{{ totalComments }}</div>
-      </div>
-    </div>
-    
     <!-- 主要内容区域 -->
     <div class="dashboard-content">
-      <div class="section-title">
-        <span>评论审核列表</span>
-      </div>
-      
       <!-- 工具栏 -->
       <div class="toolbar">
         <div class="filter-section">
-          
           <el-select v-model="filterStatus" placeholder="全部状态" clearable @change="handleFilterChange">
             <el-option label="待审核" value="pending"></el-option>
             <el-option label="已通过" value="approved"></el-option>
@@ -70,10 +40,10 @@
                    {{ row.userName }} (ID: {{ row.userId }})
                 </div>
                 <div class="comment-tag article-tag">
-                  <i class="el-icon-document"></i> {{ row.articleTitle }}
+                   {{ row.articleTitle }}
                 </div>
                 <div class="comment-tag time-tag">
-                  <i class="el-icon-time"></i> {{ formatDate(row.createTime) }}
+                   {{ formatDate(row.createTime) }}
                 </div>
               </div>
               <p style="margin-top: 8px; line-height: 1.7;">{{ row.content }}</p>
@@ -81,37 +51,35 @@
           </template>
         </el-table-column>
         
-        <el-table-column label="状态" width="120">
+        <el-table-column label="状态" width="100">
           <template #default="{ row }">
             <div v-if="row.status === 'pending'" class="status-badge status-pending">
-              <i class="el-icon-time"></i> 待审核
+              待审核
             </div>
             <div v-if="row.status === 'approved'" class="status-badge status-approved">
-              <i class="el-icon-check"></i> 已通过
+              已通过
             </div>
             <div v-if="row.status === 'rejected'" class="status-badge status-rejected">
-              <i class="el-icon-close"></i> 已拒绝
+              已拒绝
             </div>
           </template>
         </el-table-column>
         
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
-            <div class="review-actions">
-              <el-button 
-                type="success" 
-                size="small" 
-                icon="el-icon-check" 
-                @click="approveComment(row)"
-                :disabled="row.status !== 'pending'"
-              >通过</el-button>
-              <el-button 
-                type="danger" 
-                size="small" 
-                icon="el-icon-close" 
-                @click="rejectComment(row)"
-                :disabled="row.status !== 'pending'"
-              >拒绝</el-button>
+            <div class="review-actions" v-if="row.status === 'pending'">
+              <button 
+                  class="custom-button approve" 
+                  @click="approveComment(row)"
+              >通过</button>
+              <button 
+                  class="custom-button reject" 
+                  @click="rejectComment(row)"
+              >拒绝</button>
+            </div>
+            <!-- 非待审核状态显示提示信息 -->
+            <div v-else class="no-actions">
+              无需操作
             </div>
           </template>
         </el-table-column>
@@ -329,6 +297,45 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.review-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.custom-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.approve {
+    background-color: #67c23aab;
+    color: white;
+}
+
+.approve:hover {
+    background-color: #5daf34ce;
+}
+
+.reject {
+    background-color: #f56c6c5f;
+    color: white;
+}
+
+.reject:hover {
+    background-color: #f78989c3;
+}
+
+.no-actions {
+  color: #999;
+  font-size: 14px;
+  text-align: center;
+  padding: 8px 0;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -493,8 +500,8 @@ onMounted(() => {
   gap: 4px;
 }
 
-.positive { color: #28a745; }
-.negative { color: #dc3545; }
+.positive { color: #28a746b1; }
+.negative { color: #dc3546a8; }
 
 .dashboard-content {
   padding: 24px;
@@ -551,11 +558,6 @@ onMounted(() => {
   max-width: 500px;
   line-height: 1.6;
   color: #495057;
-}
-
-.review-actions {
-  display: flex;
-  gap: 8px;
 }
 
 .pagination {
