@@ -917,7 +917,7 @@ export default {
       try {
         // 获取完整的证书详情
         const token = this.userStore.token;
-        const res = await axios.get(`http://localhost:3000/api/certificates/${cert.certificate_id}`, {
+        const res = await axios.get(`http://localhost:3000/api/admin/certificates/${cert.certificate_id}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
