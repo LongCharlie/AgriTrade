@@ -450,9 +450,7 @@ const handleLogout = () => {
 }
 </script>
 
-
 <style scoped>
-
 .address-text {
   font-size: 18px;
   font-weight: 500;

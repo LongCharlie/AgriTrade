@@ -24,10 +24,10 @@
 
     <!-- 评论列表 -->
     <el-table :data="filteredComments" style="width: 100%">
-      <el-table-column prop="comment_id" label="评论ID" width="100"></el-table-column>
-      <el-table-column prop="commenter" label="评论人" width="150"></el-table-column>
-      <el-table-column prop="article_title" label="文章标题" width="200"></el-table-column>
-      <el-table-column prop="creation_date" label="评论时间" width="180">
+      <el-table-column prop="commenter" label="发布评论者" width="100"></el-table-column>
+      <el-table-column prop="article_title" label="经验分享标题" width="100"></el-table-column>
+      <el-table-column prop="content" label="内容" width="200"></el-table-column>
+      <el-table-column prop="creation_date" label="发布时间" width="150">
         <template #default="{ row }">
           {{ formatDate(row.creation_date) }}
         </template>
@@ -78,26 +78,16 @@
 </template>
 
 <script>
-import axios from "axios";
-import { useUserStore } from "@/stores/user";
-import { ElMessage } from "element-plus";
+import axios from 'axios';
 
 export default {
-  name: 'CommentReview',
-  setup() {
-    const userStore = useUserStore();
-    return {
-      userStore
-    };
-  },
   data() {
     return {
-      allComments: [],
-      comments: [],
       filter: {
         status: '',
         commenter: ''
       },
+      comments: [], // 全部评论数据
       pagination: {
         current: 1,
         size: 10,
@@ -105,122 +95,114 @@ export default {
       }
     };
   },
-  created() {
-    this.fetchComments();
-  },
   computed: {
+    // 筛选后的评论列表（仅对当前页）
     filteredComments() {
-      let filtered = [...this.allComments];
+      let result = this.comments;
+      const { status, commenter } = this.filter;
 
-      if (this.filter.status) {
-        filtered = filtered.filter(comment => comment.status === this.filter.status);
+      if (status) {
+        result = result.filter(c => c.status === status);
       }
-
-      if (this.filter.commenter) {
-        filtered = filtered.filter(comment =>
-            comment.commenter && comment.commenter.includes(this.filter.commenter)
+      if (commenter.trim()) {
+        result = result.filter(c =>
+          c.commenter.toLowerCase().includes(commenter.trim().toLowerCase())
         );
       }
 
-      this.pagination.total = filtered.length;
+      this.pagination.total = result.length;
       const start = (this.pagination.current - 1) * this.pagination.size;
-      const end = start + this.pagination.size;
-      return filtered.slice(start, end);
+      return result.slice(start, start + this.pagination.size);
     }
   },
   methods: {
+    formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleString();
+    },
+    getStatusTagType(status) {
+      switch (status) {
+        case 'approved': return 'success';
+        case 'rejected': return 'danger';
+        case 'pending': return 'warning';
+        default: return '';
+      }
+    },
+    getStatusText(status) {
+      return status === 'pending' ? '待审核'
+           : status === 'approved' ? '已通过'
+           : status === 'rejected' ? '已拒绝'
+           : '未知';
+    },
     async fetchComments() {
       try {
-        const token = this.userStore.token;
-        const res = await axios.get('http://localhost:3000/api/comments', {
+        const token = localStorage.getItem('token');
+        const res = await axios.get('comments/pending', {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
-        this.allComments = res.data;
-        this.pagination.total = res.data.length;
+        this.comments = res.data.map(c => ({
+          ...c,
+          creation_date: c.creation_date,
+          status: c.status,
+          commenter: c.commenter,
+          article_title: c.article_title,
+          content: c.content
+        }));
+        this.pagination.current = 1;
       } catch (error) {
-        console.error('获取评论列表失败:', error);
-        ElMessage.error('获取评论列表失败');
+        console.error('获取评论失败:', error);
+        alert('获取评论失败');
       }
-    },
-    getStatusText(status) {
-      const map = {
-        pending: '待审核',
-        approved: '已通过',
-        rejected: '已拒绝'
-      };
-      return map[status] || status;
-    },
-    getStatusTagType(status) {
-      const map = {
-        pending: 'warning',
-        approved: 'success',
-        rejected: 'danger'
-      };
-      return map[status] || '';
     },
     async approveComment(comment) {
-      try {
-        const token = this.userStore.token;
-        await axios.patch(
-          `http://localhost:3000/api/comments/${comment.comment_id}/status`,
-          { status: 'approved' },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          }
-        );
-        ElMessage.success('评论审核通过');
-        await this.fetchComments();
-      } catch (error) {
-        console.error('审核通过失败:', error);
-        ElMessage.error('审核通过失败');
-      }
+      await this.updateCommentStatus(comment, 'approved');
     },
     async rejectComment(comment) {
+      await this.updateCommentStatus(comment, 'rejected');
+    },
+    async updateCommentStatus(comment, newStatus) {
       try {
-        const token = this.userStore.token;
+        const token = localStorage.getItem('token');
         await axios.patch(
-          `http://localhost:3000/api/comments/${comment.comment_id}/status`,
-          { status: 'rejected' },
+          `/comments/${comment.comment_id}/status`,
+          { status: newStatus },
           {
             headers: {
               Authorization: `Bearer ${token}`
             }
           }
         );
-        ElMessage.success('评论审核拒绝');
-        await this.fetchComments();
+        comment.status = newStatus;
+        alert(`评论已${newStatus === 'approved' ? '通过' : '拒绝'}`);
       } catch (error) {
-        console.error('审核拒绝失败:', error);
-        ElMessage.error('审核拒绝失败');
+        console.error('更新状态失败:', error);
+        alert('操作失败');
       }
     },
     handleSizeChange(size) {
       this.pagination.size = size;
-      this.pagination.current = 1;
     },
-    handleCurrentChange(current) {
-      this.pagination.current = current;
+    handleCurrentChange(page) {
+      this.pagination.current = page;
+    },
+    showDetail(row) {
+      alert(`评论内容：${row.content}`);
     },
     resetFilter() {
-      this.filter = {
-        status: '',
-        commenter: ''
-      };
+      this.filter.status = '';
+      this.filter.commenter = '';
       this.pagination.current = 1;
       this.fetchComments();
-    },
-    formatDate(dateString) {
-      if (!dateString) return '';
-      const date = new Date(dateString);
-      return date.toLocaleDateString();
     }
+  },
+  mounted() {
+    this.fetchComments();
   }
 };
 </script>
+
 
 <style scoped>
 .pagination {
