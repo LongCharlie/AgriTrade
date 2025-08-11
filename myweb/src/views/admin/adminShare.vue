@@ -1,18 +1,7 @@
 <template>
   <div class="admin-dashboard">
-    <!-- 顶部标题栏 -->
-    <div class="dashboard-header">
-      <div class="header-content">
-        <div class="header-title">经验分享审核</div>
-      </div>
-    </div>
-    
     <!-- 主要内容区域 -->
-    <div class="dashboard-content">
-      <div class="section-title">
-        <span>文章列表</span>
-      </div>
-      
+    <div class="dashboard-content"> 
       <!-- 工具栏 -->
       <div class="toolbar">
         <div class="filter-section">

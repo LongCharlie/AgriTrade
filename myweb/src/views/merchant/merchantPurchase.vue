@@ -80,7 +80,7 @@
   </div>
 </template>
 
-<script>
+<!-- <script>
 export default {
   data() {
     return {
@@ -240,6 +240,62 @@ export default {
     }
   }
 };
+</script> -->
+
+<script setup>
+import { ref, onMounted, computed } from 'vue';
+import axios from 'axios';
+import { useUserStore } from '@/stores/user';
+import { ElMessage } from 'element-plus';
+
+const userStore = useUserStore();
+const token = userStore.token;
+const showClosed = ref(false);
+const currentPage = ref(1);
+const purchases = ref([]);
+const totalPages = ref(0);
+
+const paginatedPurchases = computed(() => {
+  const start = (currentPage.value - 1) * 10;
+  return purchases.value.slice(start, start + 10);
+});
+
+const fetchPurchases = async () => {
+  try {
+    const response = await axios.get('/demands/all', {
+      params: {
+        status: showClosed.value ? 'closed' : 'open',
+        page: currentPage.value
+      },
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    purchases.value = response.data;
+    totalPages.value = Math.ceil(response.data.length / 10);
+  } catch (error) {
+    console.error('获取采购信息失败:', error);
+    ElMessage.error('获取采购信息失败，请重试');
+  }
+};
+
+const toggleShowClosed = () => {
+  showClosed.value = !showClosed.value;
+  currentPage.value = 1;
+  fetchPurchases();
+};
+
+const addPurchase = () => {
+  // 添加新采购的逻辑
+};
+
+const viewPurchase = (purchase) => {
+  // 查看采购详情的逻辑
+};
+
+onMounted(() => {
+  fetchPurchases();
+});
 </script>
 
 <style scoped>

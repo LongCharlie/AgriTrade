@@ -44,7 +44,7 @@
 
       <!-- 右侧信息 -->
       <section class="info-card">
-        <!-- 1️⃣ 基本信息 -->
+        <!-- 基本信息 -->
         <div class="info-group">
           <h3>
             <svg style="width:22px;height:22px;vertical-align:-5px;fill:#4caf50" viewBox="0 0 24 24">
@@ -88,7 +88,7 @@
           </div>
         </div>
 
-        <!-- 2️⃣ 收货地址 -->
+        <!--收货地址 -->
         <div class="info-group">
           <h3>
             <svg style="width:22px;height:22px;vertical-align:-5px;fill:#4caf50" viewBox="0 0 24 24">
@@ -100,8 +100,9 @@
           </h3>
 
           <div v-if="!editingAddress">
-            <p>{{ user.province }} {{ user.city }} {{ user.district }}</p>
-            <p>{{ user.address_detail }}</p>
+            <p class="address-text">
+              {{ user.province }} {{ user.city }} {{ user.district }}{{ user.address_detail }}
+            </p>
             <button class="btn btn-edit" @click="startEditAddress">修改</button>
           </div>
 
@@ -175,201 +176,291 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted ,reactive} from 'vue';
-import { useUserStore } from '@/stores/user';
-import { ElMessage } from 'element-plus';
-import axios from 'axios';
-import { pcaTextArr } from 'element-china-area-data';
-import defaultAvatar from '@/assets/logo.png';
+import { ref, onMounted, computed } from 'vue'
+import { useUserStore } from '@/stores/user'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import axios from 'axios'
+import { pcaTextArr } from 'element-china-area-data'
+import profile from '../../assets/logo.png'
 
-const userStore = useUserStore();
-const API_BASE_URL = 'http://localhost:3000/api';
-const AVATAR_BASE_URL = 'http://localhost:3000/uploads/avatars/';
-
-const currentDate = new Date().toLocaleDateString('zh-CN', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-});
-
+const router = useRouter()
+const userStore = useUserStore()
 const user = ref({
   id: null,
   nickname: '',
-  phone: '',
   province: '',
   city: '',
   district: '',
+  phone: '',
   address_detail: '',
-  avatar_url: defaultAvatar,
-  stats: { orders: 0, purchases: 0 },
-});
+  avatar_url: '',
+  stats: { orders: 0, purchases: 0 }
+})
 
-const areaOptions = pcaTextArr;
-const avatarInput = ref(null);
-function triggerAvatar() {
-  avatarInput.value.click();
+const editingProfile = ref(false)
+const editingAddress = ref(false)
+const editingPassword = ref(false)
+
+const draftProfile = ref({ nickname: '', phone: '' })
+const draftAddress = ref({ area: [], street: '' })
+const draftPassword = ref({ old: '', new: '', confirm: '' })
+
+const profileError = ref('')
+const addressError = ref('')
+const passwordError = ref('')
+
+const selectedLocation = ref([])
+const areaOptions = pcaTextArr
+
+const currentDate = computed(() => {
+  const now = new Date()
+  return `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`
+})
+
+const fetchUserProfile = async () => {
+  try {
+    const response = await axios.get('http://localhost:3000/api/user/profile', {
+      headers: { Authorization: `Bearer ${userStore.token}` }
+    })
+    const userData = response.data
+
+    user.value = {
+      id: userData.user_id || userStore.userId,
+      nickname: userData.nickname || userStore.username,
+      phone: userData.phone || '',
+      province: userData.province || '',
+      city: userData.city || '',
+      district: userData.district || '',
+      address_detail: userData.address_detail || '',
+      avatar_url: userData.avatar_url
+        ? `http://localhost:3000/uploads/avatars/${userData.avatar_url}`
+        : profile,
+      stats: {
+        orders: userData.order_count || 0,
+        purchases: userData.purchase_count || 0
+      }
+    }
+
+    userStore.setUser({
+      username: user.value.nickname,
+      phone: user.value.phone,
+      role: userData.role,
+      userId: user.value.id,
+      avatar_url: user.value.avatar_url,
+      province: user.value.province,
+      city: user.value.city,
+      district: user.value.district,
+      address_detail: user.value.address_detail
+    })
+
+    selectedLocation.value = user.value.id
+      ? [user.value.province, user.value.city, user.value.district]
+      : []
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
+    ElMessage.error('获取用户信息失败')
+  }
 }
 
-onMounted(async () => {
+onMounted(() => {
+  fetchUserProfile()
+})
+
+const avatarInput = ref(null)
+const triggerAvatar = () => avatarInput.value.click()
+
+const handleAvatarChange = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  if (file.size > 5 * 1024 * 1024) {
+    ElMessage.error('头像大小不能超过5MB')
+    return
+  }
+
+  if (!file.type.startsWith('image/')) {
+    ElMessage.error('只能上传图片格式的文件!')
+    return
+  }
+
   try {
-    const res = await axios.get(`${API_BASE_URL}/user/profile`, {
+    const formData = new FormData()
+    formData.append('avatar', file)
+
+    const res = await fetch('http://localhost:3000/api/user/avatar', {
+      method: 'POST',
       headers: { Authorization: `Bearer ${userStore.token}` },
-    });
-    const d = res.data;
-    Object.assign(user.value, {
-      id: userStore.userId,
-      nickname: d.nickname || userStore.username,
-      phone: d.phone || '',
-      province: d.province || '',
-      city: d.city || '',
-      district: d.district || '',
-      address_detail: d.address_detail || '',
-      avatar_url: d.avatar_url ? AVATAR_BASE_URL + d.avatar_url : defaultAvatar,
-      stats: { orders: d.orders || 0, purchases: d.purchases || 0 },
-    });
-  } catch (e) {
-    ElMessage.error('获取用户信息失败');
-  }
-});
+      body: formData
+    })
 
-async function handleAvatarChange(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  if (!file.type.startsWith('image/') || file.size > 5 * 1024 * 1024) {
-    ElMessage.error('请上传 ≤5MB 的图片');
-    return;
+    const result = await res.json()
+    const newAvatarUrl = `http://localhost:3000/uploads/avatars/${result.avatarUrl}`
+
+    user.value.avatar_url = newAvatarUrl
+    userStore.avatar_url = newAvatarUrl
+
+    ElMessage.success('头像上传成功')
+    location.reload(); // 刷新页面
+  } catch (error) {
+    console.error('头像上传失败:', error)
+    ElMessage.error(`头像上传失败: ${error.message}`)
   }
+}
+
+const startEditProfile = () => {
+  draftProfile.value = {
+    nickname: user.value.nickname,
+    phone: user.value.phone
+  }
+  editingProfile.value = true
+}
+
+const cancelEditProfile = () => {
+  editingProfile.value = false
+}
+
+const saveProfile = async () => {
+  if (!draftProfile.value.phone) {
+    profileError.value = '联系电话不能为空'
+    return
+  }
+
   try {
-    const fd = new FormData();
-    fd.append('avatar', file);
-    const { data } = await axios.post(`${API_BASE_URL}/upload/avatar`, fd, {
-      headers: {
-        Authorization: `Bearer ${userStore.token}`,
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    const url = AVATAR_BASE_URL + data.avatarUrl;
-    user.value.avatar_url = url;
-    userStore.avatar_url = data.avatarUrl;
-    await axios.patch(
-      `${API_BASE_URL}/user/profile`,
-      { avatar_url: data.avatarUrl },
-      { headers: { Authorization: `Bearer ${userStore.token}` } }
-    );
-    ElMessage.success('头像更新成功');
-  } catch (e) {
-    ElMessage.error(e?.response?.data?.message || '头像上传失败');
+    await axios.patch('http://localhost:3000/api/user/profile', {
+      nickname: draftProfile.value.nickname,
+      phone: draftProfile.value.phone
+    }, {
+      headers: { Authorization: `Bearer ${userStore.token}` }
+    })
+
+    user.value.nickname = draftProfile.value.nickname
+    user.value.phone = draftProfile.value.phone
+
+    userStore.username = draftProfile.value.nickname
+    userStore.phone = draftProfile.value.phone
+
+    editingProfile.value = false
+    ElMessage.success('基本信息保存成功')
+  } catch (error) {
+    console.error('保存失败:', error)
+    profileError.value = '保存失败，请重试'
+    ElMessage.error('保存失败，请重试')
   }
 }
 
-/* ---------- 编辑状态 ---------- */
-const editingProfile = ref(false);
-const editingAddress = ref(false);
-const editingPassword = ref(false);
-
-const draftProfile = reactive({ nickname: '', phone: '' });
-const draftAddress = reactive({ area: [], street: '' });
-const draftPassword = reactive({ old: '', new: '', confirm: '' });
-
-const profileError = ref('');
-const addressError = ref('');
-const passwordError = ref('');
-
-function startEditProfile() {
-  draftProfile.nickname = user.value.nickname;
-  draftProfile.phone = user.value.phone;
-  profileError.value = '';
-  editingProfile.value = true;
-}
-function cancelEditProfile() {
-  editingProfile.value = false;
+const startEditAddress = () => {
+  draftAddress.value = {
+    area: [user.value.province, user.value.city, user.value.district],
+    street: user.value.address_detail
+  }
+  editingAddress.value = true
 }
 
-function startEditAddress() {
-  draftAddress.area = [user.value.province, user.value.city, user.value.district].filter(Boolean);
-  draftAddress.street = user.value.address_detail;
-  addressError.value = '';
-  editingAddress.value = true;
-}
-function cancelEditAddress() {
-  editingAddress.value = false;
+const cancelEditAddress = () => {
+  editingAddress.value = false
 }
 
-function startEditPassword() {
-  Object.assign(draftPassword, { old: '', new: '', confirm: '' });
-  passwordError.value = '';
-  editingPassword.value = true;
-}
-function cancelEditPassword() {
-  editingPassword.value = false;
-}
+const saveAddress = async () => {
+  const [province, city, district] = draftAddress.value.area
+  if (!province || !city || !district) {
+    addressError.value = '请选择完整的省市区'
+    return
+  }
 
-async function saveProfile() {
+  if (!draftAddress.value.street) {
+    addressError.value = '详细地址不能为空'
+    return
+  }
+
   try {
-    await axios.patch(
-      `${API_BASE_URL}/user/profile`,
-      { nickname: draftProfile.nickname, phone: draftProfile.phone },
-      { headers: { Authorization: `Bearer ${userStore.token}` } }
-    );
-    user.value.nickname = draftProfile.nickname;
-    user.value.phone = draftProfile.phone;
-    editingProfile.value = false;
-    ElMessage.success('基本信息已更新');
-  } catch (e) {
-    profileError.value = e?.response?.data?.message || '修改失败';
+    await axios.patch('http://localhost:3000/api/user/profile', {
+      province,
+      city,
+      district,
+      address_detail: draftAddress.value.street
+    }, {
+      headers: { Authorization: `Bearer ${userStore.token}` }
+    })
+
+    user.value.province = province
+    user.value.city = city
+    user.value.district = district
+    user.value.address_detail = draftAddress.value.street
+
+    userStore.province = province
+    userStore.city = city
+    userStore.district = district
+    userStore.address_detail = draftAddress.value.street
+
+    editingAddress.value = false
+    ElMessage.success('地址保存成功')
+  } catch (error) {
+    console.error('保存地址失败:', error)
+    addressError.value = '保存地址失败，请重试'
+    ElMessage.error('保存地址失败，请重试')
   }
 }
 
-async function saveAddress() {
-  if (draftAddress.area.length !== 3) {
-    addressError.value = '请选择完整的省/市/区';
-    return;
+const startEditPassword = () => {
+  draftPassword.value = { old: '', new: '', confirm: '' }
+  editingPassword.value = true
+}
+
+const cancelEditPassword = () => {
+  editingPassword.value = false
+}
+
+const savePassword = async () => {
+  if (!draftPassword.value.old || !draftPassword.value.new) {
+    passwordError.value = '请输入旧密码和新密码'
+    return
   }
-  const [province, city, district] = draftAddress.area;
+
+  if (draftPassword.value.new !== draftPassword.value.confirm) {
+    passwordError.value = '两次输入的密码不一致'
+    return
+  }
+
+  if (draftPassword.value.new.length < 6) {
+    passwordError.value = '密码长度不能少于6位'
+    return
+  }
+
   try {
-    await axios.patch(
-      `${API_BASE_URL}/user/address`,
-      { province, city, district, address_detail: draftAddress.street },
-      { headers: { Authorization: `Bearer ${userStore.token}` } }
-    );
-    Object.assign(user.value, { province, city, district, address_detail: draftAddress.street });
-    editingAddress.value = false;
-    ElMessage.success('地址已更新');
-  } catch (e) {
-    addressError.value = e?.response?.data?.message || '修改失败';
+    await axios.patch('http://localhost:3000/api/user/password', {
+      oldPassword: draftPassword.value.old,
+      newPassword: draftPassword.value.new
+    }, {
+      headers: { Authorization: `Bearer ${userStore.token}` }
+    })
+
+    ElMessage.success('密码修改成功')
+    editingPassword.value = false
+  } catch (error) {
+    console.error('修改密码失败:', error)
+    passwordError.value = error.response?.data?.error || '修改密码失败'
+    ElMessage.error('修改密码失败')
   }
 }
 
-async function savePassword() {
-  if (draftPassword.new !== draftPassword.confirm) {
-    passwordError.value = '两次密码不一致';
-    return;
-  }
-  try {
-    await axios.post(
-      `${API_BASE_URL}/user/password`,
-      {
-        oldPassword: draftPassword.old,
-        newPassword: draftPassword.new,
-      },
-      { headers: { Authorization: `Bearer ${userStore.token}` } }
-    );
-    editingPassword.value = false;
-    ElMessage.success('密码已修改');
-  } catch (e) {
-    passwordError.value = e?.response?.data?.message || '修改失败';
-  }
-}
-
-function handleLogout() {
-  userStore.clearUser();
-  ElMessage.success('已退出登录');
-
-  router.push('/login');
+const handleLogout = () => {
+  userStore.token = ''
+  router.push('/login')
 }
 </script>
 
+
 <style scoped>
+
+.address-text {
+  font-size: 18px;
+  font-weight: 500;
+  color: #1d7222;
+  margin-bottom: 30px;
+  font-family: 'PingFang SC', 'Helvetica Neue', sans-serif;
+}
+
 * {
   margin: 0;
   padding: 0;

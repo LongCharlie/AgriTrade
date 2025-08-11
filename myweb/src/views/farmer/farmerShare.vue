@@ -1,618 +1,393 @@
 <template>
-  <div id="app">
-    <div class="nav-tabs">
-      <div 
-        class="nav-tab" 
-        :class="{ active: currentPage === 'mine' }"
-        @click="currentPage = 'mine'"
-      >
-        <i class="fas fa-user"></i> 我的分享
-      </div>
-      <div 
-        class="nav-tab" 
-        :class="{ active: currentPage === 'hall' }"
-        @click="currentPage = 'hall'"
-      >
-        <i class="fas fa-book-open"></i> 分享大厅
+  <div class="experience-container">
+    <h1>经验分享列表</h1>
+    <!-- 添加发布经验分享按钮 -->
+    <div class="header-actions">
+      <el-button type="primary" @click="showPostExperienceForm">发布经验分享</el-button>
+    </div>
+
+    <!-- 发布经验分享表单 -->
+    <el-dialog title="发布经验分享" v-model="postExperienceDialogVisible" width="50%">
+      <el-form :model="postExperienceForm" ref="postExperienceForm" label-width="120px">
+        <el-form-item label="标题" required>
+          <el-input v-model="postExperienceForm.title"></el-input>
+        </el-form-item>
+        <el-form-item label="内容" required>
+          <el-input type="textarea" v-model="postExperienceForm.content" :rows="4"></el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="submitPostExperience">发布</el-button>
+          <el-button @click="postExperienceDialogVisible = false">取消</el-button>
+        </el-form-item>
+      </el-form>
+    </el-dialog>
+
+    <!-- 搜索和筛选区域 -->
+    <div class="search-filter-container">
+      <el-input
+        v-model="searchQuery"
+        placeholder="输入标题或内容搜索"
+        class="search-input"
+        clearable
+        @clear="handleSearchClear"
+        @keyup.enter="handleSearch"
+      ></el-input>
+      <!-- 状态筛选按钮 -->
+      <div class="filter-buttons">
+        <el-button :type="filter === 'all' ? 'primary' : 'default'" @click="filterExperiences('all')">全部分享</el-button>
+        <el-button :type="filter === 'mine' ? 'primary' : 'default'" @click="filterExperiences('mine')">我的分享</el-button>
       </div>
     </div>
-    
-    <transition name="fade" mode="out-in">
-      <!-- 我的分享页面 -->
-      <div v-if="currentPage === 'mine'" class="container">
-        <div class="page-header">
-          <h2 class="page-title">
-            <i class="fas fa-user"></i> 我的分享
-          </h2>
-          <button class="btn" @click="showForm = !showForm">
-            <i class="fas fa-plus"></i> {{ showForm ? '取消发布' : '发布新分享' }}
-          </button>
-        </div>
-        
-        <!-- 发布表单 -->
-        <div v-if="showForm" class="publish-form">
-          <div class="form-group">
-            <label for="postTitle"><i class="fas fa-heading"></i> 标题</label>
-            <input 
-              type="text" 
-              id="postTitle" 
-              class="form-control" 
-              placeholder="输入经验分享标题"
-              v-model="newPost.title"
-            >
-          </div>
-          
-          <div class="form-group">
-            <label for="postContent"><i class="fas fa-file-alt"></i> 内容</label>
-            <textarea 
-              id="postContent" 
-              class="form-control" 
-              placeholder="详细描述您的种植经验、技巧或心得..."
-              v-model="newPost.content"
-            ></textarea>
-          </div>
-          
-          <button class="btn" @click="publishPost">
-            <i class="fas fa-paper-plane"></i> 发布分享
-          </button>
-        </div>
-        
-        <!-- 我的分享列表 -->
-        <div v-if="myPosts.length > 0" class="posts-container">
-          <div v-for="(post, index) in myPosts" :key="index" class="post-card">
-            <div class="post-header">
-              <h3 class="post-title">{{ post.title }}</h3>
-              <div class="post-author">
-                <i class="fas fa-user"></i>
-                {{ post.author }} · {{ post.date }}
-              </div>
-            </div>
-            <div class="post-content">
-              <p>{{ post.content }}</p>
-            </div>
-            <div class="post-footer">
-              <div class="post-date">
-                <i class="far fa-clock"></i> {{ post.time }}
-              </div>
-              <router-link 
-                to="/farmer/sharedetails" 
-                class="view-more"
-              >
-                查看更多
-              </router-link>
-              <div class="post-actions">
-                <div class="post-action">
-                  <i class="far fa-comment"></i> {{ post.comments }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div v-else class="empty-state">
-          <i class="fas fa-book"></i>
-          <h3>暂无分享内容</h3>
-          <p>立即发布您的第一条分享吧！</p>
-          <button class="btn" style="margin-top: 20px;" @click="showForm = true">
-            <i class="fas fa-plus"></i> 发布分享
-          </button>
-        </div>
+
+    <!-- 经验分享列表展示区域 -->
+    <div class="experience-list">
+      <!-- 搜索结果提示 -->
+      <div v-if="searchQuery" class="search-result-tip">
+        共找到 {{ filteredExperiences.length }} 条关于"{{ searchQuery }}"的结果
+        <el-button type="text" @click="clearSearch" v-if="searchQuery">清除搜索</el-button>
       </div>
-      
-      <!-- 分享大厅页面 -->
-      <div v-else-if="currentPage === 'hall'" class="container">
-        <h2 class="page-title">
-          <i class="fas fa-book-open"></i> 分享大厅
-        </h2>
-        
-        <div v-if="posts.length === 0" class="empty-state">
-          <i class="fas fa-book"></i>
-          <h3>暂无分享内容</h3>
-          <p>成为第一个分享种植经验的人吧！</p>
-        </div>
-        
-        <div v-else class="posts-container">
-          <div v-for="(post, index) in posts" :key="index" class="post-card">
-            <div class="post-header">
-              <h3 class="post-title">{{ post.title }}</h3>
-              <div class="post-author">
-                <i class="fas fa-user"></i>
-                {{ post.author }} · {{ post.date }}
-              </div>
-            </div>
-            <div class="post-content">
-              <p>{{ post.content }}</p>
-            </div>
-            <div class="post-footer">
-              <div class="post-date">
-                <i class="far fa-clock"></i> {{ post.time }}
-              </div>
-              <router-link 
-                to="/farmer/sharedetails" 
-                class="view-more"
-              >
-                查看更多
-              </router-link>
-              <div class="post-actions">
-                <div class="post-action" @click="likePost(post.id)">
-                  <i class="far fa-thumbs-up"></i> {{ post.likes }}
-                </div>
-                <div class="post-action">
-                  <i class="far fa-comment"></i> {{ post.comments }}
-                </div>
-              </div>
-            </div>
+
+      <!-- 经验分享卡片 -->
+      <el-card
+        class="experience-card"
+        v-for="(experience, index) in paginatedExperiences"
+        :key="index"
+        shadow="hover"
+      >
+        <div class="card-header">
+          <span class="experience-title" v-html="highlightSearchText(experience.title, true)"></span>
+          <div class="tag">
+            <el-tag :type="experience.comment_count === 0 ? 'warning' : 'success'">
+              {{ experience.comment_count === 0 ? '无评论' : experience.comment_count + ' 评论' }}
+            </el-tag>
           </div>
         </div>
+        <div class="card-body">
+          <p class="experience-content" v-html="highlightSearchText(truncateText(experience.content, 150), true)"></p>
+          <div class="experience-meta">
+            <span><i class="el-icon-user"></i> {{ experience.publisher }}</span>
+            <span><i class="el-icon-time"></i> {{ formatDate(experience.published_at) }}</span>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="footer-buttons">
+            <el-button type="primary" size="small" @click="viewExperienceDetail(experience.id)">
+              查看详情
+            </el-button>
+          </div>
+        </div>
+      </el-card>
+
+      <!-- 分页组件 -->
+      <div class="pagination-container">
+        <el-pagination
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          :current-page="pagination.currentPage"
+          :page-sizes="[5, 10, 20, 50]"
+          :page-size="pagination.pageSize"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="filteredExperiences.length">
+        </el-pagination>
       </div>
-    </transition>
+    </div>
   </div>
 </template>
 
 <script>
+import axios from "axios";
+import { useUserStore } from '@/stores/user';
+import DOMPurify from 'dompurify';
+
 export default {
-  data() {
+  setup() {
+    const userStore = useUserStore();
     return {
-      currentPage: 'mine', // 默认显示我的分享
-      showForm: false, // 控制发布表单显示
-      newPost: {
-        title: '',
-        content: '',
-        author: '李技术员'
-      },
-      posts: [
-        {
-          id: 1,
-          title: '水稻高产种植技术要点',
-          content: '在水稻种植过程中，合理的水肥管理是关键。分蘖期要保证充足水分，幼穗分化期适当控水，抽穗扬花期保持浅水层。施肥方面，基肥要足，分蘖肥要早，穗肥要巧。同时注意病虫害防治，特别是稻飞虱和纹枯病。',
-          author: '张专家',
-          date: '2023-08-15',
-          time: '10:30',
-          likes: 24,
-          comments: 8
-        },
-        {
-          id: 2,
-          title: '大棚蔬菜病虫害防治经验',
-          content: '大棚蔬菜种植中，温湿度控制不当容易引发病虫害。建议：1. 加强通风，降低湿度；2. 定期轮作，减少土传病害；3. 使用黄板诱杀蚜虫、白粉虱；4. 发现病害及时使用生物农药防治。推荐使用枯草芽孢杆菌防治灰霉病。',
-          author: '王技术员',
-          date: '2023-08-12',
-          time: '14:20',
-          likes: 18,
-          comments: 5
-        },
-        {
-          id: 3,
-          title: '果树修剪的最佳时期与方法',
-          content: '果树修剪是提高产量的重要措施。落叶果树宜在冬季休眠期修剪，常绿果树宜在春季萌芽前。修剪原则：去弱留强，疏密留稀，控制高度。具体操作：剪除病虫枝、交叉枝、下垂枝，保留健壮结果枝。修剪后及时涂抹伤口保护剂。',
-          author: '赵专家',
-          date: '2023-08-10',
-          time: '09:45',
-          likes: 31,
-          comments: 12
-        },
-        {
-          id: 4,
-          title: '玉米密植高产栽培技术',
-          content: '玉米密植是提高产量的有效途径。选择紧凑型品种，适当增加种植密度，增施肥料特别是中后期追肥，加强病虫害防治，适时晚收增加粒重。',
-          author: '李技术员',
-          date: '2023-08-05',
-          time: '16:10',
-          likes: 15,
-          comments: 3
-        }
-      ]
+      userStore
     };
   },
+  data() {
+    return {
+      experiences: [], // 存储经验分享数据
+      filter: 'all',
+      searchQuery: '', // 搜索关键词
+      pagination: {
+        currentPage: 1,
+        pageSize: 10
+      },
+      postExperienceDialogVisible: false, // 发布经验分享对话框可见性
+      postExperienceForm: { // 发布经验分享表单数据
+        title: '',
+        content: ''
+      }
+    };
+  },
+  created() {
+    this.fetchExperiences();
+  },
   computed: {
-    // 获取当前用户的分享
-    myPosts() {
-      return this.posts.filter(post => post.author === '李技术员');
+    // 根据状态和搜索词过滤经验分享
+    filteredExperiences() {
+      let filtered = [...this.experiences];
+
+      // 状态筛选
+      if (this.filter === 'all') {
+        filtered = filtered.filter(q => q.status === 'open');
+      } else if (this.filter === 'mine') {
+        filtered = filtered.filter(q => q.user_id === this.userStore.userId);
+      }
+
+      // 搜索筛选
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        filtered = filtered.filter(q =>
+          q.title.toLowerCase().includes(query) ||
+          q.content.toLowerCase().includes(query)
+        );
+      }
+
+      return filtered;
+    },
+    // 分页后的数据
+    paginatedExperiences() {
+      const start = (this.pagination.currentPage - 1) * this.pagination.pageSize;
+      const end = start + this.pagination.pageSize;
+      return this.filteredExperiences.slice(start, end);
     }
   },
   methods: {
-    // 获取当前日期
-    getCurrentDate() {
-      const today = new Date();
-      return today.toISOString().split('T')[0];
-    },
-    // 获取当前时间
-    getCurrentTime() {
-      const now = new Date();
-      return now.toTimeString().slice(0, 5);
-    },
-    // 发布新分享
-    publishPost() {
-      if (!this.newPost.title.trim() || !this.newPost.content.trim()) {
-        alert('标题和内容不能为空！');
-        return;
+    async fetchExperiences() {
+      try {
+        // 使用虚拟数据
+        const mockData = [
+          {
+            id: 1,
+            title: '水稻病虫害防治',
+            content: '最近发现稻田里出现大量害虫，叶片上有明显的啃食痕迹，请问该如何有效防治？',
+            publisher: '张农户',
+            published_at: '2023-05-10',
+            comment_count: 3,
+            status: 'open',
+            user_id: 1
+          },
+          {
+            id: 2,
+            title: '小麦种植最佳时间',
+            content: '请问在我们这个地区，小麦的最佳种植时间是什么时候？不同品种的小麦在种植时间上有什么区别？',
+            publisher: '李农户',
+            published_at: '2023-04-15',
+            comment_count: 5,
+            status: 'closed',
+            user_id: 2
+          },
+          {
+            id: 3,
+            title: '有机肥料使用建议',
+            content: '想请教专家关于有机肥料的使用方法和注意事项。如何判断有机肥料的质量？施用量应该如何控制？',
+            publisher: '王农户',
+            published_at: '2023-05-20',
+            comment_count: 2,
+            status: 'open',
+            user_id: 1
+          }
+        ];
+        this.experiences = mockData;
+      } catch (error) {
+        console.error('获取经验分享列表失败:', error);
+        this.$message.error('获取经验分享列表失败');
       }
-      
-      const post = {
-        id: Date.now(),
-        title: this.newPost.title,
-        content: this.newPost.content,
-        author: this.newPost.author,
-        date: this.getCurrentDate(),
-        time: this.getCurrentTime(),
-        comments: 0
-      };
-      
-      // 添加到 posts 数组开头
-      this.posts.unshift(post);
-      
-      // 清空表单
-      this.newPost.title = '';
-      this.newPost.content = '';
-      this.showForm = false;
-      
-      alert('分享发布成功！');
     },
+    // 搜索处理
+    handleSearch() {
+      this.pagination.currentPage = 1; // 搜索时重置到第一页
+    },
+    // 清除搜索
+    clearSearch() {
+      this.searchQuery = '';
+      this.pagination.currentPage = 1;
+    },
+    // 搜索框清空时处理
+    handleSearchClear() {
+      this.pagination.currentPage = 1;
+    },
+    // 高亮搜索文本
+    highlightSearchText(text, isHtml = false) {
+      if (!this.searchQuery || !text) return text;
+
+      const query = this.searchQuery.toLowerCase();
+      const regex = new RegExp(query, 'gi');
+
+      if (isHtml) {
+        const highlighted = text.toString().replace(regex, match =>
+            `<span class="highlight-text">${match}</span>`);
+        return DOMPurify.sanitize(highlighted);
+      } else {
+        return text.toString().replace(regex, match =>
+            `{{${match}}}`);
+      }
+    },
+    // 每页条数改变
+    handleSizeChange(val) {
+      this.pagination.pageSize = val;
+      this.pagination.currentPage = 1; // 重置到第一页
+    },
+    // 当前页改变
+    handleCurrentChange(val) {
+      this.pagination.currentPage = val;
+    },
+    truncateText(text, length) {
+      if (!text) return '';
+      if (text.length <= length) return text;
+      return text.substring(0, length) + '...';
+    },
+    viewExperienceDetail(experienceId) {
+      this.$router.push(`/experience/${experienceId}`);
+    },
+    filterExperiences(status) {
+      this.filter = status;
+      this.pagination.currentPage = 1;
+    },
+    formatDate(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    },
+    showPostExperienceForm() {
+      this.postExperienceDialogVisible = true;
+      this.postExperienceForm = { title: '', content: '' };
+    },
+    submitPostExperience() {
+      this.$refs.postExperienceForm.validate((valid) => {
+        if (valid) {
+          const token = this.userStore.token;
+          axios.post('http://localhost:3000/api/experiences', {
+            title: this.postExperienceForm.title,
+            content: this.postExperienceForm.content,
+            userId: this.userStore.userId
+          }, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          })
+          .then(response => {
+            this.experiences.push(response.data);
+            this.postExperienceDialogVisible = false;
+            this.pagination.currentPage = 1;
+            this.$message.success('经验分享发布成功');
+          })
+          .catch(error => {
+            console.error('发布经验分享失败:', error);
+            this.$message.error('发布经验分享失败');
+          });
+        } else {
+          console.log('表单验证失败');
+          return false;
+        }
+      });
+    }
   }
 };
 </script>
 
-<style>
-/* 全局样式变量 */
-.view-more {
-  color: #000000;
-  cursor: pointer;
-  text-decoration: underline;
-  display: inline; /* 改为内联元素 */
-  line-height: normal; /* 重置行高 */
-  padding: 0 ; /* 清除内边距 */
-  margin: 0; /* 清除外边距 */
-  border: none ; /* 清除边框 */
-  background: none ; /* 清除背景 */
-}
-
-.view-more:hover {
-  opacity: 0.8;
-  text-decoration: underline;
-}
-
-:root {
-  --primary-green: #3d9e42be;
-  --light-green: #4caf4f75;
-  --lighter-green: #8bc34aaf;
-  --background: #f5f9f5;
-  --card-bg: #ffffff;
-  --text-dark: #333333;
-  --text-light: #666666;
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-body {
-  background-color: var(--background);
-  color: var(--text-dark);
-  line-height: 1.6;
-}
-
-#app {
-  max-width: 1200px;
-  margin: 0 auto;
+<style scoped>
+.experience-container {
   padding: 20px;
 }
 
-
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.logo i {
-  font-size: 2.5rem;
-}
-
-.logo h1 {
-  font-size: 1.8rem;
-  font-weight: 700;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.user-avatar {
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  background-color: var(--light-green);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 1.2rem;
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.user-avatar:hover {
-  transform: scale(1.05);
-}
-
-.nav-tabs {
-  display: flex;
-  background-color: white;
-  border-radius: 50px;
-  overflow: hidden;
-  box-shadow: var(--shadow);
-  margin: 0 auto 30px;
-  max-width: 500px;
-}
-
-.nav-tab {
-  flex: 1;
-  text-align: center;
-  padding: 15px 0;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 600;
-  color: var(--text-light);
-  text-decoration: none;
-}
-
-.nav-tab.active {
-  background: linear-gradient(135deg, var(--lighter-green), var(--light-green));
-  color: white;
-}
-
-.nav-tab:not(.active):hover {
-  background-color: #f0f0f0;
-}
-
-.container {
-  background-color: var(--card-bg);
-  border-radius: 15px;
-  box-shadow: var(--shadow);
-  padding: 30px;
+.header-actions {
   margin-bottom: 30px;
-  transition: transform 0.3s ease;
+  margin-top: 20px;
 }
 
-.container:hover {
-  transform: translateY(-5px);
-}
-
-.page-title {
-  margin-bottom: 25px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid var(--lighter-green);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.page-header {
+.search-filter-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 25px;
-}
-
-/* 发布分享表单样式 */
-.form-group {
-  margin-bottom: 25px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: var(--dark-green);
-}
-
-.form-control {
-  width: 100%;
-  padding: 14px;
-  border: 2px solid #e0e0e0;
-  border-radius: 10px;
-  font-size: 1rem;
-  transition: border 0.3s ease;
-}
-
-.form-control:focus {
-  border-color: var(--lighter-green);
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(139, 195, 74, 0.2);
-}
-
-textarea.form-control {
-  min-height: 200px;
-  resize: vertical;
-}
-
-.btn {
-  background: linear-gradient(135deg, var(--light-green), var(--primary-green));
-  color: white;
-  border: none;
-  padding: 14px 28px;
-  border-radius: 50px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3);
-}
-
-.btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(46, 125, 50, 0.4);
-}
-
-.btn:active {
-  transform: translateY(1px);
-}
-
-.btn-outline {
-  background: transparent;
-  border: 2px solid var(--primary-green);
-  color: var(--primary-green);
-  box-shadow: none;
-}
-
-.btn-outline:hover {
-  background: rgba(76, 175, 80, 0.1);
-}
-
-/* 分享大厅样式 */
-.posts-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 25px;
-}
-
-.post-card {
-  background: white;
-  border-radius: 15px;
-  overflow: hidden;
-  box-shadow: var(--shadow);
-  transition: all 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.post-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-}
-
-.post-header {
-  background: linear-gradient(135deg, var(--light-green), var(--primary-green));
-  color: white;
-  padding: 20px;
-}
-
-.post-title {
-  font-size: 1.3rem;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-.post-author {
-  display: flex;
-  align-items: center;
-  font-size: 0.9rem;
-  opacity: 0.9;
-}
-
-.post-author i {
-  margin-right: 8px;
-}
-
-.post-content {
-  padding: 20px;
-  flex-grow: 1;
-  color: var(--text-light);
-  line-height: 1.7;
-}
-
-.post-footer {
-  padding: 15px 20px;
-  border-top: 1px solid #f0f0f0;
-  display: flex;
-  justify-content: space-between;
-  color: var(--text-light);
-  font-size: 0.9rem;
-}
-
-.post-actions {
-  display: flex;
-  gap: 15px;
-}
-
-.post-action {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  cursor: pointer;
-  transition: color 0.3s ease;
-}
-
-.post-action:hover {
-  color: var(--primary-green);
-}
-
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text-light);
-}
-
-.empty-state i {
-  font-size: 4rem;
-  color: #e0e0e0;
   margin-bottom: 20px;
 }
 
-.empty-state h3 {
-  font-size: 1.5rem;
+.search-input {
+  width: 300px;
+}
+
+.search-result-tip {
   margin-bottom: 15px;
-  color: var(--dark-green);
+  color: #666;
+  font-size: 14px;
 }
 
-.publish-form {
-  background-color: #f8fdf8;
-  border-radius: 15px;
-  padding: 25px;
-  margin-bottom: 30px;
-  border: 2px dashed var(--lighter-green);
+.experience-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-/* 动画效果 */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.5s;
+.experience-card {
+  width: 100%;
+  margin-bottom: 20px;
+  transition: all 0.3s;
 }
 
-.fade-enter, .fade-leave-to {
-  opacity: 0;
+.experience-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-footer {
-  text-align: center;
-  padding: 30px 0;
-  color: var(--text-light);
-  font-size: 0.9rem;
-  border-top: 1px solid #e0e0e0;
-  margin-top: 30px;
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
 }
 
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .header-content {
-    flex-direction: column;
-    text-align: center;
-    gap: 15px;
-  }
-  
-  .posts-container {
-    grid-template-columns: 1fr;
-  }
-  
-  .nav-tabs {
-    max-width: 100%;
-  }
-  
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
+.experience-title {
+  font-weight: bold;
+  font-size: 18px;
+  flex: 1;
+  margin-right: 15px;
+}
+
+.card-body {
+  padding: 10px 0;
+}
+
+.experience-content {
+  margin: 10px 0;
+  color: #666;
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.experience-meta {
+  display: flex;
+  gap: 20px;
+  margin-top: 15px;
+  color: #888;
+  font-size: 14px;
+}
+
+.experience-meta i {
+  margin-right: 5px;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.tag {
+  display: flex;
+  gap: 8px;
+}
+
+.pagination-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
 }
 </style>

@@ -1,442 +1,696 @@
 <template>
-  <div class="buyer-container">
-    <div class="header">
-      <h1>我的采购订单</h1>
-      <div class="stats-card">
-        <div class="title">总支出</div>
-        <div class="value">¥ {{ totalExpense.toLocaleString() }}</div>
-      </div>
-    </div>
-    
-    <div class="search-section">
-      <div class="search-title">
-        <i class="el-icon-search"></i>
-        <h2>订单筛选</h2>
-      </div>
-      <div class="search-bar">
-        <!-- 第一行：订单编号、产品、发货地 -->
-        <div class="row-1">
-          <el-input
-            v-model="searchId"
-            placeholder="搜索订单编号"
-            clearable
-          >
-            <template #prefix>
-              <i class="el-icon-document"></i>
-            </template>
-          </el-input>
-          
-          <el-input
-            v-model="searchProduct"
-            placeholder="搜索产品种类"
-            clearable
-          >
-            <template #prefix>
-              <i class="el-icon-goods"></i>
-            </template>
-          </el-input>
-          
-          <el-input
-            v-model="searchAddress"
-            placeholder="搜索发货地"
-            clearable
-          >
-            <template #prefix>
-              <i class="el-icon-location-outline"></i>
-            </template>
-          </el-input>
-        </div>
-        
-        <!-- 第二行：订单状态、日期范围 -->
-        <div class="row-2">
+  <div id="app">
+    <div class="filters">
+      <h2><i class="fas fa-filter"></i> 筛选</h2>
+      <div class="filter-horizontal">
+        <div class="filter-group">
+          <h3><i class="far fa-calendar"></i> 时间范围</h3>
           <el-date-picker
-            v-model="filterDate"
+            v-model="dateRange"
             type="daterange"
-            range-separator="至"
             start-placeholder="开始日期"
             end-placeholder="结束日期"
-            value-format="YYYY-MM-DD"
-          />
-          
-          <el-select 
-            v-model="filterOption" 
-            placeholder="订单状态"
-            clearable
-          >
-            <el-option label="全部订单" value="all"></el-option>
-            <el-option label="待付款" value="pendingPayment"></el-option>
-            <el-option label="待发货" value="pendingDelivery"></el-option>
-            <el-option label="待收货" value="pendingReceipt"></el-option>
-            <el-option label="已完成" value="completed"></el-option>
-            <el-option label="售后中" value="afterSaleRequested"></el-option>
-            <el-option label="已售后" value="afterSaleResolved"></el-option>
-          </el-select>
+            class="filter-input"
+          ></el-date-picker>
         </div>
-        
-        <!-- 第三行：搜索和重置按钮 -->
-        <div class="row-3">
-          <el-button type="primary" @click="performSearch">
-            <i class="el-icon-search"></i> 搜索订单
-          </el-button>
-          <el-button @click="resetSearch">
-            <i class="el-icon-refresh"></i> 重置筛选
-          </el-button>
+        <div class="filter-group">
+          <h3><i class="fas fa-apple-alt"></i> 产品种类</h3>
+          <input 
+            type="text" 
+            class="filter-input" 
+            placeholder="输入产品种类"
+            v-model="filters.productType"
+          >
+        </div>
+        <div class="filter-group">
+          <h3><i class="fas fa-tasks"></i> 订单状态</h3>
+          <select class="filter-input" v-model="filters.status">
+            <option value="">全部订单</option>
+            <option value="待发货">待发货</option>
+            <option value="待收货">待收货</option>
+            <option value="已完成">已完成</option>
+            <option value="售后中">售后中</option>
+            <option value="已售后">已售后</option>
+          </select>
         </div>
       </div>
-
+      <div class="filter-buttons">
+        <button class="btn btn-primary" @click="applyFilters">
+          <i class="fas fa-check"></i> 应用筛选
+        </button>
+        <button class="btn btn-reset" @click="resetFilters">
+          <i class="fas fa-redo"></i> 重置筛选
+        </button>
+      </div>
     </div>
     
-    <div class="table-container">
-      <el-table 
-        :data="filteredTableData" 
-        v-loading="loading"
-        :empty-text="emptyText"
-        stripe
-      >
-        <el-table-column prop="id" label="订单编号" width="140" sortable>
-          <template #default="scope">
-            <span style="color: #1890ff; font-weight: 500;">#{{ scope.row.id }}</span>
-          </template>
-        </el-table-column>
-        
-        <el-table-column prop="product" label="产品" width="140">
-          <template #default="scope">
-            <div style="display: flex; align-items: center;">
-              <div :style="{
-                width: '10px',
-                height: '10px',
-                borderRadius: '50%',
-                backgroundColor: productColors[scope.row.product] || '#1890ff',
-                marginRight: '8px'
-              }"></div>
-              {{ scope.row.product }}
+    <div class="orders">
+      <div class="table-container">
+        <table v-if="filteredOrders.length > 0">
+          <thead>
+            <tr>
+              <th>订单号</th>
+              <th>产品种类</th>
+              <th>数量(kg)</th>
+              <th>价格(元/kg)</th>
+              <th>收货地</th>
+              <th>发货人</th>
+              <th>联系方式</th>
+              <th>时间</th>
+              <th>状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="order in filteredOrders" :key="order.id">
+              <td>{{ order.orderId }}</td>
+              <td>{{ order.productType }}</td>
+              <td>{{ order.quantity }}</td>
+              <td>{{ order.price }}</td>
+              <td>{{ order.destination }}</td>
+              <td>{{ order.sender }}</td>
+              <td>{{ order.contact }}</td>
+              <td>{{ order.time }}</td>
+              <td>
+                <span :class="getStatusClass(order.status)">{{ order.status }}</span>
+              </td>
+              <td>
+                <template v-if="order.status === '待发货'">
+                  <button class="action-btn btn-view" @click="openShippingModal(order)">
+                    <i class="fas fa-truck"></i> 发货信息
+                  </button>
+                </template>
+                <template v-else-if="order.status === '待收货'">
+                  <button class="action-btn btn-confirm" @click="confirmReceipt(order)">
+                    <i class="fas fa-check-circle"></i> 确认收货
+                  </button>
+                  <button class="action-btn btn-refund" @click="openRefundModal(order)">
+                    <i class="fas fa-undo"></i> 请求售后
+                  </button>
+                </template>
+                <template v-else-if="order.status === '售后中'">
+                  <button class="action-btn btn-view" @click="openRefundReasonModal(order)">
+                    <i class="fas fa-eye"></i> 售后详情
+                  </button>
+                </template>
+                <template v-else-if="order.status === '已售后'">
+                  <button class="action-btn btn-view" @click="openAuditReasonModal(order)">
+                    <i class="fas fa-file-alt"></i> 审核详情
+                  </button>
+                </template>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div v-else class="no-results">
+          <i class="fas fa-inbox"></i>
+          <p>没有找到匹配的订单</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 发货信息模态框部分 -->
+    <div class="modal-overlay" v-if="shippingModalVisible">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title"><i class="fas fa-truck"></i> 发货信息</h3>
+          <button class="close-btn" @click="shippingModalVisible = false">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="info-row">
+            <div class="info-label">订单号：</div>
+            <div class="info-value">{{ selectedOrder.orderId }}</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">产品：</div>
+            <div class="info-value">{{ selectedOrder.productType }} ({{ selectedOrder.quantity }}kg)</div>
+          </div>
+          
+          <div class="shipping-info">
+            <!-- 直接显示发货信息字符串 -->
+            <p>{{ shippingInfo }}</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-cancel" @click="shippingModalVisible = false">关闭</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 售后申请模态框 -->
+    <div class="modal-overlay" v-if="refundModalVisible">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title"><i class="fas fa-undo"></i> 申请售后</h3>
+          <button class="close-btn" @click="refundModalVisible = false">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="info-row">
+            <div class="info-label">订单号：</div>
+            <div class="info-value">{{ selectedOrder.orderId }}</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">产品：</div>
+            <div class="info-value">{{ selectedOrder.productType }} ({{ selectedOrder.quantity }}kg)</div>
+          </div>
+          
+          <h4 style="margin: 20px 0 10px;">售后原因：</h4>
+          <textarea v-model="refundReason" placeholder="请详细描述您需要售后的原因..."></textarea>
+          
+          <h4 style="margin: 20px 0 10px;">上传凭证：</h4>
+          <div class="upload-area" @click="triggerFileInput">
+            <div class="upload-icon">
+              <i class="fas fa-cloud-upload-alt"></i>
             </div>
-          </template>
-        </el-table-column>
-        
-        <el-table-column prop="quantity" label="数量(kg)" width="120" align="center" sortable />
-        
-        <el-table-column prop="price" label="价格(元/kg)" width="130" align="center">
-          <template #default="scope">
-            <span style="color: #f56c6c;">¥{{ scope.row.price }}</span>
-          </template>
-        </el-table-column>
-        
-        <el-table-column prop="shipFrom" label="发货地" width="120" />
-        
-        <el-table-column prop="contact" label="联系方式" width="140" />
-        
-        <el-table-column prop="orderTime" label="下单时间" width="180" sortable />
-        
-        <el-table-column prop="status" label="状态" width="130">
-          <template #default="scope">
-            <span :class="`status-tag status-${getStatusClass(scope.row.status)}`">
-              {{ scope.row.status }}
-            </span>
-          </template>
-        </el-table-column>
-        
-        <el-table-column label="操作" width="180" fixed="right">
-          <template #default="scope">
-            <div style="display: flex; gap: 10px;">
-              <template v-if="scope.row.status === '待付款'">
-                <span class="operation-btn" @click="payOrder(scope.row)">
-                  <i class="el-icon-shopping-bag-1"></i> 去支付
-                </span>
-                <span class="operation-btn" @click="cancelOrder(scope.row)" style="color: #f56c6c;">
-                  <i class="el-icon-close"></i> 取消
-                </span>
-              </template>
-              
-              <template v-else-if="scope.row.status === '待发货'">
-                <span class="operation-btn" @click="remindDelivery(scope.row)">
-                  <i class="el-icon-bell"></i> 催发货
-                </span>
-              </template>
-              
-              <template v-else-if="scope.row.status === '待收货'">
-                <span class="operation-btn" @click="confirmReceipt(scope.row)" style="color: #52c41a;">
-                  <i class="el-icon-circle-check"></i> 确认收货
-                </span>
-              </template>
-              
-              <template v-else-if="scope.row.status === '已完成'">
-                <span class="operation-btn" @click="applyAfterSale(scope.row)">
-                  <i class="el-icon-warning-outline"></i> 申请售后
-                </span>
-              </template>
-              
-              <template v-else-if="scope.row.status === '售后中'">
-                <span class="operation-btn" @click="viewAfterSale(scope.row)">
-                  <i class="el-icon-view"></i> 查看进度
-                </span>
-              </template>
-              
-              <template v-else-if="scope.row.status === '已售后'">
-                <span class="operation-btn" @click="viewAfterSaleResult(scope.row)">
-                  <i class="el-icon-document"></i> 查看结果
-                </span>
-              </template>
+            <div class="upload-text">点击或拖拽文件到此处上传</div>
+            <div class="upload-btn">
+              <i class="fas fa-plus"></i> 选择图片
             </div>
-          </template>
-        </el-table-column>
-      </el-table>
-      
-      <div class="pagination">
-        <el-pagination
-          background
-          layout="prev, pager, next"
-          :page-size="pageSize"
-          :total="totalOrders"
-          v-model:current-page="currentPage"
-          @current-change="handlePageChange"
-        />
+            <input type="file" ref="fileInput" style="display: none" multiple @change="handleFileUpload">
+          </div>
+          
+          <div class="preview-container" v-if="uploadedFiles.length > 0">
+            <div class="preview-item" v-for="(file, index) in uploadedFiles" :key="index">
+              <img :src="file.url" class="preview-image" alt="凭证图片">
+              <button class="remove-btn" @click="removeImage(index)">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-cancel" @click="refundModalVisible = false">取消</button>
+          <button class="btn btn-submit" @click="submitRefund">提交申请</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 售后详情模态框 -->
+    <div class="modal-overlay" v-if="refundReasonModalVisible">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title"><i class="fas fa-file-invoice"></i> 售后详情</h3>
+          <button class="close-btn" @click="refundReasonModalVisible = false">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="info-row">
+            <div class="info-label">订单号：</div>
+            <div class="info-value">{{ selectedOrder.orderId }}</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">产品：</div>
+            <div class="info-value">{{ selectedOrder.productType }} ({{ selectedOrder.quantity }}kg)</div>
+          </div>
+          
+          <div class="info-row">
+            <div class="info-label">售后原因：</div>
+            <div class="info-value">
+              <p style="background: #f8fafc; padding: 12px; border-radius: 8px;">
+                {{ refundDetail.reason }}
+              </p>
+            </div>
+          </div>
+          
+          <h4 style="margin: 20px 0 10px;">凭证图片：</h4>
+          <div class="preview-container">
+            <div class="preview-item" v-for="(img, index) in refundDetail.evidenceImages" :key="index">
+              <img :src="img" class="preview-image" alt="凭证图片">
+            </div>
+          </div>
+          
+          <div class="info-row">
+            <div class="info-label">处理状态：</div>
+            <div class="info-value">
+              <span class="status status-refund">{{ refundDetail.processStatus }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-cancel" @click="refundReasonModalVisible = false">关闭</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 审核详情模态框 -->
+    <div class="modal-overlay" v-if="auditReasonModalVisible">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title"><i class="fas fa-file-alt"></i> 售后处理结果</h3>
+          <button class="close-btn" @click="auditReasonModalVisible = false">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="info-row">
+            <div class="info-label">订单号：</div>
+            <div class="info-value">{{ selectedOrder.orderId }}</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">产品：</div>
+            <div class="info-value">{{ selectedOrder.productType }} ({{ selectedOrder.quantity }}kg)</div>
+          </div>
+          
+          <div class="info-row">
+            <div class="info-label">售后原因：</div>
+            <div class="info-value">
+              <p style="background: #f8fafc; padding: 12px; border-radius: 8px;">
+                {{ auditDetail.refundReason }}
+              </p>
+            </div>
+          </div>
+          
+          <h4 style="margin: 20px 0 10px;">凭证图片：</h4>
+          <div class="preview-container">
+            <div class="preview-item" v-for="(img, index) in auditDetail.evidenceImages" :key="index">
+              <img :src="img" class="preview-image" alt="凭证图片">
+            </div>
+          </div>
+          
+          <div class="audit-section">
+            <h4><i class="fas fa-user-check"></i> 审核结果</h4>
+            <div class="info-row">
+              <div class="info-label">处理结果：</div>
+              <div class="info-value">
+                <span class="status status-refunded">{{ auditDetail.processResult }}</span>
+              </div>
+            </div>
+            <div class="info-row">
+              <div class="info-label">退款金额：</div>
+              <div class="info-value">¥{{ auditDetail.refundAmount.toFixed(2) }}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-label">审核说明：</div>
+              <div class="info-value">
+                <p style="background: #f0f7ff; padding: 12px; border-radius: 8px;">
+                  {{ auditDetail.auditRemark }}
+                </p>
+              </div>
+            </div>
+            <div class="info-row">
+              <div class="info-label">审核时间：</div>
+              <div class="info-value">{{ auditDetail.auditTime }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-cancel" @click="auditReasonModalVisible = false">关闭</button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
+<script>
 import { ref, computed, onMounted } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+export default {
+  data() {
+    return {
+      dateRange: [] // 用于绑定日期选择器的值
+    };
+  },
 
-// 搜索和筛选变量
-const searchId = ref('');
-const searchProduct = ref('');
-const searchAddress = ref('');
-const filterDate = ref('');
-const filterOption = ref('');
-const loading = ref(false);
-const emptyText = ref('正在加载订单数据...');
-const currentPage = ref(1);
-const pageSize = ref(10);
-const totalOrders = ref(0);
-
-// 产品颜色映射
-const productColors = ref({
-  '白米': '#52c41a',
-  '西瓜': '#fa8c16',
-  '玉米': '#fadb14',
-  '黄豆': '#722ed1',
-  '小麦': '#13c2c2',
-  '苹果': '#f5222d'
-});
-
-// 模拟订单数据
-const tableData = ref([
-  { id: 1001, product: '白米', quantity: 100, price: 15, shipFrom: '黑龙江', seller: '东北米业', contact: '139****1234', orderTime: '2023-10-01 14:30', status: '已完成' },
-  { id: 1002, product: '西瓜', quantity: 200, price: 10, shipFrom: '海南', seller: '热带果园', contact: '138****5678', orderTime: '2023-10-02 10:15', status: '待发货' },
-  { id: 1003, product: '白米', quantity: 50, price: 8, shipFrom: '江苏', seller: '江南粮仓', contact: '137****9012', orderTime: '2023-10-03 09:45', status: '待收货' },
-  { id: 1004, product: '玉米', quantity: 150, price: 12, shipFrom: '山东', seller: '鲁农集团', contact: '136****3456', orderTime: '2023-10-04 16:20', status: '售后中' },
-  { id: 1005, product: '黄豆', quantity: 80, price: 20, shipFrom: '河南', seller: '中原豆业', contact: '135****7890', orderTime: '2023-10-05 11:05', status: '已售后' },
-  { id: 1006, product: '白米', quantity: 100, price: 8, shipFrom: '湖南', seller: '湘米供应商', contact: '134****2345', orderTime: '2023-10-06 13:40', status: '待付款' },
-  { id: 1007, product: '小麦', quantity: 300, price: 9, shipFrom: '河北', seller: '冀北农场', contact: '133****6789', orderTime: '2023-10-07 15:10', status: '已完成' },
-  { id: 1008, product: '苹果', quantity: 120, price: 18, shipFrom: '陕西', seller: '秦果贸易', contact: '132****0123', orderTime: '2023-10-08 08:50', status: '待收货' },
-  { id: 1009, product: '玉米', quantity: 180, price: 11, shipFrom: '吉林', seller: '长白山农产', contact: '131****4567', orderTime: '2023-10-09 17:30', status: '已完成' },
-  { id: 1010, product: '黄豆', quantity: 90, price: 22, shipFrom: '安徽', seller: '皖江豆制品', contact: '130****8901', orderTime: '2023-10-10 12:25', status: '待付款' },
-  { id: 1011, product: '西瓜', quantity: 150, price: 9, shipFrom: '广西', seller: '桂南果业', contact: '139****2345', orderTime: '2023-10-11 14:15', status: '待发货' },
-  { id: 1012, product: '白米', quantity: 120, price: 16, shipFrom: '辽宁', seller: '辽河米业', contact: '138****6789', orderTime: '2023-10-12 10:50', status: '已完成' },
-  { id: 1013, product: '苹果', quantity: 100, price: 20, shipFrom: '新疆', seller: '天山果园', contact: '137****0123', orderTime: '2023-10-13 09:30', status: '售后中' },
-  { id: 1014, product: '小麦', quantity: 250, price: 8, shipFrom: '内蒙古', seller: '草原粮仓', contact: '136****4567', orderTime: '2023-10-14 16:45', status: '待收货' },
-  { id: 1015, product: '玉米', quantity: 200, price: 10, shipFrom: '四川', seller: '川粮集团', contact: '135****8901', orderTime: '2023-10-15 11:20', status: '已完成' }
-]);
-
-// 过滤后的表格数据
-const filteredTableData = ref([]);
-
-// 计算总支出
-const totalExpense = computed(() => {
-  return tableData.value
-    .filter(order => order && order.status === '已完成')
-    .reduce((sum, order) => sum + (order.quantity * order.price), 0);
-});
-
-// 获取状态对应的样式类
-const getStatusClass = (status) => {
-  const map = {
-    '待付款': 'pending',
-    '待发货': 'delivery',
-    '待收货': 'delivery',
-    '已完成': 'completed',
-    '售后中': 'aftersale',
-    '已售后': 'resolved'
-  };
-  return map[status] || 'completed';
-};
-
-// 执行搜索和过滤
-const performSearch = () => {
-  loading.value = true;
-  emptyText.value = '没有找到符合条件的订单';
-  
-  // 模拟API请求延迟
-  setTimeout(() => {
-    try {
-      const filtered = tableData.value.filter(item => {
-        if (!item) return false;
-        
-        // 匹配ID
-        const idString = item.id?.toString() || '';
-        if (searchId.value && !idString.includes(searchId.value.trim())) {
-          return false;
-        }
-        
-        // 匹配产品
-        const product = item.product?.toString().toLowerCase() || '';
-        if (searchProduct.value && !product.includes(searchProduct.value.trim().toLowerCase())) {
-          return false;
-        }
-        
-        // 匹配地址
-        const shipFrom = item.shipFrom?.toString().toLowerCase() || '';
-        if (searchAddress.value && !shipFrom.includes(searchAddress.value.trim().toLowerCase())) {
-          return false;
-        }
-        
-        // 匹配日期
-        if (filterDate.value && filterDate.value.length === 2) {
-          const orderDate = new Date(item.orderTime.split(' ')[0]);
-          const startDate = new Date(filterDate.value[0]);
-          const endDate = new Date(filterDate.value[1]);
-          endDate.setDate(endDate.getDate() + 1); // 包含结束日期
-          
-          if (orderDate < startDate || orderDate >= endDate) {
-            return false;
-          }
-        }
-        
-        // 匹配状态筛选
-        if (filterOption.value) {
-          const statusMap = {
-            'pendingPayment': '待付款',
-            'pendingDelivery': '待发货',
-            'pendingReceipt': '待收货',
-            'completed': '已完成',
-            'afterSaleRequested': '售后中',
-            'afterSaleResolved': '已售后'
-          };
-          
-          if (filterOption.value !== 'all' && item.status !== statusMap[filterOption.value]) {
-            return false;
-          }
-        }
-        
-        return true;
-      });
+  setup() {
+    // 订单数据 - 模拟后端返回格式
+    const orders = ref([]);
+    
+    // 筛选条件
+    const filters = ref({
+      startDate: '',
+      endDate: '',
+      productType: '',
+      status: ''
+    });
+    
+    // 模态框状态
+    const shippingModalVisible = ref(false);
+    const refundModalVisible = ref(false);
+    const refundReasonModalVisible = ref(false);
+    const auditReasonModalVisible = ref(false);
+    const selectedOrder = ref({});
+    
+    const shippingInfo = ref('');
+    
+    // 售后详情 - 模拟后端返回数据
+    const refundDetail = ref({
+      reason: '',
+      evidenceImages: [],
+      processStatus: ''
+    });
+    
+    // 审核详情 - 模拟后端返回数据
+    const auditDetail = ref({
+      refundReason: '',
+      evidenceImages: [],
+      processResult: '',
+      refundAmount: 0,
+      auditRemark: '',
+      auditTime: '',
+      auditor: ''
+    });
+    
+    // 临时数据
+    const refundReason = ref('');
+    const uploadedFiles = ref([]);
+    const fileInput = ref(null);
+    
+    // 计算总订单数
+    const totalOrders = computed(() => orders.value.length);
+    
+    // 计算总交易额
+    const totalAmount = computed(() => {
+      return orders.value.reduce((sum, order) => sum + (order.quantity * order.price), 0);
+    });
+    
+    // 计算待处理订单数
+    const pendingOrders = computed(() => {
+      return orders.value.filter(order => 
+        order.status === '待发货' || order.status === '待收货' || order.status === '售后中'
+      ).length;
+    });
+    
+    // 过滤后的订单
+    const filteredOrders = computed(() => {
+      let result = [...orders.value];
       
-      totalOrders.value = filtered.length;
-      updatePagination(filtered);
+      // 应用状态筛选
+      if (filters.value.status) {
+        result = result.filter(order => order.status === filters.value.status);
+      }
+      
+      // 应用产品种类筛选
+      if (filters.value.productType) {
+        const keyword = filters.value.productType.toLowerCase();
+        result = result.filter(order => 
+          order.productType.toLowerCase().includes(keyword)
+        );
+      }
+      
+      return result;
+    });
+    
+    // 模拟API请求 - 获取订单列表
+    const fetchOrders = async () => {
+      try {
+        // 实际项目中替换为真实API地址
+        // const response = await import('axios').get('/api/orders');
+        // orders.value = response.data;
+        
+        // 模拟后端返回的虚拟数据
+        orders.value = [
+          { id: 1, orderId: 'ORD20230810001', productType: '有机蔬菜', quantity: 50, price: 12.5, destination: '北京市朝阳区', sender: '张伟', contact: '138****5678', time: '2023-08-10 09:23', status: '待发货' },
+          { id: 2, orderId: 'ORD20230809005', productType: '新鲜水果', quantity: 120, price: 8.8, destination: '上海市浦东新区', sender: '李明', contact: '139****1234', time: '2023-08-09 14:45', status: '待收货' },
+          { id: 3, orderId: 'ORD20230808012', productType: '优质谷物', quantity: 200, price: 5.5, destination: '广州市天河区', sender: '王芳', contact: '137****9876', time: '2023-08-08 11:10', status: '已完成' },
+          { id: 4, orderId: 'ORD20230807003', productType: '海鲜水产', quantity: 80, price: 25.0, destination: '深圳市南山区', sender: '赵刚', contact: '135****4567', time: '2023-08-07 16:30', status: '售后中' },
+          { id: 5, orderId: 'ORD20230805008', productType: '肉类禽蛋', quantity: 150, price: 18.0, destination: '杭州市西湖区', sender: '刘强', contact: '136****2345', time: '2023-08-05 10:15', status: '已售后' }
+        ];
+      } catch (error) {
+        console.error('获取订单失败:', error);
+      }
+    };
+    
+    // 模拟API请求 - 获取发货信息
+  const fetchShippingInfo = async () => {
+    try {
+      // 实际项目中替换为真实API地址
+      // const response = await import('axios').get(`/api/orders/${selectedOrder.value.orderId}/shipping`);
+      // shippingInfo.value = response.data;
+      
+      // 模拟后端返回的虚拟数据 - 单个字符串字段
+      shippingInfo.value = 
+        `您的订单已由 顺丰速运 承运，运单号为 SF1234567890，已于 2023-08-10 14:30 从青岛发出，预计将在 2023-08-12 18:00前 送达。`;
     } catch (error) {
-      console.error('搜索过程中发生错误:', error);
-      ElMessage.error('搜索过程中发生错误');
-      filteredTableData.value = [...tableData.value];
-    } finally {
-      loading.value = false;
+      console.error('获取发货信息失败:', error);
+      shippingInfo.value = '无法获取发货信息';
     }
-  }, 600);
+  };
+    
+    // 模拟API请求 - 获取售后详情
+    const fetchRefundDetail = async () => {
+      try {
+        // 实际项目中替换为真实API地址
+        // const response = await import('axios').get(`/api/orders/${selectedOrder.value.orderId}/refund`);
+        // refundDetail.value = response.data;
+        
+        // 模拟后端返回的虚拟数据
+        refundDetail.value = {
+          reason: '收到货物时发现包装破损严重，部分水果已经挤压变形，无法正常食用。',
+          evidenceImages: [
+            'https://images.unsplash.com/photo-1574856344991-aaa31b6f4c1f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=500&q=80',
+            'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=500&q=80'
+          ],
+          processStatus: '审核中'
+        };
+      } catch (error) {
+        console.error('获取售后详情失败:', error);
+      }
+    };
+    
+    // 模拟API请求 - 获取审核详情
+    const fetchAuditDetail = async () => {
+      try {
+        // 实际项目中替换为真实API地址
+        // const response = await import('axios').get(`/api/orders/${selectedOrder.value.orderId}/audit`);
+        // auditDetail.value = response.data;
+        
+        // 模拟后端返回的虚拟数据
+        auditDetail.value = {
+          refundReason: '收到货物后发现部分肉类产品存在异味，怀疑运输过程中未保持冷链。',
+          evidenceImages: [
+            'https://images.unsplash.com/photo-1589487391730-58f20eb2c308?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=500&q=80'
+          ],
+          processResult: '已通过',
+          refundAmount: selectedOrder.value.quantity * selectedOrder.value.price,
+          auditRemark: '经审核，您提供的照片和描述情况属实。根据我们的售后政策，已为您办理全额退款。退款金额将在1-3个工作日内原路返回。',
+          auditTime: '2023-08-10 14:30',
+          auditor: '张经理 (工号: SF00234)'
+        };
+      } catch (error) {
+        console.error('获取审核详情失败:', error);
+      }
+    };
+    
+// 模拟API请求 - 提交售后申请
+    const submitRefundApi = async () => {
+      try {
+        // 使用条件编译来区分真实API和模拟数据，避免不可达代码
+        const useMockData = true; // 切换此值来使用真实API或模拟数据
+        
+        if (useMockData) {
+          // 模拟后端处理成功
+          return { success: true };
+        } else {
+          // 实际项目中替换为真实API地址并使用图片数据
+          const imageUrls = uploadedFiles.value.map(file => file.url);
+          const response = await import('axios').post(`/api/orders/${selectedOrder.value.orderId}/refund`, {
+            refundReason: refundReason.value,
+            imageUrls
+          });
+          return response.data;
+        }
+      } catch (error) {
+        console.error('提交售后申请失败:', error);
+        return { success: false };
+      }
+    };
+    
+    // 模拟API请求 - 确认收货
+    const confirmReceiptApi = async () => {
+      try {
+        // 使用条件编译来区分真实API和模拟数据，避免不可达代码
+        const useMockData = true; // 切换此值来使用真实API或模拟数据
+        
+        if (useMockData) {
+          // 模拟后端处理成功
+          return { success: true };
+        } else {
+          // 实际项目中替换为真实API地址
+          const response = await import('axios').post(`/api/orders/${selectedOrder.value.orderId}/confirm`);
+          return response.data;
+        }
+      } catch (error) {
+        console.error('确认收货失败:', error);
+        return { success: false };
+      }
+    };
+    
+    
+    
+    // 应用筛选
+    const applyFilters = () => {
+      // 实际应用中调用API进行筛选
+      console.log('应用筛选条件:', filters.value);
+      // fetchOrders(filters.value); // 带筛选条件请求订单
+    };
+    
+    // 重置筛选
+    const resetFilters = () => {
+      filters.value = {
+        startDate: '',
+        endDate: '',
+        productType: '',
+        status: ''
+      };
+      fetchOrders(); // 重新获取所有订单
+    };
+    
+    // 获取状态对应的CSS类
+    const getStatusClass = (status) => {
+      switch(status) {
+        case '待发货': return 'status status-pending';
+        case '待收货': return 'status status-todeliver';
+        case '已完成': return 'status status-delivered';
+        case '售后中': return 'status status-refund';
+        case '已售后': return 'status status-refunded';
+        default: return 'status';
+      }
+    };
+    
+    // 打开发货信息模态框
+    const openShippingModal = (order) => {
+      selectedOrder.value = order;
+      fetchShippingInfo(); // 获取发货信息
+      shippingModalVisible.value = true;
+    };
+    
+    // 打开售后申请模态框
+    const openRefundModal = (order) => {
+      selectedOrder.value = order;
+      refundReason.value = '';
+      uploadedFiles.value = [];
+      refundModalVisible.value = true;
+    };
+    
+    // 打开售后详情模态框
+    const openRefundReasonModal = (order) => {
+      selectedOrder.value = order;
+      fetchRefundDetail(); // 获取售后详情
+      refundReasonModalVisible.value = true;
+    };
+    
+    // 打开审核详情模态框
+    const openAuditReasonModal = (order) => {
+      selectedOrder.value = order;
+      fetchAuditDetail(); // 获取审核详情
+      auditReasonModalVisible.value = true;
+    };
+    
+    // 确认收货
+    const confirmReceipt = async (order) => {
+      if(confirm(`确定要确认收货订单 ${order.orderId} 吗？`)) {
+        const result = await confirmReceiptApi();
+        if (result.success) {
+          order.status = '已完成';
+        } else {
+          alert('确认收货失败，请稍后重试');
+        }
+      }
+    };
+    
+    // 触发文件上传
+    const triggerFileInput = () => {
+      fileInput.value.click();
+    };
+    
+    // 处理文件上传
+    const handleFileUpload = (event) => {
+      const files = event.target.files;
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.type.match('image.*')) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            uploadedFiles.value.push({
+              name: file.name,
+              url: e.target.result,
+              file: file
+            });
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+      event.target.value = '';
+    };
+    
+    // 移除图片
+    const removeImage = (index) => {
+      uploadedFiles.value.splice(index, 1);
+    };
+    
+    // 提交售后申请
+    const submitRefund = async () => {
+      if (!refundReason.value.trim()) {
+        alert('请填写售后原因');
+        return;
+      }
+      
+      if (uploadedFiles.value.length === 0) {
+        if (!confirm('您没有上传任何凭证图片，确定要提交吗？')) {
+          return;
+        }
+      }
+      
+      // 调用API提交售后申请
+      const result = await submitRefundApi();
+      
+      if (result.success) {
+        // 更新本地订单状态
+        const order = orders.value.find(o => o.id === selectedOrder.value.id);
+        if (order) {
+          order.status = '售后中';
+        }
+        
+        alert('售后申请已提交，客服将在24小时内处理！');
+        refundModalVisible.value = false;
+      } else {
+        alert('提交失败，请稍后重试');
+      }
+    };
+    
+    // 初始化页面时获取订单数据
+    onMounted(() => {
+      fetchOrders();
+      
+      // 设置默认日期范围
+      const today = new Date().toISOString().split('T')[0];
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      const oneWeekAgoStr = oneWeekAgo.toISOString().split('T')[0];
+      
+      filters.value.startDate = oneWeekAgoStr;
+      filters.value.endDate = today;
+    });
+    
+    return {
+      orders,
+      filters,
+      totalOrders,
+      totalAmount,
+      pendingOrders,
+      filteredOrders,
+      applyFilters,
+      resetFilters,
+      getStatusClass,
+      confirmReceipt,
+      shippingModalVisible,
+      refundModalVisible,
+      refundReasonModalVisible,
+      auditReasonModalVisible,
+      openShippingModal,
+      openRefundModal,
+      openRefundReasonModal,
+      openAuditReasonModal,
+      selectedOrder,
+      shippingInfo,
+      refundDetail,
+      auditDetail,
+      refundReason,
+      uploadedFiles,
+      fileInput,
+      triggerFileInput,
+      handleFileUpload,
+      removeImage,
+      submitRefund
+    };
+  }
 };
-
-// 更新分页数据
-const updatePagination = (data) => {
-  const start = (currentPage.value - 1) * pageSize.value;
-  const end = start + pageSize.value;
-  filteredTableData.value = data.slice(start, end);
-};
-
-// 处理分页变化
-const handlePageChange = (page) => {
-  currentPage.value = page;
-  performSearch();
-};
-
-// 重置搜索条件
-const resetSearch = () => {
-  searchId.value = '';
-  searchProduct.value = '';
-  searchAddress.value = '';
-  filterDate.value = '';
-  filterOption.value = '';
-  currentPage.value = 1;
-  performSearch();
-};
-
-// 买家操作函数
-const payOrder = (order) => {
-  ElMessageBox.confirm(`确定要支付订单 #${order.id} 吗？金额: ¥${order.quantity * order.price}`, '确认支付', {
-    confirmButtonText: '确认支付',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    const index = tableData.value.findIndex(item => item.id === order.id);
-    if (index !== -1) {
-      tableData.value[index].status = '待发货';
-      performSearch();
-      ElMessage.success('支付成功，等待卖家发货');
-    }
-  }).catch(() => {});
-};
-
-const cancelOrder = (order) => {
-  ElMessageBox.confirm(`确定要取消订单 #${order.id} 吗？`, '取消订单', {
-    confirmButtonText: '确定取消',
-    cancelButtonText: '再想想',
-    type: 'warning'
-  }).then(() => {
-    const index = tableData.value.findIndex(item => item.id === order.id);
-    if (index !== -1) {
-      tableData.value.splice(index, 1);
-      performSearch();
-      ElMessage.success('订单已取消');
-    }
-  }).catch(() => {});
-};
-
-const remindDelivery = (order) => {
-  ElMessage.info(`已向卖家发送发货提醒: 订单 #${order.id}`);
-};
-
-const confirmReceipt = (order) => {
-  ElMessageBox.confirm(`请确认您已收到订单 #${order.id} 的货物`, '确认收货', {
-    confirmButtonText: '确认收货',
-    cancelButtonText: '取消',
-    type: 'success'
-  }).then(() => {
-    const index = tableData.value.findIndex(item => item.id === order.id);
-    if (index !== -1) {
-      tableData.value[index].status = '已完成';
-      performSearch();
-      ElMessage.success('收货确认成功');
-    }
-  }).catch(() => {});
-};
-
-const applyAfterSale = (order) => {
-  ElMessage.info(`跳转到订单 #${order.id} 的售后申请页面`);
-};
-
-const viewAfterSale = (order) => {
-  ElMessageBox.alert(`订单 #${order.id} 的售后申请正在处理中，当前进度：审核通过，等待退款`, '售后进度', {
-    confirmButtonText: '知道了',
-  });
-};
-
-const viewAfterSaleResult = (order) => {
-  ElMessageBox.alert(`订单 #${order.id} 的售后已完成处理：已退款 ¥${order.quantity * order.price * 0.8}`, '售后结果', {
-    confirmButtonText: '知道了',
-  });
-};
-
-// 初始化
-onMounted(() => {
-  totalOrders.value = tableData.value.length;
-  updatePagination(tableData.value);
-  
-  // 模拟加载完成
-  setTimeout(() => {
-    loading.value = false;
-    emptyText.value = '暂无订单数据';
-  }, 1000);
-});
 </script>
 
 <style scoped>
@@ -444,227 +698,509 @@ onMounted(() => {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-family: 'Noto Sans SC', sans-serif;
 }
 
-.buyer-container {
+body {
+  background-color: #f5f7fa;
+  color: #333;
+  line-height: 1.6;
+  padding: 20px;
+}
+
+#app {
   max-width: 1400px;
   margin: 0 auto;
+}
+
+header {
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-  padding: 30px;
-}
-
-
-
-.header {
-  display: flex;
-  justify-content: flex-start; /* 修改为左对齐 */
-  align-items: center;
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #eee;
-  flex-wrap: wrap;
-  gap: 350px; /* 添加间隙 */
-}
-
-.header h1 {
-  margin-right: 20px; /* 添加右边距 */
-}
-
-
-.stats-card {
-  background: linear-gradient(135deg, #3a8ffe 0%, #096dd9 100%);
   color: white;
-  border-radius: 10px;
-  padding: 20px;
-  width: 350px;
-  box-shadow: 0 4px 12px rgba(58, 143, 254, 0.3);
-  margin-left: 0; /* 移除左边距 */
+  padding: 20px 30px;
+  border-radius: 12px;
+  margin-bottom: 25px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
 }
 
-.stats-card .title {
-  font-size: 16px;
-  margin-bottom: 10px;
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+h1 {
+  font-size: 28px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stats {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 12px 20px;
+  border-radius: 10px;
+  min-width: 140px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  font-size: 14px;
   opacity: 0.9;
 }
 
-.stats-card .value {
-  font-size: 32px;
-  font-weight: bold;
-  letter-spacing: 1px;
+.filters {
+  border: 1px solid #e7e7e7;
+  border-radius: 4px;
+  padding: 16px;
+  background-color: #ffffff;
 }
 
-.search-section {
-  background: #f8fafc;
-  border-radius: 10px;
-  padding: 20px;
-  margin-bottom: 30px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-}
-
-.search-title {
+.filter-horizontal {
   display: flex;
-  align-items: center;
-  margin-bottom: 20px;
-  color: #2c3e50;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
-.search-title i {
-  font-size: 20px;
-  margin-right: 10px;
-  color: #3a8ffe;
-}
-
-.search-bar {
-  display: flex;
-  width: 70%;
-  flex-direction: column; /* 改为垂直排列 */
-  gap: 20px; /* 行之间的间距 */
-  margin-bottom: 15px;
-}
-
-.row-1, .row-2, .row-3 {
-  display: flex;
-  flex-wrap: wrap; /* 允许在小屏幕上换行 */
-  gap: 15px; /* 元素之间的间距 */
-}
-
-.row-1 > * {
-  flex: 1; /* 每个元素占据相等的空间 */
-  min-width: 200px; /* 设置最小宽度，确保在小屏幕上不会太窄 */
-}
-
-.row-2 > * {
+.filter-group {
   flex: 1;
-  min-width: 220px;
 }
 
-.row-3 {
-  justify-content: flex-end; /* 按钮右对齐 */
-  gap: 15px; /* 按钮之间的间距 */
+.filter-group h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: #333;
 }
 
-/* 确保每个输入框和选择框有足够的宽度 */
-.el-input, .el-select, .el-date-picker {
+.filter-input {
   width: 100%;
+  padding: 8px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
 }
 
-@media (max-width: 768px) {
-  .row-1, .row-2 {
-    flex-direction: column; /* 在小屏幕上垂直排列 */
-  }
-  
-  .row-3 {
-    flex-direction: column; /* 在小屏幕上垂直排列 */
-    align-items: flex-end; /* 按钮右对齐 */
-  }
+.filter-input::placeholder {
+  color: #000000;
 }
 
-.action-buttons {
+.filter-buttons {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  margin-top: 10px;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.btn-primary {
+  background-color: #409eff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #66b1ff;
+}
+
+.btn-reset {
+  background-color: #f56c6c;
+  color: white;
+}
+
+.btn-reset:hover {
+  background-color: #f78989;
+}
+
+.orders {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
 }
 
 .table-container {
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
-  min-height: 500px;
+  overflow-x: auto;
+  padding: 20px;
 }
 
-.status-tag {
-  padding: 5px 12px;
-  border-radius: 15px;
-  font-size: 12px;
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1000px;
+}
+
+th {
+  background-color: #f8fafc;
+  text-align: left;
+  padding: 16px 15px;
+  font-weight: 600;
+  color: #000000;
+  border-bottom: 2px solid #f0f4f8;
+}
+
+td {
+  padding: 16px 15px;
+  border-bottom: 1px solid #f0f4f8;
+  color: #4a5568;
+}
+
+tr:hover {
+  background-color: #f8fafc;
+}
+
+.status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
   font-weight: 500;
+  display: inline-block;
 }
 
 .status-pending {
-  background-color: #e6f7ff;
-  color: #1890ff;
-  border: 1px solid #91d5ff;
+  background-color: #ffedd5;
+  color: #c2410c;
 }
 
-.status-delivery {
-  background-color: #fff7e6;
-  color: #fa8c16;
-  border: 1px solid #ffd591;
+.status-todeliver {
+  background-color: #dbeafe;
+  color: #1d4ed8;
 }
 
-.status-completed {
-  background-color: #f6ffed;
-  color: #52c41a;
-  border: 1px solid #b7eb8f;
+.status-delivered {
+  background-color: #dcfce7;
+  color: #166534;
 }
 
-.status-aftersale {
-  background-color: #fff2f0;
-  color: #f5222d;
-  border: 1px solid #ffccc7;
+.status-refund {
+  background-color: #fef3c7;
+  color: #b45309;
 }
 
-.status-resolved {
-  background-color: #f9f0ff;
-  color: #722ed1;
-  border: 1px solid #d3adf7;
+.status-refunded {
+  background-color: #ede9fe;
+  color: #6d28d9;
 }
 
-.operation-btn {
+.action-btn {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
   font-weight: 500;
-  padding: 5px 10px;
-  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s;
-}
-
-.operation-btn:hover {
-  background-color: #e6f7ff;
-  color: #1890ff;
-}
-
-.pagination {
-  display: flex;
-  justify-content: center;
-  margin-top: 25px;
-  padding: 15px 0;
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
+  transition: all 0.2s ease;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 60px 0;
-  color: #999;
+  gap: 5px;
+  margin-right: 6px;
+  margin-bottom: 5px;
 }
 
-.empty-state i {
-  font-size: 70px;
-  margin-bottom: 20px;
-  color: #c5c5c5;
+.btn-view {
+  background-color: #e0f2fe;
+  color: #0369a1;
 }
 
-.empty-state p {
+.btn-confirm {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.btn-refund {
+  background-color: #ffedd5;
+  color: #c2410c;
+}
+
+.btn-view:hover, .btn-confirm:hover, .btn-refund:hover {
+  opacity: 0.85;
+  transform: translateY(-2px);
+}
+
+.no-results {
+  text-align: center;
+  padding: 40px;
+  color: #a0aec0;
   font-size: 16px;
 }
 
+/* 模态框样式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modal-header {
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #999;
+  transition: color 0.3s;
+}
+
+.close-btn:hover {
+  color: #333;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.info-row {
+  display: flex;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #f0f4f8;
+}
+
+.info-label {
+  width: 100px;
+  font-weight: 500;
+  color: #4a6583;
+}
+
+.info-value {
+  flex: 1;
+}
+
+.shipping-info {
+  background-color: #f0f7ff;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+  border-left: 4px solid #4b6cb7;
+}
+
+.shipping-info p {
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+.shipping-detail {
+  display: flex;
+  margin-top: 15px;
+}
+
+.shipping-detail div {
+  flex: 1;
+}
+
+.shipping-detail .label {
+  font-weight: 500;
+  color: #4a6583;
+  margin-bottom: 5px;
+}
+
+.upload-area {
+  border: 2px dashed #dce4ec;
+  border-radius: 8px;
+  padding: 30px;
+  text-align: center;
+  margin: 20px 0;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.upload-area:hover {
+  border-color: #4b6cb7;
+  background-color: #f8fafc;
+}
+
+.upload-icon {
+  font-size: 48px;
+  color: #4b6cb7;
+  margin-bottom: 15px;
+}
+
+.upload-text {
+  margin-bottom: 15px;
+  color: #4a5568;
+}
+
+.upload-btn {
+  background: #f0f4f8;
+  color: #4a6583;
+  padding: 8px 16px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.preview-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.preview-item {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.remove-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #dce4ec;
+  border-radius: 8px;
+  min-height: 120px;
+  margin: 15px 0;
+  resize: vertical;
+}
+
+.modal-footer {
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-cancel {
+  background: #f0f4f8;
+  color: #4a6583;
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-submit {
+  background: linear-gradient(135deg, #4b6cb7, #182848);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+.audit-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px dashed #eee;
+}
+
+.audit-section h4 {
+  margin-bottom: 10px;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 @media (max-width: 768px) {
-  .header {
+  .header-content {
     flex-direction: column;
-    align-items: flex-start;
+    gap: 20px;
   }
   
-  .stats-card {
+  .stats {
     width: 100%;
-    margin-top: 20px;
+    justify-content: space-between;
   }
   
-  .search-bar {
-    grid-template-columns: 1fr;
+  .filter-horizontal {
+    flex-direction: column;
+  }
+  
+  .filter-group {
+    min-width: 100%;
+    width: 100%;
+  }
+  
+  .action-btn {
+    margin-bottom: 8px;
+    width: 100%;
+  }
+  
+  .modal-content {
+    width: 95%;
+  }
+  
+  .shipping-detail {
+    flex-direction: column;
+    gap: 10px;
   }
 }
 </style>
