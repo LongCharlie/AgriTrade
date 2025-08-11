@@ -101,6 +101,7 @@ const fetchData = async () => {
       }
     });
     motableData.value = productResponse.data; // 假设 API 返回的数据就是我们需要的格式
+    console.log('采购需求' + motableData.value);
   } catch (error) {
     console.error('获取采购需求数据失败，使用模拟数据', error);
     motableData.value = simulatedMotableData; // 使用模拟数据
