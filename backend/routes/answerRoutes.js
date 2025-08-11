@@ -95,7 +95,7 @@ router.post('/questions/:id/answers',
 );
 
 // 获取问题的所有回答
-router.get('/questions/:id/answers', async (req, res) => {
+router.get('/question/:id/answers', async (req, res) => {
   try {
     const questionId = req.params.id;
     

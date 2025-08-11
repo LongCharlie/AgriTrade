@@ -1064,26 +1064,34 @@ const getPendingCertificates = async () => {
   return rows;
 };
 
-// 更新证书审核状态
-const updateCertificateStatus = async (certificateId, status, adminId, rejectReason = null) => {
+const updateCertificateStatus = async (certificateId, status, adminId, audited_reason = null) => {
   // 验证状态值是否有效
   const validStatuses = ['pending', 'approved', 'rejected'];
   if (!validStatuses.includes(status)) {
     throw new Error('无效的审核状态');
   }
 
-  const query = `
+  let query = `
     UPDATE certificates
     SET 
       is_audited = $1,
       audited_by = $2,
       audited_at = NOW()
+  `;
+  const params = [status, adminId, certificateId];
+
+  // 如果状态为rejected，添加rejectReason到查询和参数
+  if (status === 'rejected') {
+    query += `,
+      audited_reason = $4
+    `;
+    params.push(audited_reason);
+  }
+
+  query += `
     WHERE certificate_id = $3
     RETURNING *
   `;
-  
-  const params = [status, adminId, certificateId];
-  if (status === 'rejected') params.push(rejectReason);
   
   const { rows } = await pool.query(query, params);
   

@@ -247,7 +247,7 @@ export default {
         loading.value = true
         const id = route.params.id;
         const token = userStore.token;
-        const response = await axios.get(`http://localhost:3000/api/admin/questions/${id}/answers`, {
+        const response = await axios.get(`http://localhost:3000/api/questions/${id}/answers`, {
           headers: {
             Authorization: `Bearer ${token}`
           }

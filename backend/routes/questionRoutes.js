@@ -136,7 +136,7 @@ router.get('/questions/all', authMiddleware.authenticateToken, authMiddleware.ch
 });
 
 // 获取问题列表接口
-router.get('/questions', authMiddleware.authenticateToken, authMiddleware.checkRole([ROLES.EXPERT, ROLES.FARMER]), async (req, res) => {
+router.get('/question', authMiddleware.authenticateToken, authMiddleware.checkRole([ROLES.EXPERT, ROLES.FARMER,ROLES.ADMIN]), async (req, res) => {
   try {
     const filter = {};
     // 如果是农户，只获取自己的问题
@@ -159,7 +159,7 @@ router.get('/questions', authMiddleware.authenticateToken, authMiddleware.checkR
 });
 
 // 获取单个问题详情
-router.get('/questions/:id', authMiddleware.authenticateToken, async (req, res) => {
+router.get('/question/:id', authMiddleware.authenticateToken, async (req, res) => {
   try {
     const questionId = req.params.id;
     const question = await require('../model').getQuestionById(questionId);
