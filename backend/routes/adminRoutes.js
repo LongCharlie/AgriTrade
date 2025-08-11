@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const model = require('../model');
 const authMiddleware = require('../middleware/authMiddleware');
+const { ROLES } = authMiddleware;
 
 // 管理员权限校验中间件
 const checkAdmin = (req, res, next) => {
@@ -550,7 +551,7 @@ router.get('/certificates/pending',
 // 获取单个证书详情
 router.get('/certificates/:id', 
   authMiddleware.authenticateToken,
-  checkAdmin,
+  authMiddleware.checkRole([ROLES.ADMIN]),
   async (req, res) => {
     try {
       const certificate = await model.getCertificateWithExpertInfo(req.params.id);
