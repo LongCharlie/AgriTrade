@@ -253,7 +253,7 @@ const handleApproval = async () => {
 
   try {
     // 1: 调用接口更新订单状态
-    await axios.post(`http://localhost:3000/api/orders/${orderId}/status`, {
+    await axios.patch(`http://localhost:3000/api/orders/${orderId}/status`, {
       status: 'after_sale_resolved'
     }, {
       headers: { 'Authorization': `Bearer ${token}` }

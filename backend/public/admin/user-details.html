@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户详情 - 农业咨询平台</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .user-details {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .detail-row {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        .detail-label {
+            font-weight: bold;
+            width: 120px;
+        }
+        .detail-value {
+            flex: 1;
+        }
+        .avatar-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .avatar-img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #ddd;
+        }
+        .action-btns {
+            margin-top: 20px;
+            text-align: right;
+        }
+        .btn {
+            padding: 8px 15px;
+            margin-left: 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 3px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .back-btn {
+            background-color: #6c757d;
+            color: white;
+        }
+        .delete-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+        .role-badge {
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 14px;
+            color: white;
+            display: inline-block;
+        }
+        .farmer {
+            background-color: #2196F3;
+        }
+        .buyer {
+            background-color: #673AB7;
+        }
+        .expert {
+            background-color: #FF9800;
+        }
+    </style>
+    <script src="/js/auth.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1>用户详情</h1>
+        <a href="/admin/users.html" class="btn back-btn">返回用户列表</a>
+    </div>
+
+    <div id="loading" style="text-align: center;">加载中...</div>
+
+    <div id="userDetails" class="user-details" style="display: none;">
+        <div class="avatar-container">
+            <img id="userAvatar" class="avatar-img" src="/images/default-avatar.png" alt="用户头像">
+        </div>
+        
+        <div class="detail-row">
+            <div class="detail-label">用户ID:</div>
+            <div class="detail-value" id="userId"></div>
+        </div>
+        
+        <div class="detail-row">
+            <div class="detail-label">用户名:</div>
+            <div class="detail-value" id="username"></div>
+        </div>
+
+        <div class="detail-row">
+            <div class="detail-label">角色:</div>
+            <div class="detail-value" id="role"></div>
+        </div>
+        
+        <div class="detail-row">
+            <div class="detail-label">电话:</div>
+            <div class="detail-value" id="phone"></div>
+        </div>
+        
+        <div class="detail-row">
+            <div class="detail-label">省份:</div>
+            <div class="detail-value" id="province"></div>
+        </div>
+        
+        <div class="detail-row">
+            <div class="detail-label">城市:</div>
+            <div class="detail-value" id="city"></div>
+        </div>
+        
+        <div class="detail-row">
+            <div class="detail-label">区县:</div>
+            <div class="detail-value" id="district"></div>
+        </div>
+
+        <div class="detail-row">
+            <div class="detail-label">详细地址:</div>
+            <div class="detail-value" id="addressDetail"></div>
+        </div>
+        
+        <div class="detail-row">
+            <div class="detail-label">注册日期:</div>
+            <div class="detail-value" id="joinDate"></div>
+        </div>
+        
+        <div class="action-btns">
+            <button onclick="confirmDeleteUser()" class="btn delete-btn">删除用户</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查登录状态和权限
+            if (!checkAuth()) {
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            if (!checkRole(['admin'])) {
+                alert('无权限访问此页面');
+                window.location.href = '/';
+                return;
+            }
+
+            // 从URL获取用户ID
+            const urlParams = new URLSearchParams(window.location.search);
+            const userId = urlParams.get('id');
+            
+            if (!userId) {
+                alert('无效的用户ID');
+                window.location.href = '/admin/users.html';
+                return;
+            }
+
+            loadUserDetails(userId);
+        });
+
+        // 加载用户详情
+        async function loadUserDetails(userId) {
+            try {
+                const user = await apiRequest(`/api/admin/users/${userId}`);
+                
+                if (!user) {
+                    throw new Error('用户不存在');
+                }
+
+                // 显示用户数据
+                document.getElementById('userId').textContent = user.user_id;
+                document.getElementById('username').textContent = user.username;
+                
+                // 设置角色徽章
+                let roleBadge = '';
+                switch(user.role) {
+                    case 'farmer':
+                        roleBadge = '<span class="role-badge farmer">农户</span>';
+                        break;
+                    case 'buyer':
+                        roleBadge = '<span class="role-badge buyer">采购商</span>';
+                        break;
+                    case 'expert':
+                        roleBadge = '<span class="role-badge expert">专家</span>';
+                        break;
+                }
+                document.getElementById('role').innerHTML = roleBadge;
+                
+                document.getElementById('phone').textContent = user.phone;
+                document.getElementById('province').textContent = user.province;
+                document.getElementById('city').textContent = user.city;
+                document.getElementById('district').textContent = user.district;
+                document.getElementById('addressDetail').textContent = user.address_detail || '无';
+                document.getElementById('joinDate').textContent = user.join_date;
+                
+                // 设置头像
+                if (user.avatar_url) {
+                    document.getElementById('userAvatar').src = user.avatar_url;
+                }
+                
+                // 隐藏加载中，显示详情
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('userDetails').style.display = 'block';
+            } catch (error) {
+                console.error('加载用户详情失败:', error);
+                alert('加载用户详情失败: ' + error.message);
+                window.location.href = '/admin/users.html';
+            }
+        }
+
+        // 确认删除用户
+        function confirmDeleteUser() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const userId = urlParams.get('id');
+            
+            if (confirm('确定要删除此用户吗？此操作不可恢复！')) {
+                deleteUser(userId);
+            }
+        }
+
+        // 删除用户
+        async function deleteUser(userId) {
+            try {
+                await apiRequest(`/api/admin/users/${userId}`, 'DELETE');
+                alert('用户删除成功');
+                window.location.href = '/admin/users.html';
+            } catch (error) {
+                console.error('删除用户失败:', error);
+                alert('删除用户失败: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

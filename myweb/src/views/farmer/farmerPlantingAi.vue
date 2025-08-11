@@ -41,16 +41,16 @@
       </el-select>
 <!--  2.某个提问的问题和回答信息      -->
       <el-select
-          v-model="selectedOption"
-          placeholder="选择提问和回答"
-          @change="onSelectChange"
+          v-model="selectedQuestion"
+          placeholder="选择提问"
+          @change="onQuestionChange"
           style="margin-left: 10px; margin-top: 10px; width: 200px;"
       >
         <el-option
-            v-for="record in growthRecords"
-            :key="record.record_id"
-            :label="`id: ${record.record_id} - 种类：${record.product_name} - 创建时间：${record.created_at}`"
-            :value="record.record_id"
+            v-for="question in questions"
+            :key="question.question_id"
+            :label="`id: ${question.question_id} - 标题：${truncateText(question.title, 15)}`"
+            :value="question.question_id"
         />
       </el-select>
     </div>
@@ -70,8 +70,10 @@ export default {
     const chatLog = ref([]);
     const loading = ref(false);
     const selectedOption = ref(null);
+    const selectedQuestion = ref(null);
     const growthRecords = ref([]); // 存储获取到的种植记录
     const historicalRecords = ref([]); // 存储获取到的历史记录
+    const questions = ref([]); // 存储获取到的问题和回答
 
     const mockGrowthRecords = [
       { record_id: 51, product_name: '萝卜', province: '陕西省', growth_status: 'harvested', created_at: '2024/01/03' },
@@ -90,6 +92,23 @@ export default {
       { activity_id: 4, activity_date: '2023-05-15', activity_type: 'harvest', description: '首次收获', images: cropPhoto },
     ];
 
+    const mockQuestions = [
+      {
+        question_id: 1,
+        title: '如何防治番茄晚疫病？',
+        content: '我的番茄种植过程中出现了晚疫病症状，叶片出现水渍状斑点，应该如何防治？',
+        // answer: '针对番茄晚疫病，建议采取以下措施：\n1. 及时摘除病叶病果并销毁\n2. 使用代森锰锌或甲霜灵等杀菌剂喷雾\n3. 控制浇水量，保持通风良好\n4. 合理密植，提高植株间通风透光性',
+        created_at: '2024-05-10'
+      },
+      {
+        question_id: 2,
+        title: '萝卜种植间距问题',
+        content: '种植萝卜时株距和行距应该是多少比较合适？',
+        // answer: '萝卜的种植间距根据品种有所不同：\n小型萝卜：株距10-15cm，行距20-25cm\n中型萝卜：株距15-20cm，行距25-30cm\n大型萝卜：株距20-25cm，行距30-35cm\n播种深度一般为种子直径的2-3倍',
+        created_at: '2024-06-15'
+      }
+    ];
+
     onMounted(async () => {
       const token = userStore.token; // 从用户存储中获取 token
       try {
@@ -97,9 +116,14 @@ export default {
           headers: { 'Authorization': `Bearer ${token}` },
         });
         growthRecords.value = response.data;
+        const questionResponse = await axios.get('http://localhost:3000/api/questions/all', {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        questions.value = questionResponse.data.questions;
       } catch (error) {
         console.error('获取种植记录数据失败，使用模拟数据:', error);
         growthRecords.value = mockGrowthRecords;
+        questions.value = mockQuestions;
       }
     });
 
@@ -159,6 +183,14 @@ export default {
       }
     };
 
+    const onQuestionChange = (question_id) => {
+      const selectedQuestion = questions.value.find(q => q.question_id === question_id);
+      if (selectedQuestion) {
+        userMessage.value = `问题标题: ${selectedQuestion.title}\n问题描述: ${selectedQuestion.content}\n`;
+      }
+      selectedOption.value = null; // 清除另一个选择
+    };
+
     const getChineseActivityType = (type) => {
       const typeMapping = {
         seeding: '播种',
@@ -174,15 +206,25 @@ export default {
       return message.replace(/\n/g, '<br/>'); // 将换行符替换为 <br/> 标签
     };
 
+    const truncateText = (text, length) => {
+      if (!text) return '';
+      if (text.length <= length) return text;
+      return text.substring(0, length) + '...';
+    };
+
     return {
       userMessage,
       chatLog,
       loading,
       selectedOption,
       growthRecords,
+      questions,
+      selectedQuestion,
       sendMessage,
       onSelectChange,
+      onQuestionChange,
       formatMessage, // 暴露格式化函数
+      truncateText
     };
   },
 };

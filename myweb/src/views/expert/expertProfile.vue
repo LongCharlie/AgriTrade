@@ -1,34 +1,56 @@
 <template>
   <div class="expert-profile-container">
-<!--    <el-card class="profile-card">-->
+    <el-card class="profile-card">
       <div slot="header">
-        <h3>个人信息</h3>
+        <h3>我的主页</h3>
+      </div>
+
+      <!-- 头像显示 -->
+      <div class="avatar-container">
+<!--        <img v-if="user.avatar_url" :src="user.avatar_url" class="avatar" alt="用户头像" id="userAvatar" />-->
+        <el-button class="btn-change-avatar" @click="handleAvatarClick">更换头像</el-button>
+        <input type="file" ref="avatarUpload" accept="image/*" style="display: none;" @change="handleAvatarChange" />
       </div>
 
       <!-- 用户信息 -->
-      <div class="user-info">
-        <div class="avatar-container">
-          <img v-if="user.avatar_url" :src="user.avatar_url" class="avatar" alt="用户头像" />
-          <el-upload
-              class="avatar-uploader"
-              :action="uploadUrl"
-              :show-file-list="false"
-              :on-change="handleAvatarChange"
-              :before-upload="beforeAvatarUpload"
-              :headers="{ Authorization: `Bearer ${token}` }"
-              name="avatar"
-          >
-            <el-button type="primary">上传头像</el-button>
-          </el-upload>
-        </div>
-        <p><strong>用户名：</strong>{{ user.username }}</p>
-        <p><strong>手机号：</strong>{{ user.phone }}</p>
-        <p><strong>地址：</strong>{{ user.province }} {{ user.city }} {{ user.district }}</p>
-        <p v-if="user.address_detail"><strong>详细地址：</strong>{{ user.address_detail }}</p>
-      </div>
+      <el-form :model="user" label-width="80px" style="margin-top: 20px;">
+        <!-- ID（不可编辑） -->
+        <el-form-item label="ID">
+          <el-input v-model="user.id" disabled></el-input>
+        </el-form-item>
 
-      <!-- 专家信息表单 -->
-      <el-form ref="form" :model="user" label-width="100px" @submit.prevent="submitExpertInfo">
+        <!-- 用户名 -->
+        <el-form-item label="用户名">
+          <el-input v-model="user.username" disabled></el-input>
+        </el-form-item>
+
+        <!-- 位置 -->
+        <el-form-item label="位置">
+          <el-row :gutter="10">
+            <el-col :span="24">
+              <el-cascader
+                  size="large"
+                  :options="pcaTextArr"
+                  v-model="selectedLocation"
+                  @change="handleLocationChange"
+                  :placeholder="'请选择省、市、区'"
+                  clearable
+              />
+            </el-col>
+          </el-row>
+        </el-form-item>
+
+        <!-- 详细地址 -->
+        <el-form-item label="详细地址">
+          <el-input v-model="user.address_detail"></el-input>
+        </el-form-item>
+
+        <!-- 联系方式 -->
+        <el-form-item label="联系方式">
+          <el-input v-model="user.phone"></el-input>
+        </el-form-item>
+
+        <!-- 专家信息 -->
         <el-form-item label="真实姓名">
           <el-input v-model="user.real_name" placeholder="请输入真实姓名"></el-input>
         </el-form-item>
@@ -45,7 +67,7 @@
           <el-input v-model="user.expertise" placeholder="请输入专业领域"></el-input>
         </el-form-item>
 
-        <el-form-item label="回答数">
+        <el-form-item label="回答数量">
           <el-input v-model="user.answer_count" disabled></el-input>
         </el-form-item>
 
@@ -57,121 +79,184 @@
           <el-input type="textarea" v-model="user.bio" placeholder="请填写个人简介"></el-input>
         </el-form-item>
 
-        <el-button type="primary" native-type="submit">保存修改</el-button>
+        <!-- 保存按钮 -->
+        <el-form-item>
+          <el-button type="primary" @click="saveProfile">保存修改</el-button>
+        </el-form-item>
       </el-form>
+    </el-card>
   </div>
 </template>
 
-<script>
-// import {
-//   getExpertById,
-//   getMyCertificates,
-//   uploadCertificate as uploadCertApi,
-//   updateExpertProfile
-// } from '@/views/expert/expertApi';
-import axios from "axios";
+<script setup>
+import { ref, onMounted } from 'vue';
+import { useUserStore } from '@/stores/user';
 import { ElMessage } from 'element-plus';
-import { useUserStore } from '../../stores/user';
+import axios from 'axios';
+import { pcaTextArr } from 'element-china-area-data';
 
-export default {
-  setup() {
-    const userStore = useUserStore();
-    const token = userStore.token;
-    const uploadUrl = 'http://localhost:3000/api/upload';
+const userStore = useUserStore();
+const user = ref({
+  id: null,
+  username: '',
+  phone: '',
+  province: '',
+  city: '',
+  district: '',
+  address_detail: '',
+  avatar_url: '',
+  real_name: '',
+  title: '',
+  institution: '',
+  expertise: '',
+  bio: '',
+  answer_count: 0,
+  expert_rank: 0
+});
 
-    // 处理头像上传
-    const handleAvatarChange = async (file) => {
-      // 上传成功直接更新头像 URL
-      if (file.status === 'success' && file.response && file.response.avatarUrl) {
-        const avatarUrl = file.response.avatarUrl; // 从响应中获取头像 URL
-        user.value.avatar_url = avatarUrl; // 更新用户信息中的头像 URL
-        // 更新 Pinia 中的用户信息
-        userStore.avatar_url = avatarUrl;
-        ElMessage.success('头像上传成功');
-      } else if (file.status === 'fail') {
-        ElMessage.error('头像上传失败');
-      }
-    };
+const selectedLocation = ref([]);
+const token = userStore.token;
+const uploadUrl = 'http://localhost:3000/api/user/avatar';
 
-// 头像上传前的验证
-    const beforeAvatarUpload = (file) => {
-      const isImage = file.type.startsWith('image/');
-      if (!isImage) {
-        ElMessage.error('只能上传图片格式的文件!');
-        return false;
-      }
-      return true;
-    };
+onMounted(() => {
+  user.value.id = userStore.userId;
+  user.value.username = userStore.username;
+  user.value.phone = userStore.phone;
+  user.value.province = userStore.province;
+  user.value.city = userStore.city;
+  user.value.district = userStore.district;
+  user.value.address_detail = userStore.address_detail;
+  user.value.avatar_url = userStore.avatar_url;
+  user.value.real_name = userStore.real_name || '';
+  user.value.title = userStore.title || '';
+  user.value.institution = userStore.institution || '';
+  user.value.expertise = userStore.expertise || '';
+  user.value.bio = userStore.bio || '';
+  user.value.answer_count = userStore.answer_count || 0;
+  user.value.expert_rank = userStore.expert_rank || 0;
 
-    return { userStore, token, uploadUrl, handleAvatarChange, beforeAvatarUpload };
-  },
-  data() {
-    return {
-      user: {},
-      expert: {},
-      certificates: []
-    };
-  },
-  mounted() {
-    this.initData();
-  },
-  methods: {
-    async initData() {
-      try {
-        // 获取用户信息
-        const token = this.userStore.token;
-        console.log('Token:', 111);
-        const response = await axios.get('http://localhost:3000/api/user/profile', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        this.user = response.data;
-        console.log('加载个人信息成功');
+  selectedLocation.value = user.value.id ? [user.value.province, user.value.city, user.value.district] : [];
+});
 
-        // 获取专家信息
-        // const expertDetails = await getExpertById(userId);
-        // this.expert = {
-        //   realName: expertDetails.real_name,
-        //   title: expertDetails.title || '',
-        //   institution: expertDetails.institution || '',
-        //   expertise: expertDetails.expertise || '',
-        //   bio: expertDetails.bio || ''
-        // };
+// 打开文件选择对话框
+const handleAvatarClick = () => {
+  const avatarUpload = document.querySelector('input[type=file]');
+  avatarUpload.click();
+};
 
-        // 获取证书
-        // this.certificates = await getMyCertificates();
-      } catch (error) {
-        console.error('加载个人信息失败:', error);
-        this.$message.error('加载数据失败，请刷新重试');
-      }
-    },
+// 处理头像上传
+const handleAvatarChange = async (event) => {
+  const file = event.target.files[0];
 
-    async submitExpertInfo() {
-      try {
-        const token = this.userStore.token;
-        console.log('Token:', token);
+  if (!file) return;
 
-        const payload = {
-          real_name: this.expert.real_name,
-          title: this.expert.title,
-          institution: this.expert.institution,
-          expertise: this.expert.expertise,
-          bio: this.expert.bio
-        };
-        const response = await axios.patch('http://localhost:3000/api/expert/profile', payload,{
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        this.$message.success('信息更新成功');
-        this.initData();
-      } catch (error) {
-        console.error('更新专家信息失败:', error);
-        this.$message.error('更新失败，请稍后再试');
-      }
-    },
+  // 文件大小限制
+  if (file.size > 5 * 1024 * 1024) {
+    ElMessage.error('头像大小不能超过5MB');
+    return;
+  }
 
+  const isImage = file.type.startsWith('image/');
+  if (!isImage) {
+    ElMessage.error('只能上传图片格式的文件!');
+    return;
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    const response = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || '上传失败');
+    }
+
+    const result = await response.json();
+    if (result && result.avatarUrl) {
+      const newAvatarUrl = "http://localhost:3000/uploads/avatars/" + result.avatarUrl;
+      user.value.avatar_url = newAvatarUrl;
+      userStore.avatar_url = newAvatarUrl;
+      ElMessage.success('头像上传成功');
+      location.reload();
+    } else {
+      throw new Error('上传失败');
+    }
+  } catch (error) {
+    console.error('头像上传失败:', error);
+    ElMessage.error(`头像上传失败: ${error.message}`);
+  }
+};
+
+// 处理位置变化
+const handleLocationChange = (value) => {
+  if (Array.isArray(value) && value.length === 3) {
+    user.value.province = value[0];
+    user.value.city = value[1];
+    user.value.district = value[2];
+  } else {
+    user.value.province = '';
+    user.value.city = '';
+    user.value.district = '';
+  }
+};
+
+// 保存数据
+// 保存数据 - 拆分为两个独立请求
+const saveProfile = async () => {
+  try {
+    // 1. 先更新基础信息
+    await axios.patch('http://localhost:3000/api/user/profile', {
+      phone: user.value.phone,
+      province: user.value.province,
+      city: user.value.city,
+      district: user.value.district,
+      address_detail: user.value.address_detail,
+      avatar_url: user.value.avatar_url
+    }, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    // 2. 如果是专家，再更新专家信息
+    if (userStore.role === 'expert') {
+      await axios.patch('http://localhost:3000/api/expert/profile', {
+        real_name: user.value.real_name,
+        title: user.value.title,
+        institution: user.value.institution,
+        expertise: user.value.expertise,
+        bio: user.value.bio
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+    }
+
+    // 更新 Pinia 存储
+    userStore.$patch({
+      phone: user.value.phone,
+      province: user.value.province,
+      city: user.value.city,
+      district: user.value.district,
+      address_detail: user.value.address_detail,
+      ...(userStore.role === 'expert' ? {
+        real_name: user.value.real_name,
+        title: user.value.title,
+        institution: user.value.institution,
+        expertise: user.value.expertise,
+        bio: user.value.bio
+      } : {})
+    });
+
+    ElMessage.success('保存成功');
+  } catch (error) {
+    console.error('保存失败:', error);
+    ElMessage.error(error.response?.data?.error || '保存失败，请重试');
   }
 };
 </script>
@@ -181,14 +266,14 @@ export default {
   padding: 20px;
 }
 .profile-card {
-  //max-width: 800px;
-  //margin: auto;
+  max-width: 800px;
+  margin: auto;
 }
-.user-info {
+.avatar-container {
+  display: flex;
+  align-items: center;
+  gap: 15px;
   margin-bottom: 20px;
-}
-.certificates-section {
-  margin-top: 30px;
 }
 .avatar {
   width: 80px;
@@ -198,9 +283,15 @@ export default {
   border: 1px solid #D0D0D0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
-.avatar-container {
-  display: flex;
-  align-items: center;
-  margin-bottom: 20px;
+.btn-change-avatar {
+  background: #2196F3;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.btn-change-avatar:hover {
+  background: #0b7dda;
 }
 </style>

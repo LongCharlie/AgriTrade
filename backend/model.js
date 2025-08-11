@@ -10,7 +10,7 @@ const pool = new Pool({
   host: '22.tcp.cpolar.top',
   database: 'agriculture db',
   password: '12345678',
-  port: 14065,
+  port: 12568,
   ssl: false,
 });
 
@@ -101,6 +101,27 @@ const createUser = async (userData) => {
   return result.rows[0];
 };
 
+// 添加回答图片
+const addAnswerImages = async (answerId, imageUrls) => {
+  const query = `
+    INSERT INTO answer_images (answer_id, image_url)
+    VALUES ${imageUrls.map((_, i) => `($1, $${i + 2})`).join(', ')}
+    RETURNING *
+  `;
+  const values = [answerId, ...imageUrls];
+  const result = await pool.query(query, values);
+  return result.rows;
+};
+
+// 获取回答图片
+const getAnswerImages = async (answerId) => {
+  const result = await pool.query(
+    'SELECT * FROM answer_images WHERE answer_id = $1 AND is_deleted = false ORDER BY created_at',
+    [answerId]
+  );
+  return result.rows;
+};
+
 const createExpert = async (expertId) => {
   await pool.query(
     'INSERT INTO experts (expert_id) VALUES ($1)',
@@ -159,10 +180,13 @@ const getAnswersByQuestionId = async (questionId) => {
   const result = await pool.query(
     `SELECT 
       a.*,
-      u.username as expert_name,
-      u.avatar_url as expert_avatar,
+      e.real_name as expert_real_name,
       e.title as expert_title,
-      e.institution as expert_institution
+      u.avatar_url as expert_avatar,
+      CASE WHEN u.avatar_url IS NOT NULL 
+           THEN CONCAT('/uploads/avatars/', u.avatar_url) 
+           ELSE NULL 
+      END as expert_avatar_url
     FROM answers a
     LEFT JOIN users u ON a.expert_id = u.user_id
     LEFT JOIN experts e ON a.expert_id = e.expert_id
@@ -170,7 +194,14 @@ const getAnswersByQuestionId = async (questionId) => {
     ORDER BY a.answered_at DESC`,
     [questionId]
   );
-  return result.rows;
+  return result.rows.map(row => ({
+    ...row,
+    expert_info: {
+      real_name: row.expert_real_name,
+      title: row.expert_title,
+      avatar_url: row.expert_avatar_url
+    }
+  }));
 };
 
 // 获取单个回答详情
@@ -283,18 +314,24 @@ const createQuestion = async (farmerId, title, content) => {
 
 // 获取问题列表
 const getQuestions = async (filter = {}) => {
-  let query = 'SELECT * FROM questions';
+  let query = `
+    SELECT 
+      q.*,
+      u.username as farmer_name
+    FROM questions q
+    LEFT JOIN users u ON q.farmer_id = u.user_id
+  `;
   const values = [];
   const conditions = [];
   
   // 添加过滤条件
   if (filter.farmerId) {
-    conditions.push(`farmer_id = $${values.length + 1}`);
+    conditions.push(`q.farmer_id = $${values.length + 1}`);
     values.push(filter.farmerId);
   }
   
   if (filter.status) {
-    conditions.push(`status = $${values.length + 1}`);
+    conditions.push(`q.status = $${values.length + 1}`);
     values.push(filter.status);
   }
   
@@ -302,7 +339,7 @@ const getQuestions = async (filter = {}) => {
     query += ' WHERE ' + conditions.join(' AND ');
   }
   
-  query += ' ORDER BY created_at DESC';
+  query += ' ORDER BY q.created_at DESC';
   
   const result = await pool.query(query, values);
   return result.rows;
@@ -456,13 +493,14 @@ const getProvinceOrders = async (province) => {
     SELECT 
       o.order_id,
       d.product_name,
-      o.quantity,
-      o.price,
+      pa.quantity,
+      pa.price,
       TO_CHAR(o.created_at, 'YYYY-MM-DD') AS created_at,
       o.status
-    FROM purchase_applications o
-    JOIN purchase_demands d ON o.demand_id = d.demand_id
-    WHERE o.province = $1
+    FROM orders o
+    JOIN purchase_applications pa ON o.application_id = pa.application_id
+    JOIN purchase_demands d ON pa.demand_id = d.demand_id
+    WHERE pa.province = $1
     ORDER BY o.created_at DESC
   `, [province]);
   return rows;
@@ -488,7 +526,9 @@ const getPurchaseDemands = async () => {
       d.quantity,
       d.buyer_id,
       u.username AS buyerName,
-      d.delivery_city AS address,
+      u.province AS address,  
+      d.is_nationwide,       
+      ST_AsText(d.delivery_location) AS location,  
       TO_CHAR(d.updated_at, 'YYYY-MM-DD HH24:MI:SS') AS updated_at
     FROM purchase_demands d
     JOIN users u ON d.buyer_id = u.user_id
@@ -505,10 +545,12 @@ const getFarmerApplications = async (farmerId) => {
       record_id,
       quantity,
       price,
-      province
+      province,
+      status,
+      TO_CHAR(applied_at, 'YYYY-MM-DD HH24:MI:SS') AS applied_at
     FROM purchase_applications
     WHERE farmer_id = $1
-    ORDER BY created_at DESC
+    ORDER BY applied_at DESC
   `, [farmerId]);
   return rows;
 };
@@ -550,10 +592,61 @@ const deleteCertificate = async (certificateId) => {
   );
 };
 
+// 获取所有经验帖（可筛选状态）
+const getAllExperiences = async (auditStatus = null) => {
+  let query = `
+    SELECT 
+      e.*,
+      u.username as author_name,
+      u.avatar_url as author_avatar
+    FROM experiences e
+    LEFT JOIN users u ON e.user_id = u.user_id
+  `;
+  
+  const params = [];
+  
+  if (auditStatus) {
+    query += ' WHERE e.audit_status = $1';
+    params.push(auditStatus);
+  }
+  
+  query += ' ORDER BY e.created_at DESC';
+  
+  const { rows } = await pool.query(query, params);
+  return rows;
+};
+
+// 更新经验帖审核状态
+const updateExperienceStatus = async (experienceId, status, adminId) => {
+  // 验证状态值是否有效
+  const validStatuses = ['pending', 'approved', 'rejected'];
+  if (!validStatuses.includes(status)) {
+    throw new Error('无效的审核状态');
+  }
+
+  const query = `
+    UPDATE experiences
+    SET 
+      audit_status = $1,
+      reviewed_by = $2,
+      reviewed_at = NOW()
+    WHERE experience_id = $3
+    RETURNING *
+  `;
+  
+  const { rows } = await pool.query(query, [status, adminId, experienceId]);
+  
+  if (rows.length === 0) {
+    throw new Error('经验帖不存在');
+  }
+  
+  return rows[0];
+};
+
 // 获取管理员视图问题列表
 const getAdminQuestions = async () => {
   const query = `
-    SELECT q.*, u.username 
+    SELECT q.*, u.user_id
     FROM questions q
     LEFT JOIN users u ON q.farmer_id = u.user_id
   `;
@@ -564,7 +657,7 @@ const getAdminQuestions = async () => {
 // 获取带用户信息的问题详情
 const getQuestionWithUser = async (questionId) => {
   const query = `
-    SELECT q.*, u.username 
+    SELECT q.*, u.username, u.user_id
     FROM questions q
     LEFT JOIN users u ON q.farmer_id = u.user_id
     WHERE q.question_id = $1
@@ -627,29 +720,497 @@ const getCertificatesWithExpertInfo = async () => {
   return rows;
 };
 
+// 处理售后订单审核理由
+const resolveAfterSaleOrder = async (orderId, decision, reason) => {
+  // 验证decision是否有效
+  const validDecisions = ['approve', 'reject'];
+  if (!validDecisions.includes(decision)) {
+    throw new Error('无效的审核决定，必须是approve或reject');
+  }
+
+  // 根据decision设置订单状态
+  const newStatus = decision === 'approve' ? 'after_sale_resolved' : 'after_sale_rejected';
+
+  const query = `
+    UPDATE orders
+    SET 
+      status = $1,
+      admin_reason = $2,
+      resolved_at = NOW(),
+      updated_at = NOW()
+    WHERE order_id = $3 AND status = 'after_sale_requested'
+    RETURNING *
+  `;
+
+  const { rows } = await pool.query(query, [newStatus, reason, orderId]);
+  
+  if (rows.length === 0) {
+    throw new Error('订单不存在或当前状态不允许此操作');
+  }
+
+  return rows[0];
+};
+
+// 获取所有有售后原因的订单详情
+const getAfterSaleOrders = async () => {
+  const query = `
+    SELECT 
+      o.order_id,
+      d.product_name,
+      d.quantity,
+      a.price,
+      o.farmer_id,
+      farmer.username AS farmer_name,
+      buyer.province AS delivery_location,
+      o.buyer_id,
+      buyer.username AS buyer_name,
+      buyer.phone,
+      TO_CHAR(o.created_at, 'YYYY-MM-DD') AS created_at,
+      o.status,
+      o.after_sale_reason,
+      o.after_sale_reason_images,
+      o.admin_reason
+    FROM orders o
+    JOIN purchase_applications a ON o.application_id = a.application_id
+    JOIN purchase_demands d ON a.demand_id = d.demand_id
+    JOIN users farmer ON o.farmer_id = farmer.user_id
+    JOIN users buyer ON o.buyer_id = buyer.user_id
+    WHERE o.after_sale_reason IS NOT NULL
+    ORDER BY o.created_at DESC
+  `;
+  
+  const { rows } = await pool.query(query);
+  return rows;
+};
+
+// 获取所有非管理员用户
+const getAllUsers = async () => {
+  const { rows } = await pool.query(`
+    SELECT 
+      user_id,
+      username,
+      role,
+      phone,
+      province,
+      city,
+      district,
+      address_detail,
+      avatar_url,
+      TO_CHAR(join_date, 'YYYY-MM-DD HH24:MI:SS') AS join_date
+    FROM users
+    WHERE role != 'admin'
+    ORDER BY join_date DESC
+  `);
+  return rows;
+};
+
+// 删除用户
+const deleteUser = async (userId) => {
+  // 先检查用户是否存在且不是管理员
+  const user = await getUserById(userId);
+  if (!user) {
+    throw new Error('用户不存在');
+  }
+  if (user.role === 'admin') {
+    throw new Error('不能删除管理员用户');
+  }
+  
+  // 删除用户
+  await pool.query('DELETE FROM users WHERE user_id = $1', [userId]);
+};
+
+// 管理员更新订单状态
+const updateOrderStatus = async (orderId, status, adminReason = null) => {
+  // 验证状态值是否有效
+  const validStatuses = ['pending_shipment', 'shipped', 'completed', 'after_sale_requested', 'after_sale_resolved'];
+  if (!validStatuses.includes(status)) {
+    throw new Error('无效的订单状态');
+  }
+
+  const query = `
+    UPDATE orders
+    SET 
+      status = $1,
+      ${status === 'shipped' ? 'shipment_time = NOW(),' : ''}
+      ${status === 'completed' ? 'buyer_confirm_time = NOW(),' : ''}
+      ${adminReason ? 'admin_reason = $3,' : ''}
+      updated_at = NOW()
+    WHERE order_id = $2
+    RETURNING *
+  `;
+
+  const params = [status, orderId];
+  if (adminReason) params.push(adminReason);
+
+  const { rows } = await pool.query(query, params);
+  
+  if (rows.length === 0) {
+    throw new Error('订单不存在');
+  }
+
+  return rows[0];
+};
+
+// 获取订单对应的买家数量
+const getOrderBuyerCount = async (orderId) => {
+  const query = `
+    SELECT 
+      COUNT(DISTINCT buyer_id) AS buyer_count
+    FROM orders
+    WHERE order_id = $1
+  `;
+  
+  const { rows } = await pool.query(query, [orderId]);
+  
+  if (rows.length === 0) {
+    throw new Error('订单不存在');
+  }
+
+  return {
+    order_id: orderId,
+    buyer_count: parseInt(rows[0].buyer_count)
+  };
+};
+
+// 按周统计订单金额
+const getWeeklyOrderSummary = async () => {
+  const query = `
+    SELECT 
+      DATE_TRUNC('week', o.created_at) AS week_start,
+      SUM(pa.price * o.quantity) AS total_amount,
+      COUNT(*) AS order_count
+    FROM orders o
+    JOIN purchase_applications pa ON o.application_id = pa.application_id
+    GROUP BY week_start
+    ORDER BY week_start DESC
+  `;
+  
+  const { rows } = await pool.query(query);
+  return rows;
+};
+
+// 按月统计订单金额
+const getMonthlyOrderSummary = async () => {
+  const query = `
+    SELECT 
+      DATE_TRUNC('month', o.created_at) AS month_start,
+      SUM(pa.price * o.quantity) AS total_amount,
+      COUNT(*) AS order_count
+    FROM orders o
+    JOIN purchase_applications pa ON o.application_id = pa.application_id
+    GROUP BY month_start
+    ORDER BY month_start DESC
+  `;
+  
+  const { rows } = await pool.query(query);
+  return rows;
+};
+
+// 按年统计订单金额
+const getYearlyOrderSummary = async () => {
+  const query = `
+    SELECT 
+      DATE_TRUNC('year', o.created_at) AS year_start,
+      SUM(pa.price * o.quantity) AS total_amount,
+      COUNT(*) AS order_count
+    FROM orders o
+    JOIN purchase_applications pa ON o.application_id = pa.application_id
+    GROUP BY year_start
+    ORDER BY year_start DESC
+  `;
+  
+  const { rows } = await pool.query(query);
+  return rows;
+};
+// 获取经验帖评论（带审核状态过滤）
+const getExperienceComments = async (experienceId, status = 'approved') => {
+  const query = `
+    SELECT 
+      c.*,
+      u.username as commenter_name,
+      u.avatar_url as commenter_avatar
+    FROM experience_comments c
+    LEFT JOIN users u ON c.user_id = u.user_id
+    WHERE c.experience_id = $1
+    ${status ? 'AND c.status = $2' : ''}
+    ORDER BY c.created_at DESC
+  `;
+  
+  const params = [experienceId];
+  if (status) params.push(status);
+  
+  const { rows } = await pool.query(query, params);
+  return rows;
+};
+
+// 更新评论审核状态
+const updateCommentStatus = async (commentId, status, adminId) => {
+  // 验证状态值是否有效
+  const validStatuses = ['pending', 'approved', 'rejected'];
+  if (!validStatuses.includes(status)) {
+    throw new Error('无效的审核状态');
+  }
+
+  const query = `
+    UPDATE experience_comments
+    SET 
+      status = $1,
+      reviewed_by = $2,
+      reviewed_at = NOW()
+    WHERE comment_id = $3
+    RETURNING *
+  `;
+  
+  const { rows } = await pool.query(query, [status, adminId, commentId]);
+  
+  if (rows.length === 0) {
+    throw new Error('评论不存在');
+  }
+  
+  return rows[0];
+};
+
+// 获取所有待审核评论（管理员用）
+const getPendingComments = async () => {
+  const query = `
+    SELECT 
+      c.*,
+      u.username as commenter_name,
+      e.title as experience_title
+    FROM experience_comments c
+    LEFT JOIN users u ON c.user_id = u.user_id
+    LEFT JOIN experiences e ON c.experience_id = e.experience_id
+    WHERE c.status = 'pending'
+    ORDER BY c.created_at DESC
+  `;
+  
+  const { rows } = await pool.query(query);
+  return rows;
+};
+
+// 获取全平台买家总数
+const getTotalBuyerCount = async () => {
+  const { rows } = await pool.query(`
+    SELECT COUNT(*) AS count 
+    FROM users 
+    WHERE role = 'buyer'
+  `);
+  return parseInt(rows[0].count);
+};
+
+// 管理员更新用户信息
+const updateUserProfileAdmin = async (userId, updates) => {
+  const fields = Object.keys(updates);
+  if (fields.length === 0) {
+    throw new Error('没有可更新的字段');
+  }
+
+  const setClause = fields
+    .map((key, index) => `${key} = $${index + 1}`)
+    .join(', ');
+  
+  const values = fields.map(key => updates[key]);
+  values.push(userId);
+
+  const queryText = `
+    UPDATE users 
+    SET ${setClause}, updated_at = NOW() 
+    WHERE user_id = $${values.length} 
+    RETURNING 
+      user_id, 
+      username, 
+      phone, 
+      province, 
+      city, 
+      district, 
+      address_detail, 
+      avatar_url, 
+      updated_at
+  `;
+  
+  const result = await pool.query(queryText, values);
+  return result.rows[0];
+};
+
+// 获取所有待审核的证书
+const getPendingCertificates = async () => {
+  const { rows } = await pool.query(`
+    SELECT 
+      c.*,
+      e.real_name,
+      e.title,
+      e.institution,
+      u.username
+    FROM certificates c
+    JOIN experts e ON c.expert_id = e.expert_id
+    JOIN users u ON c.expert_id = u.user_id
+    WHERE c.is_audited = 'pending'
+    ORDER BY c.created_at DESC
+  `);
+  return rows;
+};
+
+// 更新证书审核状态
+const updateCertificateStatus = async (certificateId, status, adminId, rejectReason = null) => {
+  // 验证状态值是否有效
+  const validStatuses = ['pending', 'approved', 'rejected'];
+  if (!validStatuses.includes(status)) {
+    throw new Error('无效的审核状态');
+  }
+
+  const query = `
+    UPDATE certificates
+    SET 
+      is_audited = $1,
+      audited_by = $2,
+      audited_at = NOW(),
+    WHERE certificate_id = $3
+    RETURNING *
+  `;
+  
+  const params = [status, adminId, certificateId];
+  if (status === 'rejected') params.push(rejectReason);
+  
+  const { rows } = await pool.query(query, params);
+  
+  if (rows.length === 0) {
+    throw new Error('证书不存在');
+  }
+  
+  return rows[0];
+};
+
+// 获取单个证书详情（带专家信息）
+const getCertificateWithExpertInfo = async (certificateId) => {
+  const { rows } = await pool.query(`
+    SELECT 
+      c.*,
+      e.real_name,
+      e.title,
+      e.institution,
+      u.username
+    FROM certificates c
+    JOIN experts e ON c.expert_id = e.expert_id
+    JOIN users u ON c.expert_id = u.user_id
+    WHERE c.certificate_id = $1
+  `, [certificateId]);
+  
+  if (rows.length === 0) {
+    throw new Error('证书不存在');
+  }
+  
+  return rows[0];
+};
+
+// 获取种植记录的所有农事活动
+const getFarmingActivitiesByRecordId = async (recordId) => {
+  const result = await pool.query(
+    'SELECT * FROM farming_activities WHERE record_id = $1 ORDER BY activity_date',
+    [recordId]
+  );
+  return result.rows;
+};
+
+// 创建新的农事活动
+const createFarmingActivity = async (data) => {
+  const { record_id, activity_date, activity_type, description, images } = data;
+  // 将图片数组转为逗号分隔字符串
+  const imageString = images.join(',');
+  const result = await pool.query(
+    `INSERT INTO farming_activities (
+      record_id, 
+      activity_date, 
+      activity_type, 
+      description, 
+      images
+    ) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+    [record_id, activity_date, activity_type, description, imageString]
+  );
+  return result.rows[0];
+};
+
+const createComment = async (experienceId, userId, content) => {
+  const result = await pool.query(
+    `INSERT INTO experience_comments (
+      experience_id, 
+      user_id, 
+      content
+    ) VALUES ($1, $2, $3) RETURNING *`,
+    [experienceId, userId, content]
+  );
+  return result.rows[0];
+};
+
+// 通过经验ID获取作者信息
+const getAuthorInfoByExperience = async (experienceId) => {
+  const result = await pool.query(
+    `SELECT u.username, u.avatar_url
+     FROM experiences e
+     LEFT JOIN users u ON e.user_id = u.user_id
+     WHERE e.experience_id = $1`,
+    [experienceId]
+  );
+  return result.rows[0];
+};
+
+// 获取所有经验分享（含作者信息）
+const getAllExperiencesWithAuthor = async () => {
+  const result = await pool.query(
+    `SELECT 
+      e.*,
+      u.username AS author_name,
+      u.avatar_url AS author_avatar
+     FROM experiences e
+     LEFT JOIN users u ON e.user_id = u.user_id
+     WHERE e.audit_status = 'approved'
+     ORDER BY e.created_at DESC`
+  );
+  return result.rows;
+};
+
 // 导出所有数据库操作方法
 module.exports = {
   checkUserExists,
+  getTotalBuyerCount,
+   getWeeklyOrderSummary,
+   getMonthlyOrderSummary,
+   getYearlyOrderSummary,
   createUser,
+  getPendingCertificates,
+  updateCertificateStatus,
+  getCertificateWithExpertInfo,
+  updateOrderStatus,
+  updateUserProfileAdmin,
   createQuestion,
   getQuestions,
   updateUserProfile,
   getQuestionById,
+  getAllUsers,
+  deleteUser,
+  getOrderBuyerCount,
   updateQuestionStatus,
   updateExpertProfile,
   createExpert,
   getProductPrice,
   getUserByUsername,
   comparePassword,
+  resolveAfterSaleOrder,
+  getExperienceComments,
+  updateCommentStatus,
+  getPendingComments,
   generateToken,
+  updateExperienceStatus,
   checkFieldNeedsUpdate,
   getExpertDetails,
   getExpertById,
   getUserById,
+  getAllExperiences,
   updateUserAvatar,
   getAgricultureCount,
   getFarmerCount,
   getExpertCount,
+  addAnswerImages,
+  getAnswerImages,
   getPlantingRecordsByFarmerId,
   getProvinceOrders,
   deletePlantingRecord,
@@ -663,7 +1224,6 @@ module.exports = {
   getAnswersByQuestionId,
   getAnswerById,
   updateAnswer,
-  deleteAnswer,
   upvoteAnswer,
   updateApplication,
   deleteCertificate,
@@ -672,7 +1232,13 @@ module.exports = {
   getAnswersByQuestion,
   updateQuestionStatusAdmin,
   deleteAnswer,
+  getAfterSaleOrders,
   getCertificatesWithExpertInfo,
+  getFarmingActivitiesByRecordId,
+  createFarmingActivity,
+  createComment,
+  getAuthorInfoByExperience,
+  getAllExperiencesWithAuthor,
   // 也可以导出原始的query方法以便特殊查询使用
   query: (text, params) => pool.query(text, params),
 };

@@ -27,40 +27,70 @@ router.delete('/answers/:id', authMiddleware.authenticateToken, authMiddleware.c
 
 module.exports = router;
 
-// 专家回答问题
+// 专家回答问题（支持图片上传）
 router.post('/questions/:id/answers', 
   authMiddleware.authenticateToken, 
   authMiddleware.checkRole([ROLES.EXPERT]),
-  async (req, res) => {
-    try {
-      const questionId = req.params.id;
-      const expertId = req.user.userId;
-      const { content } = req.body;
+  (req, res) => {
+    uploadAnswerImages(req, res, async (err) => {
+      try {
+        if (err) {
+          return res.status(400).json({ error: err.message });
+        }
+        
+        const questionId = req.params.id;
+        const expertId = req.user.userId;
+        const { content } = req.body;
 
-      if (!content) {
-        return res.status(400).json({ error: '回答内容不能为空' });
+        if (!content) {
+          // 如果有上传的图片但验证失败，删除已上传的图片
+          if (req.files && req.files.length > 0) {
+            req.files.forEach(file => {
+              fs.unlinkSync(path.join(answerImagesDir, file.filename));
+            });
+          }
+          return res.status(400).json({ error: '回答内容不能为空' });
+        }
+
+        // 检查问题是否存在
+        const question = await require('../model').getQuestionById(questionId);
+        if (!question) {
+          // 删除已上传的图片
+          if (req.files && req.files.length > 0) {
+            req.files.forEach(file => {
+              fs.unlinkSync(path.join(answerImagesDir, file.filename));
+            });
+          }
+          return res.status(404).json({ error: '问题不存在' });
+        }
+
+        // 创建回答
+        const newAnswer = await require('../model').createAnswer(questionId, expertId, content);
+        
+        // 如果有上传的图片，保存图片信息
+        if (req.files && req.files.length > 0) {
+          const imageUrls = req.files.map(file => file.filename);
+          await require('../model').addAnswerImages(newAnswer.answer_id, imageUrls);
+        }
+
+        // 更新问题状态为"已解答"
+        await require('../model').updateQuestionStatus(questionId, 'answered');
+
+        res.status(201).json({
+          message: '回答提交成功',
+          answer: newAnswer
+        });
+      } catch (error) {
+        console.error('回答问题错误:', error);
+        // 如果出现错误，删除已上传的图片
+        if (req.files && req.files.length > 0) {
+          req.files.forEach(file => {
+            fs.unlinkSync(path.join(answerImagesDir, file.filename));
+          });
+        }
+        res.status(500).json({ error: '提交回答失败，请稍后再试' });
       }
-
-      // 检查问题是否存在
-      const question = await require('../model').getQuestionById(questionId);
-      if (!question) {
-        return res.status(404).json({ error: '问题不存在' });
-      }
-
-      // 创建回答
-      const newAnswer = await require('../model').createAnswer(questionId, expertId, content);
-      
-      // 更新问题状态为"已解答"
-      await require('../model').updateQuestionStatus(questionId, 'answered');
-
-      res.status(201).json({
-        message: '回答提交成功',
-        answer: newAnswer
-      });
-    } catch (error) {
-      console.error('回答问题错误:', error);
-      res.status(500).json({ error: '提交回答失败，请稍后再试' });
-    }
+    });
   }
 );
 
@@ -72,21 +102,55 @@ router.get('/questions/:id/answers', async (req, res) => {
     // 检查问题是否存在
     const question = await require('../model').getQuestionById(questionId);
     if (!question) {
-      return res.status(404).json({ error: '问题不存在' });
+      return res.status(404).json({ 
+        success: false,
+        error: '问题不存在' 
+      });
     }
 
-    const answers = await require('../model').getAnswersByQuestionId(questionId);
+    // 修改查询以包含专家详细信息
+    const answers = await require('../model').query(
+      `SELECT 
+        a.*,
+        e.real_name as expert_real_name,
+        e.title as expert_title,
+        u.avatar_url as expert_avatar,
+        CASE WHEN u.avatar_url IS NOT NULL 
+             THEN CONCAT('/uploads/avatars/', u.avatar_url) 
+             ELSE NULL 
+        END as expert_avatar_url
+      FROM answers a
+      LEFT JOIN users u ON a.expert_id = u.user_id
+      LEFT JOIN experts e ON a.expert_id = e.expert_id
+      WHERE a.question_id = $1
+      ORDER BY a.answered_at DESC`,
+      [questionId]
+    );
+
     res.json({
-      count: answers.length,
-      answers
+      success: true,
+      count: answers.rows.length,
+      answers: answers.rows.map(answer => ({
+        ...answer,
+        expert_info: {
+          real_name: answer.expert_real_name,
+          title: answer.expert_title,
+          avatar_url: answer.expert_avatar_url
+        }
+      }))
     });
   } catch (error) {
     console.error('获取回答列表错误:', error);
-    res.status(500).json({ error: '获取回答列表失败' });
+    res.status(500).json({ 
+      success: false,
+      error: '获取回答列表失败' 
+    });
   }
 });
 
-// 获取单个回答详情
+
+
+// 获取单个回答详情（包含图片）
 router.get('/answers/:id', async (req, res) => {
   try {
     const answerId = req.params.id;
@@ -96,7 +160,16 @@ router.get('/answers/:id', async (req, res) => {
       return res.status(404).json({ error: '回答未找到' });
     }
     
-    res.json(answer);
+    // 获取回答图片
+    const images = await require('../model').getAnswerImages(answerId);
+    
+    res.json({
+      ...answer,
+      images: images.map(img => ({
+        id: img.image_id,
+        url: `/uploads/answer_images/${img.image_url}`
+      }))
+    });
   } catch (error) {
     console.error('获取回答详情错误:', error);
     res.status(500).json({ error: '获取回答详情失败' });

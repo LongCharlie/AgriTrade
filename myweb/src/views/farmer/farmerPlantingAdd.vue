@@ -28,7 +28,7 @@
               </div>
               <div class="history-images">
                 <div class="history-image-wrapper" v-for="(image, index) in record.images.split(',')" :key="index">
-                  <img :src="image" alt="历史记录图像" class="history-image" @click="openImage(image)"/>
+                  <img :src="`http://localhost:3000/uploads/activity-images/${image}`" alt="历史记录图像" class="history-image" @click="openImage(image)"/>
                 </div>
               </div>
             </div>
@@ -39,17 +39,18 @@
           <img :src="selectedImage" class="enlarged-image" />
         </el-dialog>
 
-
-
         <div class="input-group" v-if="formData.growth_status !== 'harvested'">
           <label for="activityImages">上传活动图片:</label>
           <el-upload
               id="activityImages"
               class="upload-image"
               multiple
-              :show-file-list="false"
-              :on-change="handleImageChange"
+              :limit="5"
+              :show-file-list="true"
+              :http-request="uploadImage"
               :before-upload="beforeImageUpload"
+              :on-change="handleImageChange"
+              :on-remove="handleRemove"
           >
             <el-button>点击上传</el-button>
           </el-upload>
@@ -139,37 +140,23 @@ const initializeForm = () => {
 
 // 活动图片数组
 const activityImages = ref([]);
+// 上传用-活动图片数组
+const uploadAactivityImages = ref([]);
+const uploadFile = ref([]);
 
 // 历史记录
 const historicalRecords = ref([]);
 
+// // 模拟数据
+// const mockHistoricalRecords = [
+//   { activity_id: 1, activity_date: '2023-05-01', activity_type: 'seeding', description: '使用XX牌种子', images: `${cropPhoto},${cropPhoto}` },
+//   { activity_id: 2, activity_date: '2023-05-05', activity_type: 'fertilizing', description: '施用氮肥', images: cropPhoto },
+//   { activity_id: 3, activity_date: '2023-05-07', activity_type: 'pesticide', description: '喷洒病虫害防治药物', images: `${cropPhoto},${cropPhoto},${cropPhoto}` },
+//   { activity_id: 4, activity_date: '2023-05-15', activity_type: 'harvest', description: '首次收获', images: cropPhoto },
+// ];
 // 模拟数据
 const mockHistoricalRecords = [
-  { activity_id: 1, activity_date: '2023-05-01', activity_type: 'seeding', description: '使用XX牌种子', images: `${cropPhoto},${cropPhoto}` },
-  { activity_id: 2, activity_date: '2023-05-05', activity_type: 'fertilizing', description: '施用氮肥', images: cropPhoto },
-  { activity_id: 3, activity_date: '2023-05-07', activity_type: 'pesticide', description: '喷洒病虫害防治药物', images: `${cropPhoto},${cropPhoto},${cropPhoto}` },
-  { activity_id: 4, activity_date: '2023-05-15', activity_type: 'harvest', description: '首次收获', images: cropPhoto },
-];
-
-// // 获取历史记录
-// const fetchHistoricalRecords = async () => {
-//   const recordId = formData.value.record_id; // 从表单数据中获取 record_id
-//   try {
-//     const response = await axios.get(`http://localhost:3000/api/historical-activity`, {
-//       headers: {
-//         'Authorization': `Bearer ${token}`, // 设置 Authorization 头
-//       },
-//       params: {
-//         record_id: recordId // 将 record_id 作为查询参数传递
-//       }
-//     });
-//     historicalRecords.value = response.data; // 假设接口返回的数据符合预期
-//   } catch (error) {
-//     console.error('获取历史活动失败，使用模拟数据:', error);
-//     // 使用模拟数据
-//     historicalRecords.value = mockHistoricalRecords;
-//   }
-// };
+ ];
 
 const fetchHistoricalRecords = async () => {
   const recordId = formData.value.record_id; // 从表单数据中获取 record_id
@@ -180,6 +167,7 @@ const fetchHistoricalRecords = async () => {
       }
     });
     historicalRecords.value = response.data; // 假设接口返回的数据符合预期
+    console.log(response.data);
   } catch (error) {
     console.error('获取历史活动失败，使用模拟数据:', error);
     // 使用模拟数据
@@ -213,12 +201,31 @@ onMounted(async () => {
   await fetchHistoricalRecords();
 });
 
-// 处理图片变化
-const handleImageChange = (file) => {
-  if (file.status === 'success') {
-    activityImages.value.push(file.response.url); // 假设响应中返回了图片的 URL
+
+// 上传图片方法
+const uploadImage = async ({ file, onSuccess, onError }) => {
+  const formData = new FormData();
+  formData.append('images', file);
+
+  try {
+    const response = await axios.post('http://localhost:3000/api/uploads/activity-images', formData, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    const imageUrlArray = response.data.images; // 后端返回的图片 URL 数组
+    const fullImageUrls = imageUrlArray.map(image => `http://localhost:3000/uploads/activity-images/${image}`);
+    activityImages.value.push(...fullImageUrls); // 将返回的 URL 添加到活动图片数组
+    uploadAactivityImages.value.push(...imageUrlArray);
+    uploadFile.value.push(file.name);
+    console.log(uploadFile);
+    onSuccess();
     ElMessage.success('活动图片上传成功');
-  } else if (file.status === 'fail') {
+  } catch (error) {
+    console.error('活动图片上传失败:', error);
+    onError();
     ElMessage.error('活动图片上传失败');
   }
 };
@@ -233,23 +240,39 @@ const beforeImageUpload = (file) => {
   return true; // 允许上传
 };
 
+// 图片变化处理
+const handleImageChange = (file) => {
+
+};
+
+const handleRemove = (file) => {
+  const index = uploadFile.value.indexOf(file.name); // 获取文件名
+  if (index > -1) {
+    activityImages.value.splice(index, 1); // 删除已上传的 URLs
+    uploadAactivityImages.value.splice(index, 1); // 删除文件列表
+  }
+  ElMessage.success(`${file.name} 已被移除`); // 提示用户删除成功
+};
+
 // 提交活动
 const submitActivity = async () => {
+  const postData = {
+    record_id: formData.value.record_id,
+    activity_date: formattedStartDate.value,
+    activity_type: formData.value.activity_type,
+    description: formData.value.description,
+    images: uploadAactivityImages.value,
+  };
+  console.log('提交的数据:', postData); // 打印请求数据
   try {
-    const response = await axios.post('http://localhost:3000/api/planting-activities', {
-      record_id: formData.value.record_id,
-      activity_date: formattedStartDate.value,
-      activity_type: formData.value.activity_type,
-      description: formData.value.description,
-      images: activityImages.value,
-    }, {
+    const response = await axios.post('http://localhost:3000/api/planting-activities', postData, {
       headers: {
-        'Authorization': `Bearer ${token}`, // 设置 Authorization 头
+        'Authorization': `Bearer ${token}`,
       }
     });
-
-    ElMessage.success('成功创建活动');
-    router.push('/farmer/activities');
+    ElMessage.success('成功提交活动');
+    router.push('/farmer/planting');
+    // location.reload(); // 刷新页面
   } catch (error) {
     console.error('提交失败:', error);
     ElMessage.error('提交失败，请重试！');
@@ -266,7 +289,7 @@ const finishPlanting = async () => {
       }
     });
     ElMessage.success('成功结束种植活动');
-    router.push('/farmer/activities'); // 跳转到活动页面
+    router.push('/farmer/planting');
   } catch (error) {
     console.error('结束种植失败:', error);
     ElMessage.error('结束种植失败，请重试！');

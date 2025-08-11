@@ -31,6 +31,7 @@
             <div class="certificate-details">
               <p><strong>证书名称：</strong>{{ expert.certificate_name || '暂无' }}</p>
               <p><strong>发证机构：</strong>{{ expert.authorizing_unit || '暂无' }}</p>
+              <img v-if="expert.certificate_image" :src="expert.certificate_image" alt="证书图片">
             </div>
           </el-card>
         </div>
