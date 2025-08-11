@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
 const { ROLES } = authMiddleware;
-
+const { uploadAnswerImages, answerImagesDir } = require('../routes/middleware/uploadMiddleware');
 // 管理员删除回答
 router.delete('/answers/:id', authMiddleware.authenticateToken, authMiddleware.checkRole([ROLES.ADMIN]), async (req, res) => {
   try {
@@ -74,7 +74,7 @@ router.post('/questions/:id/answers',
         }
 
         // 更新问题状态为"已解答"
-        await require('../model').updateQuestionStatus(questionId, 'answered');
+        await require('../model').updateQuestionStatus(questionId, 'answered'); 
 
         res.status(201).json({
           message: '回答提交成功',

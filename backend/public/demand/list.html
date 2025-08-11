@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的采购需求 - 农业咨询平台</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .demand-list {
+            margin-top: 20px;
+        }
+        .demand-card {
+            background: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .demand-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .demand-title {
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .demand-date {
+            color: #666;
+            font-size: 14px;
+        }
+        .demand-details {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 10px;
+        }
+        .detail-item {
+            flex: 1;
+        }
+        .detail-label {
+            font-weight: bold;
+            color: #555;
+        }
+        .applications-count {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .actions {
+            margin-top: 10px;
+            text-align: right;
+        }
+        .actions a {
+            margin-left: 10px;
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        .no-demands {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .create-new {
+            display: block;
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+    <script src="/js/auth.js"></script>
+</head>
+<body>
+    <h1>我的采购需求</h1>
+    
+    <div class="nav">
+        <a href="/index.html">返回首页</a>
+        <a href="/demand-publish.html">发布新需求</a>
+    </div>
+    
+    <div class="demand-list" id="demandList">
+        <div class="no-demands" id="noDemands">
+            您还没有发布过采购需求
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 检查用户是否登录且是买家
+            if (!checkAuth() || !checkRole(['buyer'])) {
+                alert('只有登录的买家才能查看需求');
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            try {
+                // 获取当前用户的需求列表
+                const demands = await apiRequest('/api/demands/all');
+                
+                if (demands.length === 0) {
+                    document.getElementById('noDemands').style.display = 'block';
+                    return;
+                }
+                
+                document.getElementById('noDemands').style.display = 'none';
+                
+                // 渲染需求列表
+                const listContainer = document.getElementById('demandList');
+                
+                demands.forEach(demand => {
+                    const demandCard = document.createElement('div');
+                    demandCard.className = 'demand-card';
+                    
+                    // 格式化日期
+                    const date = new Date(demand.updated_at);
+                    const formattedDate = `${date.getFullYear()}/${(date.getMonth()+1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
+                    
+                    demandCard.innerHTML = `
+                        <div class="demand-header">
+                            <div class="demand-title">${demand.product_name}</div>
+                            <div class="demand-date">${formattedDate}</div>
+                        </div>
+                        <div class="demand-details">
+                            <div class="detail-item">
+                                <div class="detail-label">采购数量</div>
+                                <div>${demand.quantity} 公斤</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">交付地点</div>
+                                <div>${demand.delivery_city}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">报价数量</div>
+                                <div class="applications-count">${demand.application_count || 0} 个</div>
+                            </div>
+                        </div>
+                        <div class="actions">
+                            <a href="/demands/detail.html?id=${demand.demand_id}">查看详情</a>
+                            <a href="/communications.html?demand_id=${demand.demand_id}">沟通记录</a>
+                        </div>
+                    `;
+                    
+                    listContainer.appendChild(demandCard);
+                });
+                
+            } catch (error) {
+                console.error('获取需求列表失败:', error);
+                alert('获取需求列表失败: ' + (error.message || '请稍后再试'));
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发布采购需求 - 农业咨询平台</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .form-container {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .success-message {
+            color: green;
+            margin: 20px 0;
+            padding: 10px;
+            background: #e8f5e9;
+            border-radius: 4px;
+        }
+    </style>
+    <script src="/js/auth.js"></script>
+</head>
+<body>
+    <h1>发布采购需求</h1>
+    
+    <div class="nav">
+        <a href="/index.html">返回首页</a>
+        <a href="/demands/list.html">我的需求</a>
+    </div>
+    
+    <div class="form-container">
+        <form id="demandForm">
+            <div class="form-group">
+                <label for="product_name">产品名称 *</label>
+                <input type="text" id="product_name" name="product_name" required>
+                <div class="error" id="product_name_error"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="quantity">采购数量 (公斤) *</label>
+                <input type="number" id="quantity" name="quantity" min="1" required>
+                <div class="error" id="quantity_error"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="delivery_city">交付城市 *</label>
+                <input type="text" id="delivery_city" name="delivery_city" required>
+                <div class="error" id="delivery_city_error"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="description">附加说明</label>
+                <textarea id="description" name="description"></textarea>
+            </div>
+            
+            <button type="submit">发布需求</button>
+        </form>
+        
+        <div id="successMessage" class="success-message" style="display: none;">
+            需求发布成功！系统将为您匹配符合条件的农户。
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查用户是否登录且是买家
+            if (!checkAuth() || !checkRole(['buyer'])) {
+                alert('只有登录的买家才能发布需求');
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            // 表单提交处理
+            document.getElementById('demandForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // 清除之前的错误信息
+                document.querySelectorAll('.error').forEach(el => el.textContent = '');
+                
+                // 获取表单数据
+                const formData = {
+                    product_name: document.getElementById('product_name').value.trim(),
+                    quantity: document.getElementById('quantity').value.trim(),
+                    delivery_city: document.getElementById('delivery_city').value.trim(),
+                    description: document.getElementById('description').value.trim()
+                };
+                
+                // 简单验证
+                let isValid = true;
+                
+                if (!formData.product_name) {
+                    document.getElementById('product_name_error').textContent = '请输入产品名称';
+                    isValid = false;
+                }
+                
+                if (!formData.quantity || isNaN(formData.quantity)) {
+                    document.getElementById('quantity_error').textContent = '请输入有效的数量';
+                    isValid = false;
+                }
+                
+                if (!formData.delivery_city) {
+                    document.getElementById('delivery_city_error').textContent = '请输入交付城市';
+                    isValid = false;
+                }
+                
+                if (!isValid) return;
+                
+                try {
+                    // 发送请求到后端
+                    const response = await apiRequest('/api/demands', 'POST', {
+                        product_name: formData.product_name,
+                        quantity: formData.quantity,
+                        delivery_city: formData.delivery_city
+                    });
+                    
+                    // 显示成功消息
+                    document.getElementById('successMessage').style.display = 'block';
+                    document.getElementById('demandForm').reset();
+                    
+                    // 3秒后跳转到需求列表
+                    setTimeout(() => {
+                        window.location.href = '/demands/list.html';
+                    }, 3000);
+                    
+                } catch (error) {
+                    console.error('发布需求失败:', error);
+                    alert('发布需求失败: ' + (error.message || '请稍后再试'));
+                }
+            });
+        });
+    </script>
+</body>
+</html>

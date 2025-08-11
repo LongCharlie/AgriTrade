@@ -122,10 +122,27 @@ const getAnswerImages = async (answerId) => {
   return result.rows;
 };
 
-const createExpert = async (expertId) => {
+const createExpert = async (expertData) => {
+  const {
+    expert_id,
+    real_name,
+    title,
+    institution,
+    expertise,
+    bio
+  } = expertData;
+  
   await pool.query(
-    'INSERT INTO experts (expert_id) VALUES ($1)',
-    [expertId]
+    `INSERT INTO experts (
+      expert_id,
+      real_name,
+      title,
+      institution,
+      expertise,
+      bio,
+      answer_count
+    ) VALUES ($1, $2, $3, $4, $5, $6, 0)`,
+    [expert_id, real_name, title, institution, expertise, bio]
   );
 };
 
@@ -875,7 +892,7 @@ const getWeeklyOrderSummary = async () => {
   const query = `
     SELECT 
       DATE_TRUNC('week', o.created_at) AS week_start,
-      SUM(pa.price * o.quantity) AS total_amount,
+      SUM(pa.price * pa.quantity) AS total_amount,
       COUNT(*) AS order_count
     FROM orders o
     JOIN purchase_applications pa ON o.application_id = pa.application_id
@@ -892,7 +909,7 @@ const getMonthlyOrderSummary = async () => {
   const query = `
     SELECT 
       DATE_TRUNC('month', o.created_at) AS month_start,
-      SUM(pa.price * o.quantity) AS total_amount,
+      SUM(pa.price * pa.quantity) AS total_amount,
       COUNT(*) AS order_count
     FROM orders o
     JOIN purchase_applications pa ON o.application_id = pa.application_id
@@ -909,7 +926,7 @@ const getYearlyOrderSummary = async () => {
   const query = `
     SELECT 
       DATE_TRUNC('year', o.created_at) AS year_start,
-      SUM(pa.price * o.quantity) AS total_amount,
+      SUM(pa.price * pa.quantity) AS total_amount,
       COUNT(*) AS order_count
     FROM orders o
     JOIN purchase_applications pa ON o.application_id = pa.application_id
@@ -1023,7 +1040,6 @@ const updateUserProfileAdmin = async (userId, updates) => {
       district, 
       address_detail, 
       avatar_url, 
-      updated_at
   `;
   
   const result = await pool.query(queryText, values);
@@ -1061,7 +1077,7 @@ const updateCertificateStatus = async (certificateId, status, adminId, rejectRea
     SET 
       is_audited = $1,
       audited_by = $2,
-      audited_at = NOW(),
+      audited_at = NOW()
     WHERE certificate_id = $3
     RETURNING *
   `;
