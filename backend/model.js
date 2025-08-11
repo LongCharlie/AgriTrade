@@ -1168,6 +1168,57 @@ const getAllExperiencesWithAuthor = async () => {
   return result.rows;
 };
 
+// 更新订单物流信息
+const updateOrderLogisticsInfo = async (orderId, logisticsInfo) => {
+  const result = await pool.query(
+    'UPDATE orders SET logistics_info = $1 WHERE order_id = $2 RETURNING *',
+    [logisticsInfo, orderId]
+  );
+  return result.rows[0];
+};
+
+// 获取农户的所有订单详情
+const getFarmerOrders = async (farmerId) => {
+  const result = await pool.query(
+    `SELECT
+      o.order_id,
+      o.product_name,
+      o.quantity,
+      o.price,
+      o.delivery_location AS deliveryLocation,
+      o.buyer_id,
+      u.username AS buyerName,
+      u.phone AS buyerPhone,
+      TO_CHAR(o.created_at, 'YYYY-MM-DD') AS createdAt,
+      o.status,
+      o.after_sale_reason,
+      o.after_sale_reason_images AS afterSaleReasonImages,
+      a.reason AS adminReason
+     FROM orders o
+     LEFT JOIN users u ON o.buyer_id = u.user_id
+     LEFT JOIN after_sale_audits a ON o.order_id = a.order_id
+     WHERE o.farmer_id = $1
+     ORDER BY o.created_at DESC`,
+    [farmerId]
+  );
+  return result.rows;
+};
+
+// 更新订单状态
+const updateOrderStatus_farmer = async (orderId, status) => {
+  // 定义允许的状态值
+  const validStatuses = ['pending', 'shipped', 'completed', 'canceled'];
+  if (!validStatuses.includes(status)) {
+    throw new Error('无效的状态值');
+  }
+
+  const result = await pool.query(
+    'UPDATE orders SET status = $1 WHERE order_id = $2 RETURNING *',
+    [status, orderId]
+  );
+  return result.rows[0];
+};
+
 // 导出所有数据库操作方法
 module.exports = {
   checkUserExists,
@@ -1239,6 +1290,9 @@ module.exports = {
   createComment,
   getAuthorInfoByExperience,
   getAllExperiencesWithAuthor,
+  updateOrderLogisticsInfo,
+  getFarmerOrders,
+  updateOrderStatus_farmer,
   // 也可以导出原始的query方法以便特殊查询使用
   query: (text, params) => pool.query(text, params),
 };

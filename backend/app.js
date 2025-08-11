@@ -158,6 +158,7 @@ const statisticsRoutes = require('./routes/statisticsRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const answerRoutes = require('./routes/answerRoutes');
 const farmingActivitiesRoutes = require('./routes/farmingActivities');
+const orderRoutes = require('./routes/orderRoutes');
 
 // 挂载路由
 app.use('/api', authRoutes);
@@ -173,6 +174,7 @@ app.use('/api', statisticsRoutes);
 app.use('/api', adminRoutes);
 app.use('/api', answerRoutes);
 app.use('/api', farmingActivitiesRoutes);
+app.use('/api', orderRoutes);
 
 
 
