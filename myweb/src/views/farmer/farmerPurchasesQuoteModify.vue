@@ -64,7 +64,7 @@
           </el-select>
         </div>
 
-        <el-button type="primary" class="submit-button">提交报价</el-button>
+        <el-button type="primary" @click="submitQuote" class="submit-button">提交报价</el-button>
       </form>
     </div>
   </div>

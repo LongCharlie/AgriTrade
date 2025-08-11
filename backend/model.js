@@ -520,16 +520,16 @@ const deletePlantingRecord = async (recordId, farmerId) => {
 
 const getPurchaseDemands = async () => {
   const { rows } = await pool.query(`
-    SELECT 
+    SELECT
       d.demand_id,
       d.product_name,
       d.quantity,
       d.buyer_id,
       u.username AS buyerName,
-      u.province AS address,   
+      u.province AS address,
       TO_CHAR(d.updated_at, 'YYYY-MM-DD HH24:MI:SS') AS updated_at
     FROM purchase_demands d
-    JOIN users u ON d.buyer_id = u.user_id
+           JOIN users u ON d.buyer_id = u.user_id
     ORDER BY d.updated_at DESC
   `);
   return rows;
