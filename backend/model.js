@@ -526,9 +526,7 @@ const getPurchaseDemands = async () => {
       d.quantity,
       d.buyer_id,
       u.username AS buyerName,
-      u.province AS address,  
-      d.is_nationwide,       
-      ST_AsText(d.delivery_location) AS location,  
+      u.province AS address,   
       TO_CHAR(d.updated_at, 'YYYY-MM-DD HH24:MI:SS') AS updated_at
     FROM purchase_demands d
     JOIN users u ON d.buyer_id = u.user_id
