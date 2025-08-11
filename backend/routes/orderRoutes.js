@@ -40,10 +40,7 @@ router.get('/all',
     try {
       const farmerId = req.user.userId; // 当前用户是农户
       const orders = await getFarmerOrders(farmerId);
-      const formattedOrders = orders.map(order => ({
-        ...order,
-        afterSaleReasonImages: order.afterSaleReasonImages ? order.afterSaleReasonImages.split(',') : []
-      }));
+      const formattedOrders = orders;
 
       res.json(formattedOrders);
     } catch (error) {

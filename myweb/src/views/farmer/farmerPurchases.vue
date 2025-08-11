@@ -29,6 +29,7 @@
       <el-table :data="paginatedData" style="width: 100%">
         <el-table-column prop="product_name" label="产品种类" />
         <el-table-column prop="quantity" label="采购量(kg)" />
+        <el-table-column prop="buyer_id" label="采购方" />
         <el-table-column prop="buyerName" label="采购方" />
         <el-table-column prop="address" label="收货地" />
         <el-table-column prop="updated_at" label="更新时间" />
@@ -82,14 +83,14 @@ const currentPage = ref(1); // 当前页码
 
 // 模拟数据
 const simulatedMotableData = [
-  { demand_id: 21, product_name: '番茄', quantity: 100, buyerName: 'A老板', buyer_id: 7, address: '北京市', updated_at: '2025-07-01 12:30:45.123' },
-  { demand_id: 22, product_name: '黄瓜', quantity: 200, buyerName: '老王', buyer_id: 7, address: '河北省', updated_at: '2025-06-02 12:30:45.123' },
-  { demand_id: 23, product_name: '萝卜', quantity: 50, buyerName: '孙经理', buyer_id: 7, address: '广东省', updated_at: '202-07-02 12:30:45.123' },
+  // { demand_id: 21, product_name: '番茄', quantity: 100, buyerName: 'A老板', buyer_id: 7, address: '北京市', updated_at: '2025-07-01 12:30:45.123' },
+  // { demand_id: 22, product_name: '黄瓜', quantity: 200, buyerName: '老王', buyer_id: 7, address: '河北省', updated_at: '2025-06-02 12:30:45.123' },
+  // { demand_id: 23, product_name: '萝卜', quantity: 50, buyerName: '孙经理', buyer_id: 7, address: '广东省', updated_at: '202-07-02 12:30:45.123' },
 ];
 
 const simulatedMoquotedIds = [
-  { application_id: 1, demand_id: 21, record_id: 56, quantity: 70, price: 15, province: '河北省' },
-  { application_id: 2, demand_id: 23, record_id: 57, quantity: 45, price: 20, province: '陕西省' },
+  // { application_id: 1, demand_id: 21, record_id: 56, quantity: 70, price: 15, province: '河北省' },
+  // { application_id: 2, demand_id: 23, record_id: 57, quantity: 45, price: 20, province: '陕西省' },
 ];
 
 const fetchData = async () => {
@@ -101,6 +102,8 @@ const fetchData = async () => {
       }
     });
     motableData.value = productResponse.data; // 假设 API 返回的数据就是我们需要的格式
+    console.table('采购需求响应数据' + productResponse.data);
+
   } catch (error) {
     console.error('获取采购需求数据失败，使用模拟数据', error);
     motableData.value = simulatedMotableData; // 使用模拟数据

@@ -158,13 +158,14 @@ const filteredTableData = ref([]); // 初始化过滤后的数据
 const fetchData = async () => {
   const token = userStore.token; // 从用户存储中获取 token
   try {
-    const response = await axios.get('http://localhost:3000/api/orders/all', {
+    const response = await axios.get('http://localhost:3000/api/all', {
       headers: {
         'Authorization': `Bearer ${token}` // 设置 Authorization 头
       }
     });
     tableData.value = response.data || []; // 假设 API 返回的数据就是我们需要的格式
     filteredTableData.value = [...tableData.value]; // 同步过滤后的数据
+    console.log('订单数据'+ tableData.value);
   } catch (error) {
     console.error('获取订单数据失败，使用模拟数据', error);
     tableData.value = simulatedTableData; // 使用模拟数据
@@ -239,14 +240,14 @@ const submitDelivery = async () => {
 
   try {
     // 调用接口1: 更新订单状态为 shipped
-    await axios.post(`http://localhost:3000/api/orders/${orderId}/status`, {
+    await axios.post(`http://localhost:3000/api/${orderId}/status`, {
       status: 'shipped'
     }, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
 
     // 调用接口2: 上传物流信息
-    await axios.post(`http://localhost:3000/api/orders/${orderId}/logistics`, {
+    await axios.post(`http://localhost:3000/api/${orderId}/logistics`, {
       logisticsInfo: logisticsInfo.value
     }, {
       headers: { 'Authorization': `Bearer ${token}` }

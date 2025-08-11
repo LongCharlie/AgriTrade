@@ -31,7 +31,7 @@ router.get('/demands/all', authMiddleware.authenticateToken, async (req, res) =>
     const demands = await require('../model').getPurchaseDemands();
     const formattedDemands = demands.map(d => ({
       ...d,
-      location: d.location.replace('POINT(', '').replace(')', '').split(' ')
+      // location: d.location.replace('POINT(', '').replace(')', '').split(' ')
     }));
     res.json(formattedDemands);
   } catch (error) {
