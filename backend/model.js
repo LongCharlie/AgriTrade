@@ -1180,17 +1180,12 @@ const getFarmerOrders = async (farmerId) => {
   const result = await pool.query(
     `SELECT
       o.order_id,
-      o.product_name,
-      o.quantity,
-      o.price,
-      o.delivery_location AS deliveryLocation,
       o.buyer_id,
       u.username AS buyerName,
       u.phone AS buyerPhone,
       TO_CHAR(o.created_at, 'YYYY-MM-DD') AS createdAt,
       o.status,
       o.after_sale_reason,
-      o.after_sale_reason_images AS afterSaleReasonImages,
       a.reason AS adminReason
      FROM orders o
      LEFT JOIN users u ON o.buyer_id = u.user_id
