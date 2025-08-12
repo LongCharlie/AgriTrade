@@ -104,4 +104,44 @@ router.get('/experiences', async (req, res) => {
   }
 });
 
+// 获取经验分享详情
+router.get('/experience/:id', async (req, res) => {
+  try {
+    const experienceId = req.params.id;
+    
+    // 获取经验详情
+    const experience = await require('../model').query(
+      `SELECT 
+        e.*,
+        u.username as author_name,
+        u.avatar_url as author_avatar,
+        CASE WHEN u.avatar_url IS NOT NULL 
+             THEN CONCAT('/uploads/avatars/', u.avatar_url) 
+             ELSE NULL 
+        END as author_avatar_url
+      FROM experiences e
+      LEFT JOIN users u ON e.user_id = u.user_id
+      WHERE e.experience_id = $1 AND e.audit_status = 'approved'`,
+      [experienceId]
+    );
+
+    if (experience.rows.length === 0) {
+      return res.status(404).json({ error: '经验分享不存在或未通过审核' });
+    }
+
+    // 获取该经验的评论
+    const comments = await require('../model').getExperienceComments(experienceId);
+
+    // 返回经验详情和评论
+    res.json({
+      ...experience.rows[0],
+      comments: comments
+    });
+
+  } catch (error) {
+    console.error('获取经验详情失败:', error);
+    res.status(500).json({ error: '获取经验详情失败，请稍后再试' });
+  }
+});
+
 module.exports = router;

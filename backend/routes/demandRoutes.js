@@ -80,4 +80,66 @@ router.post('/communications', authMiddleware.authenticateToken, async (req, res
   res.status(201).json(newComm.rows[0]);
 });
 
+// 买家获取采购需求的所有申请（带农户信息）
+router.get('/demands/:demandId/applications', 
+  authMiddleware.authenticateToken, 
+  authMiddleware.checkRole([ROLES.BUYER]), 
+  async (req, res) => {
+    try {
+      const { demandId } = req.params;
+      const buyerId = req.user.userId;
+      
+      // 首先验证该需求确实属于该买家
+      const demandCheck = await require('../model').query(
+        'SELECT 1 FROM purchase_demands WHERE demand_id = $1 AND buyer_id = $2',
+        [demandId, buyerId]
+      );
+      
+      if (demandCheck.rows.length === 0) {
+        return res.status(403).json({ 
+          success: false,
+          error: '采购需求不存在或无权访问' 
+        });
+      }
+
+      // 获取申请详情
+      const applications = await require('../model').query(
+        `SELECT 
+          pa.application_id,
+          pa.quantity,
+          pa.price,
+          pa.province AS shipping_location,
+          TO_CHAR(pa.applied_at, 'YYYY-MM-DD HH24:MI:SS') AS applied_time,
+          u.username AS farmer_name,
+          u.province AS farmer_province,
+          u.city AS farmer_city,
+          pr.product_name,
+          pr.growth_status,
+          CASE 
+            WHEN u.avatar_url IS NOT NULL 
+            THEN CONCAT('/uploads/avatars/', u.avatar_url) 
+            ELSE NULL 
+          END AS farmer_avatar
+        FROM purchase_applications pa
+        JOIN users u ON pa.farmer_id = u.user_id
+        LEFT JOIN planting_records pr ON pa.record_id = pr.record_id
+        WHERE pa.demand_id = $1
+        ORDER BY pa.applied_at DESC`,
+        [demandId]
+      );
+      
+      res.json({
+        success: true,
+        data: applications.rows
+      });
+    } catch (error) {
+      console.error('获取采购申请失败:', error);
+      res.status(400).json({ 
+        success: false,
+        error: error.message 
+      });
+    }
+  }
+);
+
 module.exports = router;
