@@ -51,10 +51,10 @@ import { useUserStore } from '../../stores/user';
 const userStore = useUserStore();
 const token = userStore.token; // 从用户存储中获取 token
 
-import { useRoute } from 'vue-router';
-const route = useRoute();
-const recordId = route.params.record_id; // 获取 record_id
 
+import { useSeeRecordStore } from '@/stores/seeRecord'; // 确保路径正确
+const seeRecordStore = useSeeRecordStore();
+const recordId = seeRecordStore.recordId; // 获取保存的record_id
 
 // 更新的表单数据结构
 const formData = ref({
@@ -93,7 +93,7 @@ const fetchRecords = async () => {
 const historicalRecords = ref([]);
 // 模拟数据
 const mockHistoricalRecords = [
-];
+ ];
 const fetchHistoricalRecords = async () => {
   const recordId = formData.value.record_id; // 从表单数据中获取 record_id
   try {
