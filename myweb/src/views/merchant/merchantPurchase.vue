@@ -80,166 +80,146 @@
   </div>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      currentPage: 1,
-      showClosed: false,
-      purchases: [
-        {
-          id: 1,
-          title: '西红柿',
-          quantity: 500,
-          unit: '公斤',
-          creationDate: '2023-12-15',
-          status: '打开',
-          deliveryAddress: '北京市朝阳区',
-          isnot: '否',
-          deliveryProvinces: ['北京', '天津']
-        },
-        {
-          id: 2,
-          title: '凤梨',
-          quantity: 300,
-          unit: '箱',
-          creationDate: '2023-12-20',
-          status: '打开',
-          deliveryAddress: '上海市浦东新区',
-          isnot: '是'
-        },
-        {
-          id: 3,
-          title: '大米',
-          quantity: 2000,
-          unit: '吨',
-          creationDate: '2024-01-10',
-          status: '关闭',
-          deliveryAddress: '广州市天河区',
-          isnot: '是'
-        },
-        {
-          id: 5,
-          title: '西兰花',
-          quantity: 800,
-          unit: '公斤',
-          creationDate: '2023-12-25',
-          status: '打开',
-          deliveryAddress: '杭州市西湖区',
-          isnot: '否',
-          deliveryProvinces: ['浙江', '江苏']
-        },
-        {
-          id: 6,
-          title: '土豆',
-          quantity: 1000,
-          unit: '公斤',
-          creationDate: '2023-12-18',
-          status: '关闭',
-          deliveryAddress: '成都市武侯区',
-          isnot: '否',
-          deliveryProvinces: ['四川', '重庆']
-        },
-        {
-          id: 7,
-          title: '荔枝',
-          quantity: 500,
-          unit: '箱',
-          creationDate: '2023-12-20',
-          status: '打开',
-          deliveryAddress: '南京市鼓楼区',
-          isnot: '是'
-        },
-        {
-          id: 8,
-          title: '贵妃芒',
-          quantity: 200,
-          unit: '箱',
-          creationDate: '2023-12-25',
-          status: '打开',
-          deliveryAddress: '重庆市渝中区',
-          isnot: '否',
-          deliveryProvinces: ['重庆', '四川']
-        },
-        {
-          id: 9,
-          title: '鲜肉',
-          quantity: 1200,
-          unit: '公斤',
-          creationDate: '2023-12-15',
-          status: '关闭',
-          deliveryAddress: '武汉市洪山区',
-          isnot: '是'
-        },
-        {
-          id: 10,
-          title: '脐橙',
-          quantity: 300,
-          unit: '箱',
-          creationDate: '2023-12-31',
-          status: '打开',
-          deliveryAddress: '西安市雁塔区',
-          isnot: '否',
-          deliveryProvinces: ['陕西', '山西']
-        },
-        {
-          id: 11,
-          title: '草莓',
-          quantity: 300,
-          unit: '盒',
-          creationDate: '2023-12-31',
-          status: '打开',
-          deliveryAddress: '西安市雁塔区',
-          isnot: '是'
-        }
-      ]
-    };
-  },
-  computed: {
-    // 筛选采购信息（根据状态）
-    filteredPurchases() {
-      return this.purchases.filter(p =>
-        this.showClosed ? p.status === '关闭' : p.status === '打开'
-      );
-    },
-    // 分页处理后的采购信息
-    paginatedPurchases() {
-      const pageSize = 9;
-      return this.filteredPurchases.slice(
-        (this.currentPage - 1) * pageSize,
-        this.currentPage * pageSize
-      );
-    },
-    // 总页数计算
-    totalPages() {
-      return Math.ceil(this.filteredPurchases.length / 9);
-    }
-  },
-  methods: {
-    // 切换显示打开/关闭的采购
-    toggleShowClosed() {
-      this.showClosed = !this.showClosed;
-      this.currentPage = 1; // 切换时重置到第一页
-    },
-    // 获取状态标签的样式类
-    statusClass(status) {
-      return status === '打开' ? 'status-open' : 'status-closed';
-    },
-    // 添加新采购
-    addPurchase() {
-       this.$router.push('/merchant/addPurchase');
-    },
-    // 查看采购详情
-    viewPurchase() {
-      this.$router.push('/merchant/purchaseDetail');
-    },
-    // 修改采购信息
-    modifyPurchase(purchase) {
-      alert(`修改采购信息: ${purchase.title}`);
-      // 实际应用中可使用this.$router.push(`/purchase/${purchase.id}/edit`)导航到编辑页
-    }
+<script setup>
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import axios from 'axios'
+import { ElMessage } from 'element-plus'
+import { useUserStore } from '@/stores/user'
+
+const router = useRouter()
+const userStore = useUserStore()
+
+// 原始数据列表
+const purchases = ref([])
+
+// 视图控制
+const showClosed = ref(false)
+const currentPage = ref(1)
+const pageSize = 6 // 每页显示数量
+
+//格式化日期
+const formatDate = (val) => {
+  if (!val) return ''
+  const d = typeof val === 'string' || typeof val === 'number' ? new Date(val) : val
+  if (Number.isNaN(d.getTime())) return String(val)
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+//状态归一
+const normalizeStatus = (s) => {
+  if (!s) return 'open'
+  const t = String(s).toLowerCase()
+  if (['closed', 'close', 'ended', 'finished', 'done'].includes(t)) return 'closed'
+  if (['已关闭', '关闭', '已结束', '结束', '完成'].some(k => t.includes(k))) return 'closed'
+  if (['open', 'opening', 'active'].includes(t)) return 'open'
+  if (['进行中', '打开', '发布中'].some(k => t.includes(k))) return 'open'
+  return t
+}
+
+const isClosed = (status) => normalizeStatus(status) === 'closed'
+
+// 正常化一条采购数据，后端字段可能不统一，这里做兼容映射
+const normalizePurchase = (d, index) => {
+  const id = d.id ?? d.demand_id ?? d.purchase_id ?? d.pk ?? index + 1
+  const title = d.title ?? d.product_name ?? `采购 #${id}`
+  const status = normalizeStatus(d.status ?? d.state ?? d.phase)
+  const quantity = d.quantity ?? d.amount ?? d.count ?? 0
+  const created = d.updated_at ?? d.creationDate ?? d.created_at ?? d.createdAt ?? d.create_time;
+  const deliveryAddress =
+    d.deliveryAddress ??
+    d.delivery_address ??
+    d.address ??
+    [d.province, d.city, d.district, d.address_detail].filter(Boolean).join(' ')
+  const ownerId = d.ownerId ?? d.user_id ?? d.creator_id ?? d.merchant_id ?? d.publisher_id
+
+  return {
+    id,
+    title,
+    status,
+    quantity,
+    creationDate: formatDate(created),
+    deliveryAddress: deliveryAddress || '',
+    ownerId
   }
-};
+}
+
+// 拉取数据
+const isLoading = ref(false)
+const fetchPurchases = async () => {
+  try {
+    isLoading.value = true
+    const res = await axios.get('http://localhost:3000/api/demands/all', {
+      headers: { Authorization: `Bearer ${userStore.token}` }
+    })
+    const list = Array.isArray(res.data) ? res.data : []
+    purchases.value = list.map((d, i) => normalizePurchase(d, i))
+    console.log('原始采购数据:', res.data);
+
+    // 拉取后重置页码，避免页码越界
+    currentPage.value = 1
+  } catch (err) {
+    console.error('获取采购需求失败:', err)
+    ElMessage.error(err.response?.data?.error || '获取采购需求失败')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(fetchPurchases)
+
+// 只看“我的”采购：优先按 ownerId 过滤；若数据不含 ownerId，则不强制过滤
+const myPurchases = computed(() => {
+  const uid = userStore.userId
+  const hasOwnerKey = purchases.value.some(p => p.ownerId !== undefined && p.ownerId !== null && p.ownerId !== '')
+  if (!hasOwnerKey || !uid) return purchases.value
+  return purchases.value.filter(p => String(p.ownerId) === String(uid))
+})
+
+// 状态过滤
+const filteredPurchases = computed(() => {
+  return myPurchases.value.filter(p => {
+    const closed = isClosed(p.status)
+    return showClosed.value ? closed : !closed
+  })
+})
+
+// 分页
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredPurchases.value.length / pageSize)))
+const paginatedPurchases = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return filteredPurchases.value.slice(start, start + pageSize)
+})
+
+// 切换查看关闭/打开
+const toggleShowClosed = () => {
+  showClosed.value = !showClosed.value
+  currentPage.value = 1
+}
+
+// 新增采购
+const addPurchase = () => {
+  // 根据你的路由实际情况调整
+  router.push('/merchant/addpurchase')
+}
+
+// 查看某个采购详情/申请
+const viewPurchase = (purchase) => {
+  router.push(`/merchant/purchases/${purchase.id}`)
+}
+
+const statusClass = (status) => {
+  const s = normalizeStatus(status)
+  return {
+    'status-open': s === 'open',
+    'status-closed': s === 'closed',
+    'status-pending': s === 'pending'
+  }
+}
+
+// 保证在切换视图时回到第一页
+watch(showClosed, () => { currentPage.value = 1 })
 </script>
 
 <style scoped>

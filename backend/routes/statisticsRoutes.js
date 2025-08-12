@@ -32,10 +32,10 @@ router.get('/expert-count', async (req, res) => {
 });
 
 // 获取全平台买家总数
-router.get('/statistics/buyer-count', 
+router.get('/statistics/buyer-count',
   async (req, res) => {
     try {
-      const result = await model.getTotalBuyerCount();
+      const result = await require('../model').getTotalBuyerCount();
       
       res.json({
         success: true,

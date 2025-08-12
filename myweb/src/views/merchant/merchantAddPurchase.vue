@@ -12,7 +12,6 @@
               clearable
               filterable
           >
-            <!-- 为el-option添加唯一key（使用作物名称+索引确保唯一性） -->
             <el-option
                 v-for="(product, index) in crops"
                 :key="product + index"
@@ -23,25 +22,30 @@
         </div>
 
         <div class="form-group">
-          <label for="quantity">需求数量 (公斤)</label>
+          <label for="quantity">需求数量 (kg)</label>
           <input type="number" id="quantity" v-model="formData.quantity" placeholder="请输入采购数量">
         </div>
 
         <div class="form-group">
           <label for="deliveryAddress">收货地址</label>
           <el-cascader
-          class="custom-cascader"
-          :options="areaOptions"
-          v-model="selectedLocation"
-          @change="handleLocationChange"
-          placeholder="请选择省、市、区"
-          clearable
-        />
-       <div class="form-group" style="grid-column: span 2;">
-          <label>详细地址</label>
-          <input type="text" class="form-control">
+            v-model="selectedText"
+            :options="areaOptions"
+            :props="{ value: 'label', label: 'label', children: 'children' }"
+            @change="handleLocationChange"
+            placeholder="请选择省、市、区"
+            clearable
+          />
         </div>
-
+        
+        <div class="form-group" style="grid-column: span 2;">
+          <label>详细地址</label>
+          <input 
+            type="text" 
+            v-model="detailAddress"
+            placeholder="街道、门牌号等详细信息"
+            class="form-control"
+          />
         </div>
 
         <div class="button-group">
@@ -58,7 +62,6 @@
         <div class="prediction-header">
           <h2><i class="fas fa-chart-line"></i> 价格参考</h2>
           <select id="productFilter" v-model="selectedCrop">
-            <!-- 为option添加唯一key -->
             <option v-for="(crop, index) in crops" :key="crop + index" :value="crop">{{ crop }}</option>
           </select>
         </div>
@@ -74,7 +77,6 @@
               </tr>
             </thead>
             <tbody>
-              <!-- 使用省份名称作为key（天然唯一） -->
               <tr v-for="row in priceData" :key="row.province" :class="{highlight: row.highlight}">
                 <td>{{ row.province }}</td>
                 <td>{{ row.price }}</td>
@@ -88,14 +90,18 @@
 </template>
 
 <script>
+import { pcaTextArr} from "element-china-area-data";
 
-import { pcaTextArr } from "element-china-area-data";
 export default {
   data() {
     return {
-      areaOptions: pcaTextArr,  // 使用导入的数据
-      selectedLocation: [],     // 用于绑定级联选择器的值
-
+      areaOptions: pcaTextArr,
+      province: '',             // 存储选择的省份
+      city: '',                 // 存储选择的城市
+      district: '',             // 存储选择的区县
+      detailAddress: '',        // 存储详细地址
+      selectedText: [],
+      selectedLocation: [],     // 用于绑定级联选择器的值（代码数组）
       crops: [
         '辣椒', '白菜', '菠菜', '葱', '豆角', 
         '番茄', '黄瓜', '萝卜', '南瓜', '茄子', 
@@ -120,6 +126,11 @@ export default {
     this.updatePriceData('辣椒');
   },
   methods: {
+    // 处理地址选择变化
+   handleLocationChange(textArr) {
+    [this.province, this.city, this.district] = textArr || [];
+  },
+    
     updatePriceData(crop) {
       // 模拟不同作物的价格数据
       const mockData = {
@@ -160,7 +171,17 @@ export default {
       const now = new Date();
       this.lastUpdate = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     },
+    
     submitForm() {
+      // 检查是否选择了完整的省市区
+      if (!this.province || !this.city || !this.district) {
+        this.$message.error('请选择完整的省市区');
+        return;
+      }
+      
+      // 组合完整地址
+      const fullAddress = `${this.province}${this.city}${this.district}${this.detailAddress}`;
+      
       if (!this.formData.crop) {
         this.$message.error('请选择作物种类');
         return;
@@ -171,22 +192,24 @@ export default {
         return;
       }
       
-      if (!this.formData.address) {
-        this.$message.error('请输入收货地址');
+      if (!this.detailAddress) {
+        this.$message.error('请输入详细地址');
         return;
       }
       
-      this.$message.success(`采购需求发布成功！作物：${this.formData.crop}，数量：${this.formData.quantity}公斤`);
+      this.$message.success(`采购需求发布成功！作物：${this.formData.crop}，数量：${this.formData.quantity}公斤，地址：${fullAddress}`);
       this.resetForm();
     },
+    
     resetForm() {
-       this.$router.push('/merchant/purchases');
+      this.$router.push('/purchases');
     }
   }
 };
 </script>
 
 <style scoped>
+/* 原有样式保持不变 */
 * {
   margin: 0;
   padding: 0;

@@ -8,8 +8,8 @@ router.post('/demands', authMiddleware.authenticateToken, authMiddleware.checkRo
   const { product_name, quantity, delivery_city } = req.body;
   const buyerId = req.user.userId;
   const result = await require('../model').query(
-    'INSERT INTO purchase_demands (buyer_id, product_name, quantity, delivery_city) VALUES ($1, $2, $3, $4) RETURNING *',
-    [buyerId, product_name, quantity, delivery_city]
+    'INSERT INTO purchase_demands (buyer_id, product_name, quantity) VALUES ($1, $2, $3) RETURNING *',
+    [buyerId, product_name, quantity]
   );
   res.status(201).json(result.rows[0]);
 });

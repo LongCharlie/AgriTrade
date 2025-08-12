@@ -1,26 +1,12 @@
 <template>
   <div class="container">
     <div class="content-wrapper">
-      <!-- 作者信息区域 -->
-      <section class="author-section">
-        <img :src="author.avatar" alt="作者头像" class="author-avatar">
-        <h2 class="author-name">{{ author.name }}</h2>
-
-        <a href="#" class="btn-profile">
-          <i class="fas fa-user"></i> 查看作者主页
-        </a>
-
-        <a href="#" class="btn btn-back">
-                    <i class="fas fa-arrow-left"></i> 返回
-        </a>
-
-      </section>
-      
       <!-- 分享内容区域 -->
       <section class="share-content">
         <h2 class="share-title">{{ post.title }}</h2>
         
         <div class="share-meta">
+          <span><i class="far fa-calendar"></i> 作者： {{ author.name }}</span>
           <span><i class="far fa-calendar"></i> 发布于 {{ post.publishDate }}</span>
         </div>
         
@@ -33,10 +19,6 @@
         </div>
         
         <div class="share-stats">
-          <div class="stat-icon" @click="toggleLike">
-            <i class="far fa-heart" :class="{ 'fas': isLiked, 'far': !isLiked }"></i> 
-            {{ post.likes }} 点赞
-          </div>
           <div class="stat-icon">
             <i class="far fa-comment"></i> {{ comments.length }} 评论
           </div>
@@ -70,29 +52,10 @@
               <span class="comment-time">{{ comment.time }}</span>
             </div>
             <p class="comment-text">{{ comment.content }}</p>
-            <div class="comment-actions">
-              <button 
-                class="action-btn" 
-                @click="toggleCommentLike(index)"
-              >
-                <i 
-                  class="far fa-thumbs-up" 
-                  :class="{ 'fas': comment.liked, 'far': !comment.liked }"
-                ></i> 
-                {{ comment.likeCount }}
-              </button>
-              <button class="action-btn">
-                <i class="fas fa-reply"></i> 回复
-              </button>
-            </div>
           </div>
         </div>
       </div>
     </section>
-    
-    <footer>
-      <p>© 2023 知识分享社区 | 让知识流动起来</p>
-    </footer>
   </div>
 </template>
 
@@ -100,12 +63,8 @@
 export default {
   data() {
     return {
-      // 点赞状态
-      isLiked: false,
-      
       // 评论相关
       newComment: '',
-      
       // 虚拟作者数据
       author: {
         name: '陈明远',
@@ -114,8 +73,6 @@ export default {
         bio: '从事有机农业研究与实践15年，专注于可持续农业发展和生态种植技术推广',
         stats: {
           followers: '2.3k',
-          shares: 42,
-          likes: '8.7k'
         }
       },
       
@@ -179,13 +136,6 @@ export default {
       this.post.likes += this.isLiked ? 1 : -1;
     },
     
-    // 切换评论点赞状态
-    toggleCommentLike(index) {
-      const comment = this.comments[index];
-      comment.liked = !comment.liked;
-      comment.likeCount += comment.liked ? 1 : -1;
-    },
-    
     // 提交评论
     submitComment() {
       if (!this.newComment.trim()) {
@@ -220,7 +170,7 @@ export default {
 
 
 .container {
-  max-width: 1000px;
+  max-width: 1500px;
   margin: 0 auto;
 }
 

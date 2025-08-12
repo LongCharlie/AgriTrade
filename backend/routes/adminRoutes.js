@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const model = require('../model');
 const authMiddleware = require('../middleware/authMiddleware');
+const { ROLES } = authMiddleware;
 
 // 管理员权限校验中间件
 const checkAdmin = (req, res, next) => {
@@ -136,8 +137,7 @@ router.patch('/users/:id',
           city: updatedUser.city,
           district: updatedUser.district,
           address_detail: updatedUser.address_detail,
-          avatar_url: updatedUser.avatar_url,
-          updated_at: updatedUser.updated_at
+          avatar_url: updatedUser.avatar_url
         }
       });
     } catch (error) {
@@ -551,7 +551,7 @@ router.get('/certificates/pending',
 // 获取单个证书详情
 router.get('/certificates/:id', 
   authMiddleware.authenticateToken,
-  checkAdmin,
+  authMiddleware.checkRole([ROLES.ADMIN]),
   async (req, res) => {
     try {
       const certificate = await model.getCertificateWithExpertInfo(req.params.id);

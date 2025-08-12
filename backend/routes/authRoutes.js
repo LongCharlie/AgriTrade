@@ -12,20 +12,37 @@ router.post('/register', async (req, res) => {
     province,
     city,
     district,
-    address_detail
+    address_detail,
+    // 专家特有字段
+    real_name,
+    title,
+    institution,
+    expertise,
+    bio
   } = req.body;
+  
   try {
     // 检查用户名是否已存在
     const userExists = await db.checkUserExists(username);
     if (userExists) {
       return res.status(400).send('用户名已存在');
     }
+    
     // 创建新用户
     const newUser = await db.createUser(req.body);
+    
     // 如果是专家角色，需要在experts表中也创建记录
     if (role === 'expert') {
-      await db.createExpert(newUser.user_id);
+      await db.createExpert({
+        expert_id: newUser.user_id,
+        real_name,
+        title,
+        institution,
+        expertise,
+        bio
+      });
     }
+    
     res.status(200).send('注册成功');
   } catch (error) {
     console.error('注册错误:', error);
