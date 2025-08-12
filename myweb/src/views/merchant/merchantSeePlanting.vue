@@ -4,6 +4,11 @@
     <div class="form-container">
       <form class="activity-form">
         <div class="input-group">
+          <label for="farmer_name">作物种类:</label>
+          <el-input id="farmer_name" v-model="formData.farmer_name" placeholder="农户" disabled style="width: 200px;" />
+        </div>
+
+        <div class="input-group">
           <label for="product_name">作物种类:</label>
           <el-input id="product_name" v-model="formData.product_name" placeholder="作物种类" disabled style="width: 200px;" />
         </div>
@@ -59,6 +64,8 @@ const recordId = seeRecordStore.recordId; // 获取保存的record_id
 // 更新的表单数据结构
 const formData = ref({
   record_id: recordId,
+  farmer_id:'',
+  farmer_name:'',
   product_name: '',
   province: '',
   growth_status: '',
