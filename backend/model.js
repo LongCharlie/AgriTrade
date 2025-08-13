@@ -543,15 +543,17 @@ const getPurchaseDemands = async () => {
       d.quantity,
       d.buyer_id,
       u.username AS buyerName,
-      d.status
-    FROM purchase_demands d
-    JOIN users u ON d.buyer_id = u.user_id
-    WHERE d.status = 'open'
       u.province AS address,
-      TO_CHAR(d.updated_at, 'YYYY-MM-DD HH24:MI:SS') AS updated_at
-    FROM purchase_demands d
-           JOIN users u ON d.buyer_id = u.user_id
-    ORDER BY d.updated_at DESC
+      TO_CHAR(d.updated_at, 'YYYY-MM-DD HH24:MI:SS') AS updated_at,
+      d.status
+    FROM 
+      purchase_demands d
+    JOIN 
+      users u ON d.buyer_id = u.user_id
+    WHERE 
+      d.status = 'open'
+    ORDER BY 
+      d.updated_at DESC
   `);
   return rows;
 };
