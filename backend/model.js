@@ -1274,6 +1274,28 @@ const getDemandApplicationsWithFarmerInfo = async (demandId, buyerId) => {
   return result.rows;
 };
 
+// 获取特定种植记录详情
+const getPlantingRecordById = async (recordId, farmerId) => {
+  const { rows } = await pool.query(
+    `SELECT 
+      pr.*,
+      u.username AS farmer_name,
+      TO_CHAR(pr.created_at, 'YYYY/MM/DD') AS created_at
+    FROM planting_records pr
+    JOIN users u ON pr.farmer_id = u.user_id
+    WHERE pr.record_id = $1 AND pr.farmer_id = $2`,
+    [recordId, farmerId]
+  );
+  
+  if (rows.length === 0) {
+    throw new Error('种植记录不存在或无权访问');
+  }
+  
+  return rows[0];
+};
+
+
+
 // 导出所有数据库操作方法
 module.exports = {
   checkUserExists,
@@ -1292,6 +1314,7 @@ module.exports = {
   getQuestions,
   updateUserProfile,
   getQuestionById,
+  getPlantingRecordById,
   getAllUsers,
   deleteUser,
   getOrderBuyerCount,
