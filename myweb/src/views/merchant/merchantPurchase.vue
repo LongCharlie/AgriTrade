@@ -46,12 +46,6 @@
                 <span class="value">{{ purchase.deliveryAddress }}</span>
               </div>
             </div>
-            <div class="meta-row">
-              <div class="meta-item">
-                <span class="label"> 采购方</span>
-                <span class="value">{{ purchase.buyerName }}</span>
-              </div>
-            </div>
           </div>
         </div>
 

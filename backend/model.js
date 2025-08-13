@@ -542,7 +542,7 @@ const getPurchaseDemands = async () => {
       d.product_name,
       d.quantity,
       d.buyer_id,
-      u.username AS buyerName,
+      u.username AS buyername,
       u.province AS address,
       TO_CHAR(d.updated_at, 'YYYY-MM-DD HH24:MI:SS') AS updated_at,
       d.status
