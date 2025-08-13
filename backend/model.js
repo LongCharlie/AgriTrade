@@ -10,7 +10,7 @@ const pool = new Pool({
   host: '22.tcp.cpolar.top',
   database: 'agriculture db',
   password: '12345678',
-  port: 12568,
+  port: 12407,
   ssl: false,
 });
 
@@ -122,10 +122,27 @@ const getAnswerImages = async (answerId) => {
   return result.rows;
 };
 
-const createExpert = async (expertId) => {
+const createExpert = async (expertData) => {
+  const {
+    expert_id,
+    real_name,
+    title,
+    institution,
+    expertise,
+    bio
+  } = expertData;
+  
   await pool.query(
-    'INSERT INTO experts (expert_id) VALUES ($1)',
-    [expertId]
+    `INSERT INTO experts (
+      expert_id,
+      real_name,
+      title,
+      institution,
+      expertise,
+      bio,
+      answer_count
+    ) VALUES ($1, $2, $3, $4, $5, $6, 0)`,
+    [expert_id, real_name, title, institution, expertise, bio]
   );
 };
 
@@ -525,12 +542,18 @@ const getPurchaseDemands = async () => {
       d.product_name,
       d.quantity,
       d.buyer_id,
-      u.username AS buyerName,
+      u.username AS buyername,
       u.province AS address,
-      TO_CHAR(d.updated_at, 'YYYY-MM-DD HH24:MI:SS') AS updated_at
-    FROM purchase_demands d
-           JOIN users u ON d.buyer_id = u.user_id
-    ORDER BY d.updated_at DESC
+      TO_CHAR(d.updated_at, 'YYYY-MM-DD HH24:MI:SS') AS updated_at,
+      d.status
+    FROM 
+      purchase_demands d
+    JOIN 
+      users u ON d.buyer_id = u.user_id
+    WHERE 
+      d.status = 'open'
+    ORDER BY 
+      d.updated_at DESC
   `);
   return rows;
 };
@@ -875,7 +898,7 @@ const getWeeklyOrderSummary = async () => {
   const query = `
     SELECT 
       DATE_TRUNC('week', o.created_at) AS week_start,
-      SUM(pa.price * o.quantity) AS total_amount,
+      SUM(pa.price * pa.quantity) AS total_amount,
       COUNT(*) AS order_count
     FROM orders o
     JOIN purchase_applications pa ON o.application_id = pa.application_id
@@ -892,7 +915,7 @@ const getMonthlyOrderSummary = async () => {
   const query = `
     SELECT 
       DATE_TRUNC('month', o.created_at) AS month_start,
-      SUM(pa.price * o.quantity) AS total_amount,
+      SUM(pa.price * pa.quantity) AS total_amount,
       COUNT(*) AS order_count
     FROM orders o
     JOIN purchase_applications pa ON o.application_id = pa.application_id
@@ -909,7 +932,7 @@ const getYearlyOrderSummary = async () => {
   const query = `
     SELECT 
       DATE_TRUNC('year', o.created_at) AS year_start,
-      SUM(pa.price * o.quantity) AS total_amount,
+      SUM(pa.price * pa.quantity) AS total_amount,
       COUNT(*) AS order_count
     FROM orders o
     JOIN purchase_applications pa ON o.application_id = pa.application_id
@@ -1023,7 +1046,6 @@ const updateUserProfileAdmin = async (userId, updates) => {
       district, 
       address_detail, 
       avatar_url, 
-      updated_at
   `;
   
   const result = await pool.query(queryText, values);
@@ -1048,26 +1070,34 @@ const getPendingCertificates = async () => {
   return rows;
 };
 
-// 更新证书审核状态
-const updateCertificateStatus = async (certificateId, status, adminId, rejectReason = null) => {
+const updateCertificateStatus = async (certificateId, status, adminId, audited_reason = null) => {
   // 验证状态值是否有效
   const validStatuses = ['pending', 'approved', 'rejected'];
   if (!validStatuses.includes(status)) {
     throw new Error('无效的审核状态');
   }
 
-  const query = `
+  let query = `
     UPDATE certificates
     SET 
       is_audited = $1,
       audited_by = $2,
-      audited_at = NOW(),
+      audited_at = NOW()
+  `;
+  const params = [status, adminId, certificateId];
+
+  // 如果状态为rejected，添加rejectReason到查询和参数
+  if (status === 'rejected') {
+    query += `,
+      audited_reason = $4
+    `;
+    params.push(audited_reason);
+  }
+
+  query += `
     WHERE certificate_id = $3
     RETURNING *
   `;
-  
-  const params = [status, adminId, certificateId];
-  if (status === 'rejected') params.push(rejectReason);
   
   const { rows } = await pool.query(query, params);
   
@@ -1212,6 +1242,44 @@ const updateOrderStatus_farmer = async (orderId, status) => {
   return result.rows[0];
 };
 
+// 获取采购需求的所有申请（带农户信息）
+const getDemandApplicationsWithFarmerInfo = async (demandId, buyerId) => {
+  // 首先验证该需求确实属于该买家
+  const demandCheck = await pool.query(
+    'SELECT 1 FROM purchase_demands WHERE demand_id = $1 AND buyer_id = $2',
+    [demandId, buyerId]
+  );
+  
+  if (demandCheck.rows.length === 0) {
+    throw new Error('采购需求不存在或无权访问');
+  }
+
+  const result = await pool.query(
+    `SELECT 
+      pa.*,
+      u.username AS farmer_name,
+      u.phone AS farmer_phone,
+      u.province AS farmer_province,
+      u.city AS farmer_city,
+      u.district AS farmer_district,
+      CASE WHEN u.avatar_url IS NOT NULL 
+           THEN CONCAT('/uploads/avatars/', u.avatar_url) 
+           ELSE NULL 
+      END AS farmer_avatar_url,
+      pr.product_name,
+      pr.growth_status,
+      TO_CHAR(pa.applied_at, 'YYYY-MM-DD HH24:MI:SS') AS formatted_applied_at
+    FROM purchase_applications pa
+    JOIN users u ON pa.farmer_id = u.user_id
+    LEFT JOIN planting_records pr ON pa.record_id = pr.record_id
+    WHERE pa.demand_id = $1
+    ORDER BY pa.applied_at DESC`,
+    [demandId]
+  );
+  
+  return result.rows;
+};
+
 // 导出所有数据库操作方法
 module.exports = {
   checkUserExists,
@@ -1222,6 +1290,7 @@ module.exports = {
   createUser,
   getPendingCertificates,
   updateCertificateStatus,
+  getDemandApplicationsWithFarmerInfo,
   getCertificateWithExpertInfo,
   updateOrderStatus,
   updateUserProfileAdmin,

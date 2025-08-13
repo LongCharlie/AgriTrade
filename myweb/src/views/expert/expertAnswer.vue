@@ -179,7 +179,7 @@ export default {
       try {
         const id = this.$route.params.id;
         const token = this.userStore.token;
-        const response = await axios.get(`http://localhost:3000/api/questions/${id}`, {
+        const response = await axios.get(`http://localhost:3000/api/question/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -193,7 +193,7 @@ export default {
       try {
         const id = this.$route.params.id;
         const token = this.userStore.token;
-        const response = await axios.get(`http://localhost:3000/api/questions/${id}/answers`, {
+        const response = await axios.get(`http://localhost:3000/api/question/${id}/answers`, {
           headers: {
             Authorization: `Bearer ${token}`
           }

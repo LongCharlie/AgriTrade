@@ -325,7 +325,7 @@ router.patch('/certificates/:id',
 );
 
 // 获取单个证书详情（专家自己的证书）
-router.get('/certificates/:id', 
+router.get('/certificate/:id', 
   authMiddleware.authenticateToken, 
   authMiddleware.checkRole([ROLES.EXPERT]), 
   async (req, res) => {

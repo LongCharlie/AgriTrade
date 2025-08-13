@@ -68,7 +68,7 @@
               <button class="action-btn message" @click="handleAction(application.farmerName, 'message')">
                 <i class="fas fa-comment"></i> 确认
               </button>
-              <button class="action-btn record" @click="handleAction(application.farmerName, 'record')">
+              <button class="action-btn record" @click="handleAction(application.farmerName, 'record',application.record_id)">
                 <i class="fas fa-seedling"></i> 详情
               </button>
             </div>
@@ -102,8 +102,10 @@
 </template>
 
 <script>
+import { useSeeRecordStore } from '@/stores/seeRecord';
 export default {
-  data() {
+
+  data() {//需要有record_id
     return {
       searchQuery: '',
       statusFilter: 'all',
@@ -122,7 +124,8 @@ export default {
           shippingLocation: '山东省寿光市',
           applicationTime: '2025-07-01 14:30',
           farmerAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80',
-          priceValue: 5.50
+          priceValue: 5.50,
+          record_id: 2
         },
         {
           status: 'approved',
@@ -135,7 +138,8 @@ export default {
           shippingLocation: '陕西省延安市',
           applicationTime: '2025-06-28 10:15',
           farmerAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=776&q=80',
-          priceValue: 8.20
+          priceValue: 8.20,
+          record_id: 2
         },
         {
           status: 'pending',
@@ -148,7 +152,8 @@ export default {
           shippingLocation: '黑龙江省五常市',
           applicationTime: '2025-06-30 16:45',
           farmerAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80',
-          priceValue: 4.80
+          priceValue: 4.80,
+          record_id: 2
         },
         {
           status: 'rejected',
@@ -161,7 +166,8 @@ export default {
           shippingLocation: '浙江省杭州市',
           applicationTime: '2025-06-25 09:20',
           farmerAvatar: 'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80',
-          priceValue: 15.20
+          priceValue: 15.20,
+          record_id: 2
         },
         {
           status: 'approved',
@@ -174,7 +180,8 @@ export default {
           shippingLocation: '福建省武夷山市',
           applicationTime: '2025-07-02 11:20',
           farmerAvatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80',
-          priceValue: 12.50
+          priceValue: 12.50,
+          record_id: 2
         },
         {
           status: 'pending',
@@ -187,7 +194,8 @@ export default {
           shippingLocation: '江苏省南京市',
           applicationTime: '2025-07-03 09:45',
           farmerAvatar: 'https://images.unsplash.com/photo-1600701704189-263eec2d0e0d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80',
-          priceValue: 9.80
+          priceValue: 9.80,
+          record_id: 2
         }
       ],
       monthlyIncrease: 8,
@@ -273,13 +281,16 @@ export default {
       };
       return statusMap[status] || status;
     },
-    handleAction(farmerName, actionType) {
+    handleAction(farmerName, actionType, record_id) {
       if (actionType === 'profile') {
         alert(`查看 ${farmerName} 的农户主页`);
       } else if (actionType === 'message') {
         alert(`与 ${farmerName} 互通消息`);
       } else if (actionType === 'record') {
         alert(`查看 ${farmerName} 的种植记录`);
+        const seeRecordStore = useSeeRecordStore();
+        seeRecordStore.setRecordId(record_id);
+        this.$router.push(`/merchant/purchaseDetail/record`);
       }
     },
     changePage(page) {
