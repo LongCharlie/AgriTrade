@@ -110,6 +110,7 @@ const routes = [
             { path : 'sharecomment', component: () =>import('../views/admin/ShareCommentCheck.vue')},
             { path: 'ques/:id', component: () => import("../views/admin/adminAnswers.vue") },
             { path: 'answer/:id', component: () => import("../views/admin/adminAnswerDetail.vue") },
+            { path: 'test', component: () => import("../views/admin/test.vue") },
         ]
     },
       {
