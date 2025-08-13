@@ -8,7 +8,7 @@
         <el-menu
             :default-active="activeMenuItem"
             class="el-menu-vertical-demo full-height"
-            :style="{ height: menuHeight + 'px', overflowY: 'auto' }"
+            :style="{ overflowY: 'auto' }"
             @open="handleOpen"
             @close="handleClose"
             background-color="#D9EEDD"
@@ -42,7 +42,7 @@ export default {
         { path: "/share", name: "经验分享审核" },
         { path: "/sharecomment", name: "经验分享评论审核" }
       ],
-      menuHeight: 0 // 初始化菜单高度
+      // menuHeight: 0 // 初始化菜单高度
     };
   },
   computed: {
@@ -74,44 +74,44 @@ export default {
     }
   },
   mounted() {
-    this.calculateMenuHeight();
-    window.addEventListener('resize', this.throttle(this.calculateMenuHeight, 100));
+    // this.calculateMenuHeight();
+    // window.addEventListener('resize', this.throttle(this.calculateMenuHeight, 100));
   },
   beforeUnmount() {
-    window.removeEventListener('resize', this.throttle(this.calculateMenuHeight, 100));
+    // window.removeEventListener('resize', this.throttle(this.calculateMenuHeight, 100));
   },
   methods: {
-    calculateMenuHeight() {
-      const headerElement = this.$refs.header;
-      const headerHeight = headerElement ? headerElement.clientHeight : 0;
-      this.menuHeight = window.innerHeight - headerHeight;
-    },
+    // calculateMenuHeight() {
+    //   const headerElement = this.$refs.header;
+    //   const headerHeight = headerElement ? headerElement.clientHeight : 0;
+    //   this.menuHeight = window.innerHeight - headerHeight;
+    // },
     handleOpen(key, keyPath) {
       console.log(key, keyPath);
     },
     handleClose(key, keyPath) {
       console.log(key, keyPath);
     },
-    throttle(func, limit) {
-      let lastFunc;
-      let lastRan;
-      return function() {
-        const context = this;
-        const args = arguments;
-        if (!lastRan) {
-          func.apply(context, args);
-          lastRan = Date.now();
-        } else {
-          clearTimeout(lastFunc);
-          lastFunc = setTimeout(function() {
-            if ((Date.now() - lastRan) >= limit) {
-              func.apply(context, args);
-              lastRan = Date.now();
-            }
-          }, limit - (Date.now() - lastRan));
-        }
-      };
-    }
+    // throttle(func, limit) {
+    //   let lastFunc;
+    //   let lastRan;
+    //   return function() {
+    //     const context = this;
+    //     const args = arguments;
+    //     if (!lastRan) {
+    //       func.apply(context, args);
+    //       lastRan = Date.now();
+    //     } else {
+    //       clearTimeout(lastFunc);
+    //       lastFunc = setTimeout(function() {
+    //         if ((Date.now() - lastRan) >= limit) {
+    //           func.apply(context, args);
+    //           lastRan = Date.now();
+    //         }
+    //       }, limit - (Date.now() - lastRan));
+    //     }
+    //   };
+    // }
   }
 }
 </script>
@@ -127,7 +127,7 @@ export default {
 .el-menu-vertical-demo {
   border-right: none;
   overflow-y: auto; /* 允许滚动 */
-  /* 自定义滚动条样式 */
+  height: calc(100vh - 70px);
 }
 
 /* 隐藏滚动条 */
