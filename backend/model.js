@@ -1216,10 +1216,19 @@ const getFarmerOrders = async (farmerId) => {
       TO_CHAR(o.created_at, 'YYYY-MM-DD') AS createdAt,
       o.status,
       o.after_sale_reason,
-      a.reason AS adminReason
+      o.after_sale_reason_images,
+      a.reason AS adminReason,
+      pa.product_name,
+      pa.quantity,
+      pa.price,
+      o.province,
+      o.city,
+      o.district,
+      o.address_detail
      FROM orders o
      LEFT JOIN users u ON o.buyer_id = u.user_id
      LEFT JOIN after_sale_audits a ON o.order_id = a.order_id
+     LEFT JOIN purchase_applications pa ON o.application_id = pa.application_id
      WHERE o.farmer_id = $1
      ORDER BY o.created_at DESC`,
     [farmerId]
