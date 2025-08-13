@@ -5,13 +5,6 @@
     <!-- 筛选区域 -->
     <div class="filter-section">
       <el-form :inline="true">
-        <el-form-item label="审核状态">
-          <el-select v-model="filter.status" clearable placeholder="请选择">
-            <el-option label="待审核" value="pending"></el-option>
-            <el-option label="已通过" value="approved"></el-option>
-            <el-option label="已拒绝" value="rejected"></el-option>
-          </el-select>
-        </el-form-item>
         <el-form-item label="评论人">
           <el-input v-model="filter.commenter" placeholder="评论人"></el-input>
         </el-form-item>
@@ -84,10 +77,9 @@ export default {
   data() {
     return {
       filter: {
-        status: '',
         commenter: ''
       },
-      comments: [], // 全部评论数据
+      comments: [],
       pagination: {
         current: 1,
         size: 10,
@@ -96,14 +88,10 @@ export default {
     };
   },
   computed: {
-    // 筛选后的评论列表（仅对当前页）
     filteredComments() {
       let result = this.comments;
-      const { status, commenter } = this.filter;
+      const { commenter } = this.filter;
 
-      if (status) {
-        result = result.filter(c => c.status === status);
-      }
       if (commenter.trim()) {
         result = result.filter(c =>
           c.commenter.toLowerCase().includes(commenter.trim().toLowerCase())
@@ -137,7 +125,7 @@ export default {
     async fetchComments() {
       try {
         const token = localStorage.getItem('token');
-        const res = await axios.get('comments/pending', {
+        const res = await axios.get('http://localhost:3000/api/comments/pending', {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -153,9 +141,10 @@ export default {
         this.pagination.current = 1;
       } catch (error) {
         console.error('获取评论失败:', error);
-        alert('获取评论失败');
+        this.$message.error('评论加载失败');
       }
     },
+
     async approveComment(comment) {
       await this.updateCommentStatus(comment, 'approved');
     },
@@ -166,7 +155,7 @@ export default {
       try {
         const token = localStorage.getItem('token');
         await axios.patch(
-          `/comments/${comment.comment_id}/status`,
+          `/api/comments/${comment.comment_id}/status`,
           { status: newStatus },
           {
             headers: {
@@ -175,10 +164,10 @@ export default {
           }
         );
         comment.status = newStatus;
-        alert(`评论已${newStatus === 'approved' ? '通过' : '拒绝'}`);
+        this.$message.success(`评论已${newStatus === 'approved' ? '通过' : '拒绝'}`);
       } catch (error) {
         console.error('更新状态失败:', error);
-        alert('操作失败');
+        this.$message.error('操作失败');
       }
     },
     handleSizeChange(size) {
@@ -188,10 +177,9 @@ export default {
       this.pagination.current = page;
     },
     showDetail(row) {
-      alert(`评论内容：${row.content}`);
+      this.$message.info(`评论内容：${row.content}`);
     },
     resetFilter() {
-      this.filter.status = '';
       this.filter.commenter = '';
       this.pagination.current = 1;
       this.fetchComments();
@@ -202,7 +190,6 @@ export default {
   }
 };
 </script>
-
 
 <style scoped>
 .pagination {
