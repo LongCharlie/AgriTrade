@@ -8,7 +8,7 @@
         <el-menu
             :default-active="activeMenuItem"
             class="el-menu-vertical-demo full-height"
-            :style="{ height: menuHeight + 'px', overflowY: 'auto' }"
+            :style="{ overflowY: 'auto' }"
             @open="handleOpen"
             @close="handleClose"
             background-color="#D9EEDD"
@@ -67,18 +67,18 @@ export default {
     }
   },
   mounted() {
-    this.calculateMenuHeight();
-    window.addEventListener('resize', this.calculateMenuHeight);
+    // this.calculateMenuHeight();
+    // window.addEventListener('resize', this.calculateMenuHeight);
   },
   beforeUnmount() {
-    window.removeEventListener('resize', this.calculateMenuHeight);
+    // window.removeEventListener('resize', this.calculateMenuHeight);
   },
   methods: {
-    calculateMenuHeight() {
-      const headerElement = this.$refs.header;
-      const headerHeight = headerElement ? headerElement.clientHeight : 0;
-      this.menuHeight = window.innerHeight - headerHeight;
-    },
+    // calculateMenuHeight() {
+    //   const headerElement = this.$refs.header;
+    //   const headerHeight = headerElement ? headerElement.clientHeight : 0;
+    //   this.menuHeight = window.innerHeight - headerHeight;
+    // },
     handleOpen(key, keyPath) {
       console.log(key, keyPath);
     },
@@ -101,7 +101,7 @@ export default {
 .el-menu-vertical-demo {
   border-right: none;
   overflow-y: auto; /* 允许滚动 */
-  /* 自定义滚动条样式 */
+  height: calc(100vh - 70px);
 }
 
 /* 隐藏滚动条 */
