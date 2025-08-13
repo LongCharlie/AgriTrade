@@ -30,7 +30,7 @@
         <el-table-column prop="product_name" label="产品种类" />
         <el-table-column prop="quantity" label="采购量(kg)" />
         <el-table-column prop="buyer_id" label="采购方" />
-        <el-table-column prop="buyerName" label="采购方" />
+        <el-table-column prop="buyername" label="采购方名称" />
         <el-table-column prop="address" label="收货地" />
         <el-table-column prop="updated_at" label="更新时间" />
         <el-table-column label="操作">

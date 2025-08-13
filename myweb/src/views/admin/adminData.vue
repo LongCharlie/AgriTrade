@@ -70,6 +70,14 @@
         </el-card>
       </el-col>
     </el-row>
+
+    <div class="table-container">
+      <el-table :data="weekData" style="width: 100%">
+        <el-table-column prop="period" label="日期" />
+        <el-table-column prop="total_amount" label="总金额" />
+        <el-table-column prop="order_count" label="数量" />
+      </el-table>
+    </div>
   </div>
 </template>
 
@@ -96,6 +104,48 @@ const vegetables = ref([
 
 const fetchData = async () => {
   const token = userStore.token;
+  try {
+    const [buyerRes, farmerRes, expertRes, weekSumRes, monthSumRes, yearSumRes, agriRes] = await Promise.all([
+      axios.get('http://localhost:3000/api/statistics/buyer-count', { headers: { 'Authorization': `Bearer ${token}` } }),
+      axios.get('http://localhost:3000/api/farmer-count', { headers: { 'Authorization': `Bearer ${token}` } }),
+      axios.get('http://localhost:3000/api/expert-count', { headers: { 'Authorization': `Bearer ${token}` } }),
+      axios.get('http://localhost:3000/api/week-order-sum', { headers: { 'Authorization': `Bearer ${token}` } }),
+      axios.get('http://localhost:3000/api/month-order-sum', { headers: { 'Authorization': `Bearer ${token}` } }),
+      axios.get('http://localhost:3000/api/year-order-sum', { headers: { 'Authorization': `Bearer ${token}` } }),
+      axios.get('http://localhost:3000/api/agriculture-count', { headers: { 'Authorization': `Bearer ${token}` } }),
+    ]);
+
+    buyerCount.value = buyerRes.data.data;
+    farmerCount.value = farmerRes.data.count;
+    expertCount.value = expertRes.data.count;
+    // weekOrderSum.value = weekSumRes.data.sum;
+    // monthOrderSum.value = monthSumRes.data.sum;
+    // yearOrderSum.value = yearSumRes.data.sum;
+    // agricultureCount.value = agriRes.data.count;
+    agricultureCount.value = 14;
+
+    // console.log(weekSumRes.data.sum);
+  } catch (error) {
+    console.error('获取管理员统计数据失败，使用模拟数据:', error);
+  }
+};
+
+const weekData = ref([]);
+const getWeekData = async () => {
+  const token = userStore.token;
+  try {
+    const weekSumRes = await axios.get('http://localhost:3000/api/week-order-sum', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    weekData.value = weekSumRes.data;
+    // weekOrderSum.value = weekSumRes.data.sum;
+    // console.log('周' + weekSumRes);
+  } catch (error) {
+    console.error('获取周总额失败，使用模拟数据:', error);
+
+  }
 
   try {
     const [buyerRes, farmerRes, expertRes, weekSumRes, monthSumRes, yearSumRes, agriRes] = await Promise.all([
@@ -111,6 +161,7 @@ const fetchData = async () => {
     buyerCount.value = buyerRes.data.data;
     farmerCount.value = farmerRes.data.count;
     expertCount.value = expertRes.data.count;
+    // 这三个要改！！
     weekOrderSum.value = weekSumRes.data.sum;
     monthOrderSum.value = monthSumRes.data.sum;
     yearOrderSum.value = yearSumRes.data.sum;
@@ -129,9 +180,9 @@ const fetchData = async () => {
     // agricultureCount.value = 14;
   }
 };
-
 onMounted(() => {
   fetchData();
+  getWeekData();
 });
 </script>
 

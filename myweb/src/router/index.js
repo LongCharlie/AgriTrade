@@ -110,49 +110,23 @@ const routes = [
             { path : 'sharecomment', component: () =>import('../views/admin/ShareCommentCheck.vue')},
             { path: 'ques/:id', component: () => import("../views/admin/adminAnswers.vue") },
             { path: 'answer/:id', component: () => import("../views/admin/adminAnswerDetail.vue") },
+            { path: 'test', component: () => import("../views/admin/test.vue") },
         ]
     },
       {
-      path: '/merchant',
-      redirect: 'merchant/Main',
-      component: Merchant,
-      children: [
-        {
-          path: '',
-          name: 'Main',
-          component: MerchantMain
-        },
-        {
-          path: 'order',
-          name: 'Order',
-          component: MerchantOrder
-        },
-        {
-          path: 'purchases',
-          name: 'Purchases',
-          component: MerchantPurchase
-        },
-        {
-          path: 'purchaseDetail',
-          name: 'PurchaseDetail',
-          component: merchantPurchaseDetails
-        },
-        {
-          path: 'addPurchase',
-          name: 'AddPurchase',
-          component: MerchantAddPurchase
-        },
-        {
-          path: 'merchantHome',
-          name: 'MerchantHome',
-          component: MerchantHome
-        },
-        {
-          path: 'Message',
-          name: 'MerchantMessage',
-          component: MerchantMessage
-        }
-      ]
+          path: '/merchant',
+          redirect: 'merchant/Main',
+          component: Merchant,
+          children: [
+              {path: '', name: 'Main', component: MerchantMain},
+              {path: 'order', name: 'Order', component: MerchantOrder},
+              {path: 'purchases', name: 'Purchases', component: MerchantPurchase},
+              {path: 'purchaseDetail', name: 'PurchaseDetail', component: merchantPurchaseDetails},
+              {path: 'purchaseDetail/record', name: 'Record', component: () => import("../views/merchant/merchantSeePlanting.vue") },
+              {path: 'addPurchase', name: 'AddPurchase', component: MerchantAddPurchase},
+              {path: 'merchantHome', name: 'MerchantHome', component: MerchantHome},
+              {path: 'Message', name: 'MerchantMessage', component: MerchantMessage},
+       ]
   }
 ]
 
