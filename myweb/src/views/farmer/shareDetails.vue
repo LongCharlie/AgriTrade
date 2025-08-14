@@ -6,7 +6,7 @@
         <h2 class="share-title">{{ post.title }}</h2>
         
         <div class="share-meta">
-          <span><i class="far fa-calendar"></i> 作者： {{ author.name }}</span>
+          <span><i class="far fa-user"></i> 作者： {{ author.name }}</span>
           <span><i class="far fa-calendar"></i> 发布于 {{ post.publishDate }}</span>
         </div>
         
@@ -20,7 +20,7 @@
         
         <div class="share-stats">
           <div class="stat-icon">
-            <i class="far fa-comment"></i> {{ comments.length }} 评论
+            <i class="far fa-comment"></i> {{ commentPagination.total }} 评论
           </div>
         </div>
       </section>
@@ -28,7 +28,6 @@
     
     <!-- 评论区域 -->
     <section class="comments-section">
-      
       <div class="comment-form">
         <form @submit.prevent="submitComment">
           <div class="form-group">
@@ -55,109 +54,110 @@
           </div>
         </div>
       </div>
+
+      <!-- 分页组件 -->
+      <el-pagination
+        @current-change="handleCommentPageChange"
+        :current-page="commentPagination.currentPage"
+        :page-size="commentPagination.pageSize"
+        layout="prev, pager, next"
+        :total="commentPagination.total"
+      />
     </section>
   </div>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      // 评论相关
-      newComment: '',
-      // 虚拟作者数据
-      author: {
-        name: '陈明远',
-        avatar: 'https://randomuser.me/api/portraits/men/67.jpg',
-        title: '资深农业技术员 | 生态农场主',
-        bio: '从事有机农业研究与实践15年，专注于可持续农业发展和生态种植技术推广',
-        stats: {
-          followers: '2.3k',
-        }
-      },
-      
-      // 虚拟分享数据
-      post: {
-        title: '有机蔬菜大棚种植的关键技术与管理要点',
-        publishDate: '2023年9月28日',
-        readTime: '10分钟',
-        imageUrl: 'https://images.unsplash.com/photo-1544847558-167b99e057d3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-        likes: 456,
-        shares: 78,
-        content: [
-          '有机蔬菜大棚种植是一种高效的农业生产方式，既能保证蔬菜的品质和安全性，又能有效抵御自然环境的影响，实现反季节生产。近年来，随着消费者对食品安全的重视，有机蔬菜的市场需求持续增长，为农户带来了可观的经济效益。',
-          '要成功进行有机蔬菜大棚种植，首先要做好前期准备工作。大棚选址应选择地势平坦、排水良好、土壤肥沃的地块，同时要保证充足的光照条件。大棚的结构设计也很关键，应考虑通风、保温、灌溉等因素，确保蔬菜生长在适宜的环境中。',
-          '土壤改良是有机种植的基础。在种植前，应进行土壤检测，了解土壤的pH值、有机质含量等指标，有针对性地进行改良。通常采用秸秆还田、施用有机肥等方式提高土壤肥力，避免使用化学肥料和农药。',
-          '品种选择应根据当地气候条件、市场需求以及大棚的种植环境来确定。优先选择抗病性强、产量高、品质好的优良品种，同时要注意种子的来源，确保其符合有机种植的要求。',
-          '在日常管理中，温湿度控制是重中之重。不同的蔬菜品种对温湿度有不同的要求，应根据蔬菜的生长阶段进行调节。通过通风、遮阳、喷雾等措施，创造适宜的生长环境，减少病虫害的发生。'
-        ],
-        tips: [
-          '采用轮作制度，避免连作障碍，提高土地利用率',
-          '推广生物防治技术，利用天敌、生物农药等控制病虫害',
-          '安装智能监测设备，实时监控大棚内的温湿度、光照等环境因素',
-          '采用滴灌、喷灌等节水灌溉方式，提高水资源利用效率',
-          '建立完善的田间档案，记录种植过程中的各项农事活动'
-        ]
-      },
-      
-      // 虚拟评论数据
-      comments: [
-        {
-          avatar: 'https://randomuser.me/api/portraits/women/42.jpg',
-          author: '林小美',
-          time: '3小时前',
-          content: '非常实用的技术分享！我正在筹备自己的蔬菜大棚，这些建议对我很有帮助。请问在南方地区，夏季大棚如何有效降温？',
-          likeCount: 24,
-          liked: false
-        },
-        {
-          avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-          author: '王建国',
-          time: '昨天',
-          content: '作为一名有多年经验的菜农，我非常认同作者的观点。有机种植虽然初期投入大，但长期来看经济效益和生态效益都很显著。补充一点，在土壤改良时加入蚯蚓粪效果非常好。',
-          likeCount: 47,
-          liked: false
-        },
-        {
-          avatar: 'https://randomuser.me/api/portraits/men/54.jpg',
-          author: '刘志强',
-          time: '2天前',
-          content: '智能监测设备有具体的推荐吗？想了解一下相关的成本和安装方式。',
-          likeCount: 12,
-          liked: false
-        }
-      ]
-    };
-  },
-  methods: {
-    // 切换文章点赞状态
-    toggleLike() {
-      this.isLiked = !this.isLiked;
-      this.post.likes += this.isLiked ? 1 : -1;
-    },
-    
-    // 提交评论
-    submitComment() {
-      if (!this.newComment.trim()) {
-        alert('请填写评论内容');
-        return;
-      }
-      
-      // 添加新评论到列表
-      this.comments.unshift({
-        avatar: 'https://randomuser.me/api/portraits/lego/1.jpg',
-        author: '当前用户',
-        time: '刚刚',
-        content: this.newComment,
-        likeCount: 0,
-        liked: false
-      });
-      
-      // 清空输入框
-      this.newComment = '';
-    }
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import axios from 'axios'
+
+const route = useRoute()
+const experienceId = route.params.id
+
+const post = ref({
+  title: '',
+  content: [],
+  tips: [],
+  publishDate: ''
+})
+
+const author = ref({
+  name: '',
+  avatar: ''
+})
+
+const comments = ref([])
+const newComment = ref('')
+
+const commentPagination = ref({
+  currentPage: 1,
+  pageSize: 5,
+  total: 0
+})
+
+// 获取经验详情
+const fetchExperienceDetail = async () => {
+  try {
+    const res = await axios.get(`/api/experience/${experienceId}`)
+    const data = res.data
+
+    post.value.title = data.title
+    post.value.content = data.content ? data.content.split('\n') : []
+    post.value.tips = data.tips || []
+    post.value.publishDate = data.created_at || data.published_at || ''
+
+    author.value.name = data.author_name || '匿名'
+    author.value.avatar = data.author_avatar_url ? data.author_avatar_url : ''
+
+    commentPagination.value.total = data.comments.length // 初始总数（可选）
+    fetchComments()
+  } catch (err) {
+    console.error('获取经验详情失败:', err)
   }
-};
+}
+
+// 获取分页评论
+const fetchComments = async () => {
+  try {
+    const { currentPage, pageSize } = commentPagination.value
+    const res = await axios.get(`/api/experiences/${experienceId}/comments`, {
+      params: { page: currentPage, pageSize }
+    })
+    comments.value = res.data.comments.map(c => ({
+      author: c.username,
+      avatar: c.avatar_url ? `/uploads/avatars/${c.avatar_url}` : '',
+      content: c.content,
+      time: c.created_at
+    }))
+    commentPagination.value.total = res.data.total
+  } catch (err) {
+    console.error('获取评论失败:', err)
+  }
+}
+
+// 提交评论
+const submitComment = async () => {
+  if (!newComment.value.trim()) return
+  try {
+    await axios.post(`/api/experiences/${experienceId}/comments`, {
+      content: newComment.value
+    })
+    newComment.value = ''
+    fetchComments()
+  } catch (err) {
+    console.error('提交评论失败:', err)
+  }
+}
+
+const handleCommentPageChange = (page) => {
+  commentPagination.value.currentPage = page
+  fetchComments()
+}
+
+onMounted(() => {
+  fetchExperienceDetail()
+})
 </script>
 
 <style>

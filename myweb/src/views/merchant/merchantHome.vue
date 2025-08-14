@@ -126,38 +126,7 @@
           </div>
         </div>
 
-        <!-- 3️⃣ 安全设置（密码） -->
-        <div class="info-group">
-          <h3>
-            <svg style="width:22px;height:22px;vertical-align:-5px;fill:#4caf50" viewBox="0 0 24 24">
-              <path
-                d="M12,15C10.9,15 10,14.1 10,13C10,11.9 10.9,11 12,11C13.1,11 14,11.9 14,13C14,14.1 13.1,15 12,15M6,20V10H18V20H6M6,8H18V6H6V8M20,4H4V20H20V4M22,2V22H2V2H22Z"
-              />
-            </svg>
-            安全设置
-          </h3>
 
-          <div v-if="!editingPassword">
-            <button class="btn btn-change" @click="startEditPassword">修改密码</button>
-          </div>
-
-          <div v-else>
-            <div class="password-row">
-              <input type="password" class="password-input" placeholder="旧密码" v-model="draftPassword.old" />
-            </div>
-            <div class="password-row">
-              <input type="password" class="password-input" placeholder="新密码" v-model="draftPassword.new" />
-            </div>
-            <div class="password-row">
-              <input type="password" class="password-input" placeholder="确认新密码" v-model="draftPassword.confirm" />
-            </div>
-            <div class="btn-group">
-              <button class="btn btn-save" @click="savePassword">保存</button>
-              <button class="btn btn-cancel" @click="cancelEditPassword">取消</button>
-            </div>
-            <p v-if="passwordError" class="error-tip">{{ passwordError }}</p>
-          </div>
-        </div>
 
         <!-- 退出登录 -->
         <div class="action-buttons">

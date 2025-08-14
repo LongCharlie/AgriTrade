@@ -94,200 +94,126 @@
   </div>
 </template>
 
-<script>
-import axios from "axios";
-import { useUserStore } from '@/stores/user';
-import DOMPurify from 'dompurify';
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import axios from 'axios'
 
-export default {
-  setup() {
-    const userStore = useUserStore();
-    return {
-      userStore
-    };
-  },
-  data() {
-    return {
-      experiences: [], // 存储经验分享数据
-      filter: 'all',
-      searchQuery: '', // 搜索关键词
-      pagination: {
-        currentPage: 1,
-        pageSize: 10
-      },
-      postExperienceDialogVisible: false, // 发布经验分享对话框可见性
-      postExperienceForm: { // 发布经验分享表单数据
-        title: '',
-        content: ''
-      }
-    };
-  },
-  created() {
-    this.fetchExperiences();
-  },
-  computed: {
-    // 根据状态和搜索词过滤经验分享
-    filteredExperiences() {
-      let filtered = [...this.experiences];
+const router = useRouter()
 
-      // 状态筛选
-      if (this.filter === 'all') {
-        filtered = filtered.filter(q => q.status === 'open');
-      } else if (this.filter === 'mine') {
-        filtered = filtered.filter(q => q.user_id === this.userStore.userId);
-      }
+const experiences = ref([])
+const searchQuery = ref('')
+const filter = ref('all')
+const pagination = ref({
+  currentPage: 1,
+  pageSize: 10
+})
 
-      // 搜索筛选
-      if (this.searchQuery) {
-        const query = this.searchQuery.toLowerCase();
-        filtered = filtered.filter(q =>
-          q.title.toLowerCase().includes(query) ||
-          q.content.toLowerCase().includes(query)
-        );
-      }
+const postExperienceDialogVisible = ref(false)
+const postExperienceForm = ref({
+  title: '',
+  content: ''
+})
 
-      return filtered;
-    },
-    // 分页后的数据
-    paginatedExperiences() {
-      const start = (this.pagination.currentPage - 1) * this.pagination.pageSize;
-      const end = start + this.pagination.pageSize;
-      return this.filteredExperiences.slice(start, end);
-    }
-  },
-  methods: {
-    async fetchExperiences() {
-      try {
-        // 使用虚拟数据
-        const mockData = [
-          {
-            id: 1,
-            title: '水稻病虫害防治',
-            content: '最近发现稻田里出现大量害虫，叶片上有明显的啃食痕迹，请问该如何有效防治？',
-            publisher: '张农户',
-            published_at: '2023-05-10',
-            comment_count: 3,
-            status: 'open',
-            user_id: 1
-          },
-          {
-            id: 2,
-            title: '小麦种植最佳时间',
-            content: '请问在我们这个地区，小麦的最佳种植时间是什么时候？不同品种的小麦在种植时间上有什么区别？',
-            publisher: '李农户',
-            published_at: '2023-04-15',
-            comment_count: 5,
-            status: 'closed',
-            user_id: 2
-          },
-          {
-            id: 3,
-            title: '有机肥料使用建议',
-            content: '想请教专家关于有机肥料的使用方法和注意事项。如何判断有机肥料的质量？施用量应该如何控制？',
-            publisher: '王农户',
-            published_at: '2023-05-20',
-            comment_count: 2,
-            status: 'open',
-            user_id: 1
-          }
-        ];
-        this.experiences = mockData;
-      } catch (error) {
-        console.error('获取经验分享列表失败:', error);
-        this.$message.error('获取经验分享列表失败');
-      }
-    },
-    // 搜索处理
-    handleSearch() {
-      this.pagination.currentPage = 1; // 搜索时重置到第一页
-    },
-    // 清除搜索
-    clearSearch() {
-      this.searchQuery = '';
-      this.pagination.currentPage = 1;
-    },
-    // 搜索框清空时处理
-    handleSearchClear() {
-      this.pagination.currentPage = 1;
-    },
-    // 高亮搜索文本
-    highlightSearchText(text, isHtml = false) {
-      if (!this.searchQuery || !text) return text;
-
-      const query = this.searchQuery.toLowerCase();
-      const regex = new RegExp(query, 'gi');
-
-      if (isHtml) {
-        const highlighted = text.toString().replace(regex, match =>
-            `<span class="highlight-text">${match}</span>`);
-        return DOMPurify.sanitize(highlighted);
-      } else {
-        return text.toString().replace(regex, match =>
-            `{{${match}}}`);
-      }
-    },
-    // 每页条数改变
-    handleSizeChange(val) {
-      this.pagination.pageSize = val;
-      this.pagination.currentPage = 1; // 重置到第一页
-    },
-    // 当前页改变
-    handleCurrentChange(val) {
-      this.pagination.currentPage = val;
-    },
-    truncateText(text, length) {
-      if (!text) return '';
-      if (text.length <= length) return text;
-      return text.substring(0, length) + '...';
-    },
-    viewExperienceDetail(experienceId) {
-      this.$router.push(`/experience/${experienceId}`);
-    },
-    filterExperiences(status) {
-      this.filter = status;
-      this.pagination.currentPage = 1;
-    },
-    formatDate(dateString) {
-      if (!dateString) return '';
-      const date = new Date(dateString);
-      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-    },
-    showPostExperienceForm() {
-      this.postExperienceDialogVisible = true;
-      this.postExperienceForm = { title: '', content: '' };
-    },
-    submitPostExperience() {
-      this.$refs.postExperienceForm.validate((valid) => {
-        if (valid) {
-          const token = this.userStore.token;
-          axios.post('http://localhost:3000/api/experiences', {
-            title: this.postExperienceForm.title,
-            content: this.postExperienceForm.content,
-            userId: this.userStore.userId
-          }, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          })
-          .then(response => {
-            this.experiences.push(response.data);
-            this.postExperienceDialogVisible = false;
-            this.pagination.currentPage = 1;
-            this.$message.success('经验分享发布成功');
-          })
-          .catch(error => {
-            console.error('发布经验分享失败:', error);
-            this.$message.error('发布经验分享失败');
-          });
-        } else {
-          console.log('表单验证失败');
-          return false;
-        }
-      });
-    }
+// 获取经验分享列表
+const fetchExperiences = async () => {
+  try {
+    const res = await axios.get('/api/experiences')
+    experiences.value = res.data
+  } catch (err) {
+    console.error('获取经验列表失败:', err)
   }
-};
+}
+
+onMounted(() => {
+  fetchExperiences()
+})
+
+// 搜索过滤
+const filteredExperiences = computed(() => {
+  let list = [...experiences.value]
+  if (filter.value === 'mine') {
+    const currentUser = getCurrentUser() // 假设你有这个方法
+    list = list.filter(e => e.publisher === currentUser.username)
+  }
+  if (searchQuery.value) {
+    const keyword = searchQuery.value.toLowerCase()
+    list = list.filter(e =>
+      e.title.toLowerCase().includes(keyword) ||
+      e.content.toLowerCase().includes(keyword)
+    )
+  }
+  return list
+})
+
+// 分页处理
+const paginatedExperiences = computed(() => {
+  const start = (pagination.value.currentPage - 1) * pagination.value.pageSize
+  return filteredExperiences.value.slice(start, start + pagination.value.pageSize)
+})
+
+const handleSizeChange = (size) => {
+  pagination.value.pageSize = size
+  pagination.value.currentPage = 1
+}
+
+const handleCurrentChange = (page) => {
+  pagination.value.currentPage = page
+}
+
+const filterExperiences = (type) => {
+  filter.value = type
+  pagination.value.currentPage = 1
+}
+
+const handleSearch = () => {
+  pagination.value.currentPage = 1
+}
+
+const handleSearchClear = () => {
+  searchQuery.value = ''
+}
+
+const clearSearch = () => {
+  searchQuery.value = ''
+}
+
+const formatDate = (dateStr) => {
+  const date = new Date(dateStr)
+  return date.toLocaleString()
+}
+
+const truncateText = (text, length) => {
+  return text.length > length ? text.slice(0, length) + '...' : text
+}
+
+const highlightSearchText = (text, html = false) => {
+  if (!searchQuery.value) return html ? text : text
+  const keyword = searchQuery.value
+  const regex = new RegExp(`(${keyword})`, 'gi')
+  const highlighted = text.replace(regex, '<span class="highlight">$1</span>')
+  return html ? highlighted : highlighted
+}
+
+const viewExperienceDetail = (id) => {
+  router.push(`/farmer/sharedetails/${id}`)
+}
+
+const showPostExperienceForm = () => {
+  postExperienceDialogVisible.value = true
+}
+
+const submitPostExperience = async () => {
+  try {
+    await axios.post('/api/experiences', postExperienceForm.value)
+    postExperienceDialogVisible.value = false
+    fetchExperiences()
+  } catch (err) {
+    console.error('发布经验失败:', err)
+  }
+}
 </script>
+
 
 <style scoped>
 .experience-container {

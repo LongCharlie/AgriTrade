@@ -369,31 +369,39 @@ export default {
     // 过滤后的订单
     const filteredOrders = computed(() => {
       let result = [...orders.value];
-      
+
       // 应用状态筛选
       if (filters.value.status) {
         result = result.filter(order => order.status === filters.value.status);
       }
-      
+
       // 应用产品种类筛选
       if (filters.value.productType) {
         const keyword = filters.value.productType.toLowerCase();
-        result = result.filter(order => 
+        result = result.filter(order =>
           order.productType.toLowerCase().includes(keyword)
         );
       }
-      
+
+      // ✅ 应用日期范围筛选
+      if (dateRange.value && dateRange.value.length === 2) {
+        const [start, end] = dateRange.value;
+        const startDate = new Date(start).setHours(0, 0, 0, 0);
+        const endDate = new Date(end).setHours(23, 59, 59, 999);
+
+        result = result.filter(order => {
+          const orderDate = new Date(order.time).getTime();
+          return orderDate >= startDate && orderDate <= endDate;
+        });
+      }
+
       return result;
     });
+
     
     // 模拟API请求 - 获取订单列表
     const fetchOrders = async () => {
       try {
-        // 实际项目中替换为真实API地址
-        // const response = await import('axios').get('/api/orders');
-        // orders.value = response.data;
-        
-        // 模拟后端返回的虚拟数据
         orders.value = [
           { id: 1, orderId: 'ORD20230810001', productType: '有机蔬菜', quantity: 50, price: 12.5, destination: '北京市朝阳区', sender: '张伟', contact: '138****5678', time: '2023-08-10 09:23', status: '待发货' },
           { id: 2, orderId: 'ORD20230809005', productType: '新鲜水果', quantity: 120, price: 8.8, destination: '上海市浦东新区', sender: '李明', contact: '139****1234', time: '2023-08-09 14:45', status: '待收货' },
@@ -509,15 +517,6 @@ export default {
         console.error('确认收货失败:', error);
         return { success: false };
       }
-    };
-    
-    
-    
-    // 应用筛选
-    const applyFilters = () => {
-      // 实际应用中调用API进行筛选
-      console.log('应用筛选条件:', filters.value);
-      // fetchOrders(filters.value); // 带筛选条件请求订单
     };
     
     // 重置筛选
