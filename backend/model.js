@@ -1310,7 +1310,13 @@ const getPlantingRecordById = async (recordId, farmerId) => {
   return rows[0];
 };
 
-
+const incrementExpertAnswerCount = async (expertId) => {
+  const result = await pool.query(
+    'UPDATE experts SET answer_count = COALESCE(answer_count, 0) + 1 WHERE expert_id = $1 RETURNING answer_count',
+    [expertId]
+  );
+  return result.rows[0]?.answer_count;
+};
 
 // 导出所有数据库操作方法
 module.exports = {
@@ -1337,6 +1343,7 @@ module.exports = {
   updateQuestionStatus,
   updateExpertProfile,
   createExpert,
+  incrementExpertAnswerCount,
   getProductPrice,
   getUserByUsername,
   comparePassword,

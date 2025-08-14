@@ -703,7 +703,7 @@ export default {
         );
 
         const token = this.userStore.token;
-        await axios.delete(`http://localhost:3000/api/answers/${answerId}`, {
+        await axios.delete(`http://localhost:3000/api/answer/${answerId}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
