@@ -102,6 +102,153 @@ router.get('/demands/:demandId/applications',
         });
       }
 
+// 买家通过申请并创建订单
+router.post('/applications/:applicationId/accept', 
+  authMiddleware.authenticateToken, 
+  authMiddleware.checkRole([ROLES.BUYER]),
+  async (req, res) => {
+    try {
+      const { applicationId } = req.params;
+      const buyerId = req.user.userId;
+
+      // 开始事务
+      await pool.query('BEGIN');
+
+      // 1. 获取申请信息并验证买家权限
+      const applicationResult = await pool.query(`
+        SELECT pa.*, pd.buyer_id
+        FROM purchase_applications pa
+        JOIN purchase_demands pd ON pa.demand_id = pd.demand_id
+        WHERE pa.application_id = $1
+      `, [applicationId]);
+
+      if (applicationResult.rows.length === 0) {
+        await pool.query('ROLLBACK');
+        return res.status(404).json({ error: '申请不存在' });
+      }
+
+      const application = applicationResult.rows[0];
+      
+      // 验证当前用户是该需求的所有者
+      if (application.buyer_id !== buyerId) {
+        await pool.query('ROLLBACK');
+        return res.status(403).json({ error: '无权操作此申请' });
+      }
+
+      // 2. 拒绝该需求的其他所有申请
+      await pool.query(`
+        UPDATE purchase_applications
+        SET status = 'rejected'
+        WHERE demand_id = $1 AND application_id != $2
+      `, [application.demand_id, applicationId]);
+
+      // 3. 更新当前申请状态为已接受
+      await pool.query(`
+        UPDATE purchase_applications
+        SET status = 'accepted'
+        WHERE application_id = $1
+      `, [applicationId]);
+
+      // 4. 创建订单
+      const orderResult = await pool.query(`
+        INSERT INTO orders (
+          farmer_id,
+          buyer_id,
+          application_id,
+          status,
+          province,
+          city,
+          district,
+          address_detail
+        ) VALUES (
+          $1, $2, $3, 'pending_shipment',
+          (SELECT province FROM users WHERE user_id = $2),
+          (SELECT city FROM users WHERE user_id = $2),
+          (SELECT district FROM users WHERE user_id = $2),
+          (SELECT address_detail FROM users WHERE user_id = $2)
+        ) RETURNING *
+      `, [application.farmer_id, buyerId, applicationId]);
+
+      // 5. 更新需求状态为已完成
+      await pool.query(`
+        UPDATE purchase_demands
+        SET status = 'completed'
+        WHERE demand_id = $1
+      `, [application.demand_id]);
+
+      // 提交事务
+      await pool.query('COMMIT');
+
+      res.status(201).json({
+        success: true,
+        order: orderResult.rows[0],
+        message: '申请已接受，订单已创建'
+      });
+
+    } catch (error) {
+      await pool.query('ROLLBACK');
+      console.error('接受申请失败:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// 买家关闭采购需求
+router.post('/demands/:demandId/close', 
+  authMiddleware.authenticateToken, 
+  authMiddleware.checkRole([ROLES.BUYER]),
+  async (req, res) => {
+    try {
+      const { demandId } = req.params;
+      const buyerId = req.user.userId;
+
+      // 验证需求存在且属于当前买家
+      const demandCheck = await pool.query(`
+        SELECT 1 FROM purchase_demands 
+        WHERE demand_id = $1 AND buyer_id = $2 AND status = 'open'
+      `, [demandId, buyerId]);
+
+      if (demandCheck.rows.length === 0) {
+        return res.status(404).json({ 
+          error: '采购需求不存在或已关闭，或您无权操作' 
+        });
+      }
+
+      // 开始事务
+      await pool.query('BEGIN');
+
+      // 1. 拒绝所有关联的申请
+      await pool.query(`
+        UPDATE purchase_applications
+        SET status = 'rejected'
+        WHERE demand_id = $1
+      `, [demandId]);
+
+      // 2. 关闭需求
+      const result = await pool.query(`
+        UPDATE purchase_demands
+        SET status = 'closed'
+        WHERE demand_id = $1
+        RETURNING *
+      `, [demandId]);
+
+      await pool.query('COMMIT');
+
+      res.json({
+        success: true,
+        demand: result.rows[0],
+        message: '采购需求已关闭'
+      });
+
+    } catch (error) {
+      await pool.query('ROLLBACK');
+      console.error('关闭采购需求失败:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+
       // 获取申请详情
       const applications = await require('../model').query(
         `SELECT 

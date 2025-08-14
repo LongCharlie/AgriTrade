@@ -79,5 +79,140 @@ router.post('/:order_id/status',
   }
 );
 
+// 商户获取所有订单信息
+router.get('/merchant/orders/all', 
+  authMiddleware.authenticateToken,
+  async (req, res) => {
+    try {
+      const buyerId = req.user.userId;
+      
+      const query = `
+        SELECT 
+          o.order_id,
+          d.product_name,
+          pa.quantity,
+          pa.price,
+          u.province AS delivery_location,
+          farmer.username AS farmer_name,
+          farmer.phone AS farmer_phone,
+          TO_CHAR(o.created_at, 'YYYY-MM-DD HH24:MI:SS') AS created_at,
+          o.status
+        FROM orders o
+        JOIN purchase_applications pa ON o.application_id = pa.application_id
+        JOIN purchase_demands d ON pa.demand_id = d.demand_id
+        JOIN users farmer ON o.farmer_id = farmer.user_id
+        JOIN users u ON o.buyer_id = u.user_id
+        WHERE o.buyer_id = $1
+        ORDER BY o.created_at DESC
+      `;
+      
+      const { rows } = await pool.query(query, [buyerId]);
+      res.json(rows);
+    } catch (error) {
+      console.error('获取订单信息失败:', error);
+      res.status(500).json({ error: '服务器错误' });
+    }
+  }
+);
+
+// 商户获取待收货订单的物流信息
+router.get('/merchant/logistics', 
+  authMiddleware.authenticateToken,
+  async (req, res) => {
+    try {
+      const buyerId = req.user.userId;
+      
+      const query = `
+        SELECT 
+          o.order_id,
+          o.logistics_info,
+          d.product_name,
+          pa.quantity,
+          farmer.username AS farmer_name,
+          farmer.phone AS farmer_phone
+        FROM orders o
+        JOIN purchase_applications pa ON o.application_id = pa.application_id
+        JOIN purchase_demands d ON pa.demand_id = d.demand_id
+        JOIN users farmer ON o.farmer_id = farmer.user_id
+        WHERE o.buyer_id = $1 AND o.status = 'shipped'
+        ORDER BY o.shipment_time DESC
+      `;
+      
+      const { rows } = await pool.query(query, [buyerId]);
+      res.json(rows);
+    } catch (error) {
+      console.error('获取物流信息失败:', error);
+      res.status(500).json({ error: '服务器错误' });
+    }
+  }
+);
+
+// 商户获取待审核的售后订单信息
+router.get('/merchant/pending-after-sale', 
+  authMiddleware.authenticateToken,
+  async (req, res) => {
+    try {
+      const buyerId = req.user.userId;
+      
+      const query = `
+        SELECT 
+          o.order_id,
+          o.after_sale_reason,
+          o.after_sale_reason_images,
+          d.product_name,
+          pa.quantity,
+          pa.price,
+          farmer.username AS farmer_name
+        FROM orders o
+        JOIN purchase_applications pa ON o.application_id = pa.application_id
+        JOIN purchase_demands d ON pa.demand_id = d.demand_id
+        JOIN users farmer ON o.farmer_id = farmer.user_id
+        WHERE o.buyer_id = $1 AND o.status = 'after_sale_requested'
+        ORDER BY o.created_at DESC
+      `;
+      
+      const { rows } = await pool.query(query, [buyerId]);
+      res.json(rows);
+    } catch (error) {
+      console.error('获取待审核售后信息失败:', error);
+      res.status(500).json({ error: '服务器错误' });
+    }
+  }
+);
+
+// 商户获取已审核的售后订单信息
+router.get('/merchant/reviewed-after-sale', 
+  authMiddleware.authenticateToken,
+  async (req, res) => {
+    try {
+      const buyerId = req.user.userId;
+      
+      const query = `
+        SELECT 
+          o.order_id,
+          o.after_sale_reason,
+          o.admin_reason,
+          o.status AS final_status,
+          d.product_name,
+          pa.quantity,
+          pa.price,
+          farmer.username AS farmer_name,
+          TO_CHAR(o.resolved_at, 'YYYY-MM-DD HH24:MI:SS') AS reviewed_at
+        FROM orders o
+        JOIN purchase_applications pa ON o.application_id = pa.application_id
+        JOIN purchase_demands d ON pa.demand_id = d.demand_id
+        JOIN users farmer ON o.farmer_id = farmer.user_id
+        WHERE o.buyer_id = $1 AND o.status IN ('after_sale_resolved', 'after_sale_rejected')
+        ORDER BY o.resolved_at DESC
+      `;
+      
+      const { rows } = await pool.query(query, [buyerId]);
+      res.json(rows);
+    } catch (error) {
+      console.error('获取已审核售后信息失败:', error);
+      res.status(500).json({ error: '服务器错误' });
+    }
+  }
+);
 
 module.exports = router;

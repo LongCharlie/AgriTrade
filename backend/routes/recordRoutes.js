@@ -26,6 +26,28 @@ router.get('/growth-records', authMiddleware.authenticateToken, authMiddleware.c
   }
 });
 
+// 获取特定种植记录详情
+router.get('/planting-records/:record_id', 
+  authMiddleware.authenticateToken, 
+  authMiddleware.checkRole([ROLES.FARMER,ROLES.BUYER]), 
+  async (req, res) => {
+    try {
+      const recordId = parseInt(req.params.record_id);
+      const farmerId = req.user.userId;
+      
+      const record = await require('../model').getPlantingRecordById(recordId, farmerId);
+      res.json(record);
+    } catch (error) {
+      console.error('获取种植记录详情失败:', error);
+      if (error.message === '种植记录不存在或无权访问') {
+        res.status(404).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: '获取种植记录详情失败' });
+      }
+    }
+  }
+);
+
 // 修改种植记录
 router.patch('/planting-records/:id/status', authMiddleware.authenticateToken, authMiddleware.checkRole([ROLES.FARMER]), async (req, res) => {
   try {
