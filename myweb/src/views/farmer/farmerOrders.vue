@@ -27,9 +27,9 @@
       <el-table-column prop="product_name" label="产品种类"></el-table-column>
       <el-table-column prop="quantity" label="数量(kg)"></el-table-column>
       <el-table-column prop="price" label="价格(元/kg)"></el-table-column>
-      <el-table-column prop="delivery_location" label="收货地"></el-table-column>
+      <el-table-column prop="province" label="收货地"></el-table-column>
       <el-table-column prop="buyer_name" label="采购方"></el-table-column>
-      <el-table-column prop="phone" label="联系方式"></el-table-column>
+      <el-table-column prop="buyer_phone" label="联系方式"></el-table-column>
       <el-table-column prop="created_at" label="时间"></el-table-column>
       <el-table-column prop="formatted_status" label="状态"></el-table-column>
       <el-table-column label="操作">
@@ -54,6 +54,10 @@
 
     <!-- 物流信息弹窗 -->
     <el-dialog v-model="dialogVisible" title="确认发货">
+      <p><strong>买家详细地址：</strong></p>
+      <div>
+        {{ currentOrder.province }}，{{ currentOrder.city }}，{{ currentOrder.district }}，{{ currentOrder.address_detail }}
+      </div>
       <el-input
           type="textarea"
           v-model="logisticsInfo"
@@ -138,17 +142,17 @@ const currentPage = ref(1);
 
 // 模拟订单数据
 const simulatedTableData = [
-  { order_id: 1, product_name: '白米', quantity: 100, price: 15, delivery_location: '北京', buyer_id: '1', buyer_name: 'A老板', phone: '123456789', created_at: '2023-10-01', status: 'pending_shipment' },
-  { order_id: 2, product_name: '西瓜', quantity: 200, price: 10, delivery_location: '河北', buyer_id: '2', buyer_name: '老王', phone: '987654321', created_at: '2023-10-02', status: 'completed' },
-  { order_id: 3, product_name: '白米', quantity: 50, price: 8, delivery_location: '广东', buyer_id: '3', buyer_name: '孙经理', phone: '135792468', created_at: '2024-10-03', status: 'shipped' },
-  { order_id: 4, product_name: '玉米', quantity: 150, price: 12, delivery_location: '四川', buyer_id: '4', buyer_name: '小李', phone: '159753864', created_at: '2024-10-04', status: 'after_sale_requested', after_sale_reason: '玉米变质（附图）', after_sale_reason_images: `${Photo},${Photo},${Photo},${Photo}` },
-  { order_id: 5, product_name: '黄豆', quantity: 80, price: 20, delivery_location: '江苏', buyer_id: '5', buyer_name: '老张', phone: '246813579', created_at: '2024-11-05', status: 'after_sale_resolved', after_sale_reason: '变质（附图）', after_sale_reason_images: `${Photo},${Photo}`, reason: '同意'},
-  { order_id: 6, product_name: '白米', quantity: 100, price: 8, delivery_location: '广东', buyer_id: '3', buyer_name: '孙经理', phone: '135792468', created_at: '2024-11-03', status: 'completed' },
-  { order_id: 7, product_name: '玉米', quantity: 150, price: 12, delivery_location: '四川', buyer_id: '4', buyer_name: '小李', phone: '159753864', created_at: '2024-11-04', status: 'completed' },
-  { order_id: 8, product_name: '黄豆', quantity: 80, price: 20, delivery_location: '江苏', buyer_id:'5', buyer_name: '老张', phone: '246813579', created_at: '2024-11-05', status: 'shipped' },
-  { order_id: 9, product_name: '玉米', quantity: 150, price: 12, delivery_location: '四川', buyer_id:'4', buyer_name: '小李', phone: '159753864', created_at: '2024-11-04', status: 'pending_shipment' },
-  { order_id: 10, product_name: '黄豆', quantity: 80, price: 20, delivery_location: '江苏', buyer_id:'5', buyer_name: '老张', phone: '246813579', created_at: '2024-11-05', status: 'pending_shipment' },
-  { order_id: 11, product_name: '玉米', quantity: 150, price: 12, delivery_location: '四川', buyer_id:'4', buyer_name: '小李', phone: '159753864', created_at: '2024-10-04', status: 'completed'},
+  // { order_id: 1, product_name: '白米', quantity: 100, price: 15, delivery_location: '北京', buyer_id: '1', buyer_name: 'A老板', phone: '123456789', created_at: '2023-10-01', status: 'pending_shipment' },
+  // { order_id: 2, product_name: '西瓜', quantity: 200, price: 10, delivery_location: '河北', buyer_id: '2', buyer_name: '老王', phone: '987654321', created_at: '2023-10-02', status: 'completed' },
+  // { order_id: 3, product_name: '白米', quantity: 50, price: 8, delivery_location: '广东', buyer_id: '3', buyer_name: '孙经理', phone: '135792468', created_at: '2024-10-03', status: 'shipped' },
+  // { order_id: 4, product_name: '玉米', quantity: 150, price: 12, delivery_location: '四川', buyer_id: '4', buyer_name: '小李', phone: '159753864', created_at: '2024-10-04', status: 'after_sale_requested', after_sale_reason: '玉米变质（附图）', after_sale_reason_images: `${Photo},${Photo},${Photo},${Photo}` },
+  // { order_id: 5, product_name: '黄豆', quantity: 80, price: 20, delivery_location: '江苏', buyer_id: '5', buyer_name: '老张', phone: '246813579', created_at: '2024-11-05', status: 'after_sale_resolved', after_sale_reason: '变质（附图）', after_sale_reason_images: `${Photo},${Photo}`, reason: '同意'},
+  // { order_id: 6, product_name: '白米', quantity: 100, price: 8, delivery_location: '广东', buyer_id: '3', buyer_name: '孙经理', phone: '135792468', created_at: '2024-11-03', status: 'completed' },
+  // { order_id: 7, product_name: '玉米', quantity: 150, price: 12, delivery_location: '四川', buyer_id: '4', buyer_name: '小李', phone: '159753864', created_at: '2024-11-04', status: 'completed' },
+  // { order_id: 8, product_name: '黄豆', quantity: 80, price: 20, delivery_location: '江苏', buyer_id:'5', buyer_name: '老张', phone: '246813579', created_at: '2024-11-05', status: 'shipped' },
+  // { order_id: 9, product_name: '玉米', quantity: 150, price: 12, delivery_location: '四川', buyer_id:'4', buyer_name: '小李', phone: '159753864', created_at: '2024-11-04', status: 'pending_shipment' },
+  // { order_id: 10, product_name: '黄豆', quantity: 80, price: 20, delivery_location: '江苏', buyer_id:'5', buyer_name: '老张', phone: '246813579', created_at: '2024-11-05', status: 'pending_shipment' },
+  // { order_id: 11, product_name: '玉米', quantity: 150, price: 12, delivery_location: '四川', buyer_id:'4', buyer_name: '小李', phone: '159753864', created_at: '2024-10-04', status: 'completed'},
 ];
 
 // 表格数据

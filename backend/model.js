@@ -1211,8 +1211,8 @@ const getFarmerOrders = async (farmerId) => {
     `SELECT
       o.order_id,
       o.buyer_id,
-      u.username AS buyerName,
-      u.phone AS buyerPhone,
+      u.username AS buyer_name,
+      u.phone AS buyer_phone,
       TO_CHAR(o.created_at, 'YYYY-MM-DD') AS createdAt,
       o.status,
       o.after_sale_reason,
