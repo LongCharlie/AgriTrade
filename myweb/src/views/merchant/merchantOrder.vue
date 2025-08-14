@@ -35,9 +35,6 @@
         </div>
       </div>
       <div class="filter-buttons">
-        <button class="btn btn-primary" @click="applyFilters">
-          <i class="fas fa-check"></i> 应用筛选
-        </button>
         <button class="btn btn-reset" @click="resetFilters">
           <i class="fas fa-redo"></i> 重置筛选
         </button>
