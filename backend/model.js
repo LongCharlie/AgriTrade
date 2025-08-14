@@ -1218,7 +1218,7 @@ const getFarmerOrders = async (farmerId) => {
       o.after_sale_reason,
       o.after_sale_reason_images,
       a.reason AS adminReason,
-      pa.product_name,
+      pd.product_name,
       pa.quantity,
       pa.price,
       o.province,
@@ -1229,6 +1229,7 @@ const getFarmerOrders = async (farmerId) => {
      LEFT JOIN users u ON o.buyer_id = u.user_id
      LEFT JOIN after_sale_audits a ON o.order_id = a.order_id
      LEFT JOIN purchase_applications pa ON o.application_id = pa.application_id
+     LEFT JOIN purchase_demands pd ON pa.demand_id = pd.demand_id
      WHERE o.farmer_id = $1
      ORDER BY o.created_at DESC`,
     [farmerId]

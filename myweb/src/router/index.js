@@ -106,10 +106,10 @@ const routes = [
             { path: 'orders', component: () => import("../views/admin/adminOrders.vue") },
             { path: 'cert', component: () => import("../views/admin/adminCert.vue") },
             { path: 'ques', component: () => import("../views/admin/adminQues.vue") },
-            { path: 'share', component: () => import("../views/admin/adminShare.vue") },
-            { path : 'sharecomment', component: () =>import('../views/admin/ShareCommentCheck.vue')},
             { path: 'ques/:id', component: () => import("../views/admin/adminAnswers.vue") },
             { path: 'answer/:id', component: () => import("../views/admin/adminAnswerDetail.vue") },
+            { path: 'share', component: () => import("../views/admin/adminShare.vue") },
+            { path : 'sharecomment', component: () =>import('../views/admin/ShareCommentCheck.vue')},
             { path: 'test', component: () => import("../views/admin/test.vue") },
         ]
     },
