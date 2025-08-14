@@ -150,6 +150,8 @@ router.get('/certificates/my',
           status,
           is_audited,
           audited_reason,
+          audited_by,
+          audited_at,
           CASE WHEN certificate_image IS NOT NULL 
                THEN CONCAT('/uploads/certificates/', certificate_image) 
                ELSE NULL 
@@ -327,7 +329,7 @@ router.patch('/certificates/:id',
 // 获取单个证书详情（专家自己的证书）
 router.get('/certificate/:id', 
   authMiddleware.authenticateToken, 
-  authMiddleware.checkRole([ROLES.EXPERT]), 
+  authMiddleware.checkRole([ROLES.EXPERT]),
   async (req, res) => {
     const { id } = req.params;
     const expertId = req.user.userId;

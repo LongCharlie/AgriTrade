@@ -231,7 +231,7 @@ export default {
     async fetchCertificateDetail(id) {
       try {
         const token = this.userStore.token;
-        const response = await axios.get(`http://localhost:3000/api/certificates/${id}`, {
+        const response = await axios.get(`http://localhost:3000/api/certificate/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }

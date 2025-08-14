@@ -83,7 +83,7 @@
                 </div>
                 <div class="answer-content">{{ answer.content }}</div>
                 <div class="answer-footer">
-                  <el-button type="text" icon="el-icon-thumb">{{ answer.upvotes || 0 }} 有用</el-button>
+<!--                  <el-button type="text" icon="el-icon-thumb">{{ answer.upvotes || 0 }} 有用</el-button>-->
                   <el-button
                       v-if="question.user_id === userStore.userId"
                       type="text"

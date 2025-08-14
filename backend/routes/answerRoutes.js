@@ -73,8 +73,8 @@ router.post('/questions/:id/answers',
           await require('../model').addAnswerImages(newAnswer.answer_id, imageUrls);
         }
 
-        // 更新问题状态为"已解答"
-        await require('../model').updateQuestionStatus(questionId, 'answered'); 
+        // // 更新问题状态为"已解答"
+        // await require('../model').updateQuestionStatus(questionId, 'answered');
 
         res.status(201).json({
           message: '回答提交成功',

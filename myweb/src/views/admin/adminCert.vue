@@ -761,7 +761,7 @@
               <!-- ... 其他原有字段 ... -->
               <el-descriptions-item label="证书ID">{{ detailData.certificate_id }}</el-descriptions-item>
               <el-descriptions-item label="证书名称">{{ detailData.certificate_name }}</el-descriptions-item>
-              <el-descriptions-item label="专家姓名" :span="2">{{ detailData.expert_name }}</el-descriptions-item>
+              <el-descriptions-item label="专家姓名" :span="2">{{ detailData.real_name }}</el-descriptions-item>
               <el-descriptions-item label="专家ID">{{ detailData.expert_id }}</el-descriptions-item>
               <el-descriptions-item label="授权单位">{{ detailData.authorizing_unit }}</el-descriptions-item>
               <el-descriptions-item label="获得时间">{{ formatDate(detailData.obtain_time) }}</el-descriptions-item>
@@ -772,20 +772,20 @@
                   {{ getStatusText(detailData.is_audited) }}
                 </el-tag>
               </el-descriptions-item>
-              <el-descriptions-item label="审核人" v-if="detailData.reviewed_by">{{ detailData.reviewed_by }}</el-descriptions-item>
-              <el-descriptions-item label="审核时间" v-if="detailData.reviewed_at">{{ formatDate(detailData.reviewed_at) }}</el-descriptions-item>
-              <el-descriptions-item label="拒绝原因" :span="2" v-if="detailData.reject_reason">{{ detailData.reject_reason }}</el-descriptions-item>
+              <el-descriptions-item label="审核人" v-if="detailData.audited_by">{{ detailData.audited_by }}</el-descriptions-item>
+              <el-descriptions-item label="审核时间" v-if="detailData.audited_at">{{ formatDate(detailData.audited_at) }}</el-descriptions-item>
+              <el-descriptions-item label="拒绝原因" :span="2" v-if="detailData.audited_reason">{{ detailData.audited_reason }}</el-descriptions-item>
             </el-descriptions>
           </el-col>
           <el-col :span="8">
             <div class="certificate-image-section">
               <h3>证书图片</h3>
-              <div v-if="detailData.image_url" class="image-container">
+              <div v-if="detailData.certificate_image" class="image-container">
                 <el-image
-                    :src="getImageUrl(detailData.image_url)"
+                    :src="`http://localhost:3000/uploads/certificates/${detailData.certificate_image}`"
                     class="certificate-image"
                     fit="contain"
-                    :preview-src-list="[getImageUrl(detailData.image_url)]"
+                    :preview-src-list="getPreviewList(detailData.certificate_image)"
                     hide-on-click-modal>
                   <div slot="error" class="image-slot">
                     <i class="el-icon-picture-outline"></i>
@@ -885,6 +885,21 @@ export default {
         this.$message.error('获取证书列表失败');
       }
     },
+    getPreviewList(imagePath) {
+      // 处理单个图片路径
+      if (typeof imagePath === 'string' && imagePath) {
+        // 构建完整URL
+        if (imagePath.startsWith('http')) {
+          return [imagePath];
+        } else if (imagePath.startsWith('/')) {
+          return [`http://localhost:3000${imagePath}`];
+        } else {
+          // 假设证书图片存储在 /uploads/certificates/ 目录下
+          return [`http://localhost:3000/uploads/certificates/${imagePath}`];
+        }
+      }
+      return [];
+    },
     getStatusText(status) {
       const map = {
         pending: '待审核',
@@ -924,6 +939,9 @@ export default {
         });
         this.detailData = res.data;
         this.detailDialogVisible = true;
+        // this.$message.info('获取证书详情成功' + res.data);
+        console.log('获取证书详情成功:', JSON.stringify(this.detailData, null, 2));
+        // console.log('获取证书详情成功' + this.detailData);
       } catch (error) {
         console.error('获取证书详情失败:', error);
         this.$message.error('获取证书详情失败: ' + (error.response?.data?.error || '未知错误'));

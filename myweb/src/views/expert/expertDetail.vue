@@ -12,7 +12,7 @@
 
       <el-card shadow="hover" class="expert-card">
         <div class="expert-avatar">
-          <el-avatar :src="expert.avatar_url" :size="100" />
+          <el-avatar :src="getAvatarUrl(expert.avatar_url)" :size="100" />
         </div>
 
         <div class="expert-details">
@@ -31,7 +31,7 @@
             <div class="certificate-details">
               <p><strong>证书名称：</strong>{{ expert.certificate_name || '暂无' }}</p>
               <p><strong>发证机构：</strong>{{ expert.authorizing_unit || '暂无' }}</p>
-              <img v-if="expert.certificate_image" :src="expert.certificate_image" alt="证书图片">
+              <img v-if="expert.certificate_image" :src="getCertificateImageUrl(expert.certificate_image)" alt="证书图片" class="certificate-image">
             </div>
           </el-card>
         </div>
@@ -46,7 +46,6 @@
 <script>
 import { useUserStore } from '@/stores/user';
 import axios from "axios";
-//import { getExpertById } from '../../views/expert/expertApi';
 
 export default {
   data() {
@@ -68,64 +67,49 @@ export default {
       try {
         const res = await axios.get(`http://localhost:3000/api/experts/${expertId}`);
         this.expert = res.data;
-        //mock
-        // const res=[
-        //   {
-        //     expert_id: 1,
-        //     real_name: '张三',
-        //     title: '教授',
-        //     institution: '中国农业科学院',
-        //     expertise: '农业经济',
-        //     answer_count: 45,
-        //     expert_rank: 1,
-        //     bio: '专注于农村经济发展与政策研究，具有丰富的实践经验。'
-        //   },
-        //   {
-        //     expert_id: 2,
-        //     real_name: '李四',
-        //     title: '高级农艺师',
-        //     institution: '北京农业大学',
-        //     expertise: '植物保护',
-        //     answer_count: 30,
-        //     expert_rank: 2,
-        //     bio: '长期从事农作物病虫害防治研究，发表多篇核心论文。'
-        //   },
-        //   {
-        //     expert_id: 3,
-        //     real_name: '王五',
-        //     title: '研究员',
-        //     institution: '南京土壤研究所',
-        //     expertise: '土壤科学',
-        //     answer_count: 28,
-        //     expert_rank: 3,
-        //     bio: '专长于土壤改良和土地可持续利用研究。'
-        //   },
-        //   {
-        //     expert_id: 4,
-        //     real_name: '赵六',
-        //     title: '副教授',
-        //     institution: '华中农业大学',
-        //     expertise: '畜牧养殖',
-        //     answer_count: 20,
-        //     expert_rank: 4,
-        //     bio: '研究方向为畜禽遗传育种与规模化养殖技术。'
-        //   },
-        //   {
-        //     expert_id: 5,
-        //     real_name: '陈七',
-        //     title: '博士',
-        //     institution: '华南农业技术中心',
-        //     expertise: '农业机械',
-        //     answer_count: 15,
-        //     expert_rank: 5,
-        //     bio: '致力于智能农机装备研发，拥有多项专利技术。'
-        //   }
-        // ]
-        //this.expert = res.find(item => item.expert_id === id);
+        console.log('专家详情:', this.expert);
+        console.log('头像URL:', this.expert.avatar_url);
       } catch (error) {
         console.error('获取专家详情失败:', error);
       } finally {
         this.loading = false;
+      }
+    },
+
+    // 获取头像完整URL
+    getAvatarUrl(avatarUrl) {
+      // 如果没有头像，返回默认头像
+      if (!avatarUrl) {
+        return require('@/assets/profile.jpg'); // 使用默认头像
+      }
+
+      // 如果已经是完整URL，直接返回
+      if (avatarUrl.startsWith('http')) {
+        return avatarUrl;
+      }
+
+      // 构建完整URL - 头像存储在 /uploads/avatars/ 目录下
+      if (avatarUrl.startsWith('/')) {
+        return `http://localhost:3000${avatarUrl}`;
+      } else {
+        return `http://localhost:3000/uploads/avatars/${avatarUrl}`;
+      }
+    },
+
+    // 获取证书图片完整URL
+    getCertificateImageUrl(certificateImage) {
+      if (!certificateImage) return '';
+
+      // 如果已经是完整URL，直接返回
+      if (certificateImage.startsWith('http')) {
+        return certificateImage;
+      }
+
+      // 构建完整URL - 证书图片存储在 /uploads/certificates/ 目录下
+      if (certificateImage.startsWith('/')) {
+        return `http://localhost:3000${certificateImage}`;
+      } else {
+        return `http://localhost:3000/uploads/certificates/${certificateImage}`;
       }
     }
   }
@@ -169,8 +153,19 @@ export default {
   color: #666;
 }
 
-.certificate-details
-{
+.certificate-card {
+  margin-top: 10px;
+}
 
+.certificate-image {
+  max-width: 100%;
+  height: auto;
+  margin-top: 10px;
+  border: 1px solid #eee;
+  border-radius: 4px;
+}
+
+.certificate-details p {
+  margin: 5px 0;
 }
 </style>
