@@ -5,6 +5,10 @@
     <div class="form-container">
       <form @submit.prevent="submitActivity" class="activity-form">
         <div class="input-group">
+          <label for="record_id">种植编号:</label>
+          <el-input id="record_id" v-model="formData.record_id" placeholder="种植编号" disabled style="width: 200px;" />
+        </div>
+        <div class="input-group">
           <label for="product_name">作物种类:</label>
           <el-input id="product_name" v-model="formData.product_name" placeholder="作物种类" disabled style="width: 200px;" />
         </div>
@@ -24,7 +28,7 @@
           <div class="history-timeline">
             <div v-for="record in historicalRecords" :key="record.activity_id" class="history-item">
               <div class="history-details">
-                <p>{{ record.activity_date }} - {{ getChineseActivityType(record.activity_type) }}: {{ record.description }}</p>
+                <p>{{ record.created_at }} - {{ getChineseActivityType(record.activity_type) }}: {{ record.description }}</p>
               </div>
               <div class="history-images">
                 <div class="history-image-wrapper" v-for="(image, index) in record.images.split(',')" :key="index">
