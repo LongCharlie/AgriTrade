@@ -3,8 +3,12 @@
     <h1>种植详情</h1>
     <div class="form-container">
       <form class="activity-form">
+<!--        <div class="input-group">-->
+<!--          <label for="farmer_name">农户:</label>-->
+<!--          <span id="farmer_name" style="width: 200px; display: inline-block;">{{ formData.farmer_name }}</span>-->
+<!--        </div>-->
         <div class="input-group">
-          <label for="farmer_name">作物种类:</label>
+          <label for="farmer_name">农户:</label>
           <el-input id="farmer_name" v-model="formData.farmer_name" placeholder="农户" disabled style="width: 200px;" />
         </div>
 
@@ -14,8 +18,8 @@
         </div>
 
         <div class="input-group">
-          <label for="created_at">开始日期:</label>
-          <el-input id="created_at" v-model="formData.created_at" placeholder="开始日期" disabled style="width: 200px;" />
+          <label for="record_created_at">开始日期:</label>
+          <el-input id="record_created_at" v-model="formData.record_created_at" placeholder="开始日期" disabled style="width: 200px;" />
         </div>
 
         <div class="input-group">
@@ -28,7 +32,7 @@
           <div class="history-timeline">
             <div v-for="record in historicalRecords" :key="record.activity_id" class="history-item">
               <div class="history-details">
-                <p>{{ record.activity_date }} - {{ getChineseActivityType(record.activity_type) }}: {{ record.description }}</p>
+                <p>{{ formatDate(record.created_at) }}  - {{ getChineseActivityType(record.activity_type) }}: {{ record.description }}</p>
               </div>
               <div class="history-images">
                 <div class="history-image-wrapper" v-for="(image, index) in record.images.split(',')" :key="index">
@@ -60,6 +64,7 @@ const token = userStore.token; // 从用户存储中获取 token
 import { useSeeRecordStore } from '@/stores/seeRecord'; // 确保路径正确
 const seeRecordStore = useSeeRecordStore();
 const recordId = seeRecordStore.recordId; // 获取保存的record_id
+// const recordId = 26;
 
 // 更新的表单数据结构
 const formData = ref({
@@ -69,9 +74,9 @@ const formData = ref({
   product_name: '',
   province: '',
   growth_status: '',
-  created_at: '',
+  record_created_at: '',
   activity_id: '',
-  activity_date: '',
+  created_at: '',
   activity_type: '',
   description: '',
   images: '',
@@ -80,16 +85,17 @@ const formData = ref({
 //种植信息
 const fetchRecords = async () => {
   try {
-    const growthRecordsResponse = await axios.get(`http://localhost:3000/api/planting_record/${recordId}`, {
+    const response = await axios.get(`http://localhost:3000/api/planting-record/${recordId}`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
     });
-    formData.value.product_name = growthRecordsResponse.product_name;
-    formData.value.province = growthRecordsResponse.province;
-    formData.value.created_at = growthRecordsResponse.created_at;
-    formData.value.growth_status = growthRecordsResponse.growth_status;
-    console.log(growthRecordsResponse.data);
+    formData.value.farmer_name = response.data.farmer_name;
+    formData.value.product_name = response.data.product_name;
+    formData.value.province = response.data.province;
+    formData.value.record_created_at = response.data.record_created_at;
+    formData.value.growth_status = response.data.growth_status;
+    console.log(response.data);
   } catch (error) {
     console.error('获取种植信息失败，使用模拟数据:', error);
   }
@@ -98,9 +104,9 @@ const fetchRecords = async () => {
 
 // 历史记录
 const historicalRecords = ref([]);
-// 模拟数据
-const mockHistoricalRecords = [
- ];
+// // 模拟数据
+// const mockHistoricalRecords = [
+//  ];
 const fetchHistoricalRecords = async () => {
   const recordId = formData.value.record_id; // 从表单数据中获取 record_id
   try {
@@ -113,8 +119,8 @@ const fetchHistoricalRecords = async () => {
     console.log(response.data);
   } catch (error) {
     console.error('获取历史活动失败，使用模拟数据:', error);
-    // 使用模拟数据
-    historicalRecords.value = mockHistoricalRecords;
+    // // 使用模拟数据
+    // historicalRecords.value = mockHistoricalRecords;
   }
 };
 
@@ -148,6 +154,15 @@ const getChineseActivityType = (type) => {
   };
   return typeMapping[type] || type; // 如果未找到对应类型，返回原值
 };
+
+// 格式化日期的方法
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从0开始，所以加1
+  const day = String(date.getDate()).padStart(2, '0'); // 一位数补零
+  return `${year}/${month}/${day}`;
+}
 
 </script>
 
