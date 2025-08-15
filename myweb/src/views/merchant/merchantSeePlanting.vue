@@ -32,7 +32,7 @@
           <div class="history-timeline">
             <div v-for="record in historicalRecords" :key="record.activity_id" class="history-item">
               <div class="history-details">
-                <p>{{ record.created_at }} - {{ getChineseActivityType(record.activity_type) }}: {{ record.description }}</p>
+                <p>{{ formatDate(record.created_at) }}  - {{ getChineseActivityType(record.activity_type) }}: {{ record.description }}</p>
               </div>
               <div class="history-images">
                 <div class="history-image-wrapper" v-for="(image, index) in record.images.split(',')" :key="index">
@@ -61,10 +61,10 @@ const userStore = useUserStore();
 const token = userStore.token; // 从用户存储中获取 token
 
 
-// import { useSeeRecordStore } from '@/stores/seeRecord'; // 确保路径正确
-// const seeRecordStore = useSeeRecordStore();
-// const recordId = seeRecordStore.recordId; // 获取保存的record_id
-const recordId = 26;
+import { useSeeRecordStore } from '@/stores/seeRecord'; // 确保路径正确
+const seeRecordStore = useSeeRecordStore();
+const recordId = seeRecordStore.recordId; // 获取保存的record_id
+// const recordId = 26;
 
 // 更新的表单数据结构
 const formData = ref({
@@ -154,6 +154,15 @@ const getChineseActivityType = (type) => {
   };
   return typeMapping[type] || type; // 如果未找到对应类型，返回原值
 };
+
+// 格式化日期的方法
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从0开始，所以加1
+  const day = String(date.getDate()).padStart(2, '0'); // 一位数补零
+  return `${year}/${month}/${day}`;
+}
 
 </script>
 
