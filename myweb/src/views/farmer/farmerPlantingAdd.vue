@@ -31,10 +31,19 @@
                 <p>{{ formatDate(record.created_at) }} - {{ getChineseActivityType(record.activity_type) }}: {{ record.description }}</p>
               </div>
               <div class="history-images">
-                <div class="history-image-wrapper" v-for="(image, index) in record.images.split(',')" :key="index">
-                  <img :src="`http://localhost:3000/uploads/activity-images/${image}`" alt="历史记录图像" class="history-image" @click="openImage(image)"/>
+                <div v-if="record.images && record.images.split(',').length" class="history-image-wrapper"
+                     v-for="(image, index) in record.images.split(',')"
+                     :key="index">
+                  <img :src="`http://localhost:3000/uploads/activity-images/${image}`"
+                       alt="历史记录图像"
+                       class="history-image"
+                       @click="openImage(image)" />
                 </div>
+<!--                <div v-else>-->
+<!--                  <p>暂无图片记录</p> &lt;!&ndash; 可选：显示一个提示信息 &ndash;&gt;-->
+<!--                </div>-->
               </div>
+
             </div>
           </div>
         </div>
@@ -183,7 +192,7 @@ const dialogVisible = ref(false);
 const selectedImage = ref('');
 
 const openImage = (image) => {
-  selectedImage.value = image;
+  selectedImage.value = `http://localhost:3000/uploads/activity-images/${image}`;
   dialogVisible.value = true;
 };
 
