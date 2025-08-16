@@ -48,7 +48,7 @@
             <el-tag :type="question.answer_count === 0 ? 'warning' : 'success'">
               {{ question.answer_count === 0 ? '未回答' : '已回答' }}
             </el-tag>
-            <el-tag v-if="filter === 'mine'" :type="question.status === 'open' ? 'success' : 'info'">
+            <el-tag v-if="filter === 'mine' || (filter === 'all' && question.farmer_id === userStore.userId)" :type="question.status === 'open' ? 'success' : 'info'">
               {{ question.status === 'open' ? '开启' : '关闭' }}
             </el-tag>
           </div>
@@ -66,7 +66,8 @@
             <el-button type="primary" size="small" @click="viewQuestionDetail(question.question_id)">
               查看详情
             </el-button>
-            <div v-if="filter === 'mine'" class="action-buttons">
+<!--            <div v-if="filter === 'mine'" class="action-buttons">-->
+            <div v-if="filter === 'mine' || (filter === 'all' && question.farmer_id === userStore.userId)" class="action-buttons">
               <el-button
                   type="warning"
                   size="small"
@@ -136,11 +137,18 @@ export default {
 
       // 状态筛选
       if (this.filter === 'all') {
-        // 全部提问：只显示状态为'open'的问题
-        filtered = filtered.filter(q => q.status === 'open');
+        // 全部问题：显示自己发布的所有问题（无论status）+ 别人发布的open问题
+        filtered = filtered.filter(q => {
+          // 如果是自己发布的问题，显示所有状态
+          if (q.farmer_id === this.userStore.userId) {
+            return true;
+          }
+          // 如果是别人发布的问题，只显示open状态的
+          return q.status === 'open';
+        });
       } else if (this.filter === 'mine') {
         // 我的提问：只显示当前用户的问题（无论status是open还是closed都显示）
-        filtered = filtered.filter(q => q.user_id === this.userStore.userId);
+        filtered = filtered.filter(q => q.farmer_id === this.userStore.userId);
       }
 
       // 搜索筛选
@@ -291,8 +299,8 @@ export default {
     },
     // 切换问题状态（打开/关闭）
     async toggleQuestionStatus(question) {
-      // 添加加载状态
-      this.$set(question, 'updatingStatus', true);
+      // 添加加载状态 - 直接添加属性
+      question.updatingStatus = true;
 
       try {
         const token = this.userStore.token;
@@ -314,7 +322,7 @@ export default {
         console.error('更新问题状态失败:', error);
       } finally {
         // 移除加载状态
-        this.$set(question, 'updatingStatus', false);
+        question.updatingStatus = false;
       }
     },
     // 删除问题
@@ -329,6 +337,13 @@ export default {
       } catch {
         // 用户取消删除
         return;
+      }
+
+      // 找到要删除的问题对象
+      const question = this.questions.find(q => q.question_id === questionId);
+      if (question) {
+        // 添加加载状态
+        question.deleting = true;
       }
 
       try {
@@ -350,6 +365,11 @@ export default {
       } catch (error) {
         this.$message.error('删除提问失败');
         console.error('删除问题失败:', error);
+      } finally {
+        // 移除加载状态
+        if (question) {
+          question.deleting = false;
+        }
       }
     },
     goToPostQuestion() {

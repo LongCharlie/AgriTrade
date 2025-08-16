@@ -211,7 +211,14 @@ CREATE TABLE `orders`  (
   `shipment_time` datetime NULL DEFAULT NULL COMMENT '发货时间',
   `buyer_confirm_time` datetime NULL DEFAULT NULL COMMENT '确认收货时间',
   `after_sale_reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '售后原因',
+  `province` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '省份',
+  `city` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '城市',
+  `district` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '区县',
+  `address_detail` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '详细地址',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `logistics_info` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '物流信息',
+  `admin_reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '审核理由',
+  `after_sale_reason_images` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '售后图片路径',
   PRIMARY KEY (`order_id`) USING BTREE,
   UNIQUE INDEX `application_id`(`application_id`) USING BTREE,
   INDEX `farmer_id`(`farmer_id`) USING BTREE,
@@ -294,8 +301,6 @@ CREATE TABLE `purchase_demands`  (
    PRIMARY KEY (`demand_id`) USING BTREE,
   INDEX `buyer_id`(`buyer_id`) USING BTREE,
   INDEX `status_idx`(`status`) USING BTREE,
-  INDEX `nationwide_idx`(`is_nationwide`) USING BTREE,
-  SPATIAL INDEX `delivery_location_spatial_idx`(`delivery_location`),
   CONSTRAINT `purchase_demands_ibfk_1` FOREIGN KEY (`buyer_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE RESTRICT
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 

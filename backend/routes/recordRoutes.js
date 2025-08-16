@@ -26,17 +26,15 @@ router.get('/growth-records', authMiddleware.authenticateToken, authMiddleware.c
   }
 });
 
-// 获取特定种植记录详情
-router.get('/planting-records/:record_id', 
+// 买家获取特定种植记录详情
+router.get('/planting-record/:record_id',
   authMiddleware.authenticateToken, 
-  authMiddleware.checkRole([ROLES.FARMER,ROLES.BUYER]), 
+  authMiddleware.checkRole([ROLES.BUYER]),
   async (req, res) => {
     try {
-      const recordId = parseInt(req.params.record_id);
-      const farmerId = req.user.userId;
-      
-      const record = await require('../model').getPlantingRecordById(recordId, farmerId);
-      res.json(record);
+      const record = await require('../model').getPlantingRecordById(req.params.record_id);
+      // const activities = await require('../model').getFarmingActivitiesByRecordId(req.params.recordId);
+        res.json(record);
     } catch (error) {
       console.error('获取种植记录详情失败:', error);
       if (error.message === '种植记录不存在或无权访问') {

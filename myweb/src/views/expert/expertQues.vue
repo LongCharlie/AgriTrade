@@ -145,6 +145,7 @@ export default {
           }
         })
         this.questions = response.data.questions;
+        // console.success('获取问题列表成功');
         // mock
         /*const mockData = [
           {

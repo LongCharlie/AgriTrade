@@ -159,6 +159,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const answerRoutes = require('./routes/answerRoutes');
 const farmingActivitiesRoutes = require('./routes/farmingActivities');
 const orderRoutes = require('./routes/orderRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 
 
 // 挂载路由
@@ -176,6 +177,7 @@ app.use('/api', adminRoutes);
 app.use('/api', answerRoutes);
 app.use('/api', farmingActivitiesRoutes);
 app.use('/api', orderRoutes);
+app.use('/api', chatRoutes);
 
 
 const PORT = process.env.PORT || 3000;

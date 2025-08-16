@@ -3,7 +3,38 @@ const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
 const { ROLES } = authMiddleware;
-const { uploadAnswerImages, answerImagesDir } = require('../routes/middleware/uploadMiddleware');
+
+const multer = require('multer');
+const { v4: uuidv4 } = require('uuid');
+const path = require('path');
+const fs = require('fs');
+
+// 创建回答图片上传目录
+const answerImagesDir = path.join(__dirname, '../uploads', 'answer_images');
+if (!fs.existsSync(answerImagesDir)) {
+  fs.mkdirSync(answerImagesDir, { recursive: true });
+}
+
+// 配置multer
+const answerImageStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, answerImagesDir);
+  },
+  filename: (req, file, cb) => {
+    const cleanedName = file.originalname.replace(/[/\\?%*:|"<>]/g, '');
+    cb(null, `${uuidv4()}-${cleanedName}`);
+  }
+});
+
+const uploadAnswerImages = multer({ 
+  storage: answerImageStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('仅支持图片格式'), false);
+  }
+}).array('images', 5); // 最多5张图片
+
 // 管理员删除回答
 router.delete('/answers/:id', authMiddleware.authenticateToken, authMiddleware.checkRole([ROLES.ADMIN]), async (req, res) => {
   try {
@@ -27,7 +58,7 @@ router.delete('/answers/:id', authMiddleware.authenticateToken, authMiddleware.c
 
 module.exports = router;
 
-// 专家回答问题（支持图片上传）
+// routes/answerRoutes.js
 router.post('/questions/:id/answers', 
   authMiddleware.authenticateToken, 
   authMiddleware.checkRole([ROLES.EXPERT]),
@@ -43,7 +74,6 @@ router.post('/questions/:id/answers',
         const { content } = req.body;
 
         if (!content) {
-          // 如果有上传的图片但验证失败，删除已上传的图片
           if (req.files && req.files.length > 0) {
             req.files.forEach(file => {
               fs.unlinkSync(path.join(answerImagesDir, file.filename));
@@ -52,10 +82,8 @@ router.post('/questions/:id/answers',
           return res.status(400).json({ error: '回答内容不能为空' });
         }
 
-        // 检查问题是否存在
         const question = await require('../model').getQuestionById(questionId);
         if (!question) {
-          // 删除已上传的图片
           if (req.files && req.files.length > 0) {
             req.files.forEach(file => {
               fs.unlinkSync(path.join(answerImagesDir, file.filename));
@@ -67,14 +95,14 @@ router.post('/questions/:id/answers',
         // 创建回答
         const newAnswer = await require('../model').createAnswer(questionId, expertId, content);
         
-        // 如果有上传的图片，保存图片信息
+        // 增加专家回答数
+        await require('../model').incrementExpertAnswerCount(expertId);
+        
+        // 保存图片信息
         if (req.files && req.files.length > 0) {
           const imageUrls = req.files.map(file => file.filename);
           await require('../model').addAnswerImages(newAnswer.answer_id, imageUrls);
         }
-
-        // 更新问题状态为"已解答"
-        await require('../model').updateQuestionStatus(questionId, 'answered'); 
 
         res.status(201).json({
           message: '回答提交成功',
@@ -82,7 +110,6 @@ router.post('/questions/:id/answers',
         });
       } catch (error) {
         console.error('回答问题错误:', error);
-        // 如果出现错误，删除已上传的图片
         if (req.files && req.files.length > 0) {
           req.files.forEach(file => {
             fs.unlinkSync(path.join(answerImagesDir, file.filename));
@@ -208,7 +235,7 @@ router.patch('/answers/:id',
 );
 
 // 删除回答
-router.delete('/answers/:id', 
+router.delete('/answer/:id', 
   authMiddleware.authenticateToken, 
   authMiddleware.checkRole([ROLES.EXPERT]),
   async (req, res) => {

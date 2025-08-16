@@ -10,7 +10,7 @@ const pool = new Pool({
   host: '22.tcp.cpolar.top',
   database: 'agriculture db',
   password: '12345678',
-  port: 12407,
+  port: 10679,
   ssl: false,
 });
 
@@ -1144,6 +1144,11 @@ const createFarmingActivity = async (data) => {
   const { record_id, activity_date, activity_type, description, images } = data;
   // 将图片数组转为逗号分隔字符串
   const imageString = images.join(',');
+  // activity_date转换没问题，但是存进去还是不对，不用这个了，拿数据用created_at
+  const activityDate = new Date(activity_date);
+  if (isNaN(activityDate.getTime())) {
+    throw new Error('Invalid date format');
+  }
   const result = await pool.query(
     `INSERT INTO farming_activities (
       record_id, 
@@ -1152,8 +1157,9 @@ const createFarmingActivity = async (data) => {
       description, 
       images
     ) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-    [record_id, activity_date, activity_type, description, imageString]
+    [record_id, activityDate, activity_type, description, imageString]
   );
+console.log(result.rows[0]);
   return result.rows[0];
 };
 
@@ -1211,13 +1217,13 @@ const getFarmerOrders = async (farmerId) => {
     `SELECT
       o.order_id,
       o.buyer_id,
-      u.username AS buyerName,
-      u.phone AS buyerPhone,
-      TO_CHAR(o.created_at, 'YYYY-MM-DD') AS createdAt,
+      u.username AS buyer_name,
+      u.phone AS buyer_phone,
+      TO_CHAR(o.created_at, 'YYYY-MM-DD') AS created_at,
       o.status,
       o.after_sale_reason,
       o.after_sale_reason_images,
-      a.reason AS adminReason,
+      a.reason,
       pd.product_name,
       pa.quantity,
       pa.price,
@@ -1291,26 +1297,50 @@ const getDemandApplicationsWithFarmerInfo = async (demandId, buyerId) => {
 };
 
 // 获取特定种植记录详情
-const getPlantingRecordById = async (recordId, farmerId) => {
+const getPlantingRecordById = async (recordId) => {
   const { rows } = await pool.query(
-    `SELECT 
-      pr.*,
+    `SELECT
+       pr.record_id,
+       pr.farmer_id,
+       pr.product_name,
+       pr.province,
+       pr.growth_status,
       u.username AS farmer_name,
-      TO_CHAR(pr.created_at, 'YYYY/MM/DD') AS created_at
+      TO_CHAR(pr.created_at, 'YYYY/MM/DD') AS record_created_at
     FROM planting_records pr
     JOIN users u ON pr.farmer_id = u.user_id
-    WHERE pr.record_id = $1 AND pr.farmer_id = $2`,
-    [recordId, farmerId]
+    WHERE pr.record_id = $1`,
+    [recordId]
   );
-  
   if (rows.length === 0) {
     throw new Error('种植记录不存在或无权访问');
   }
-  
   return rows[0];
 };
 
 
+// const getPlantingRecordsByFarmerId = async (farmerId) => {
+//   const { rows } = await pool.query(`
+//     SELECT
+//       record_id,
+//       product_name,
+//       province,
+//       growth_status,
+//       TO_CHAR(created_at, 'YYYY/MM/DD') AS created_at
+//     FROM planting_records
+//     WHERE farmer_id = $1
+//     ORDER BY created_at DESC
+//   `, [farmerId]);
+//   return rows;
+// };
+
+const incrementExpertAnswerCount = async (expertId) => {
+  const result = await pool.query(
+    'UPDATE experts SET answer_count = COALESCE(answer_count, 0) + 1 WHERE expert_id = $1 RETURNING answer_count',
+    [expertId]
+  );
+  return result.rows[0]?.answer_count;
+};
 
 // 导出所有数据库操作方法
 module.exports = {
@@ -1337,6 +1367,7 @@ module.exports = {
   updateQuestionStatus,
   updateExpertProfile,
   createExpert,
+  incrementExpertAnswerCount,
   getProductPrice,
   getUserByUsername,
   comparePassword,

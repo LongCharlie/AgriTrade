@@ -134,7 +134,7 @@
           <el-input type="textarea" :value="rejectionReason.audited_reason || '无'" :rows="3" readonly />
         </el-form-item>
         <el-form-item label="审核时间">
-          <el-input :value="rejectionReason.audited_at || '无'" readonly />
+          <el-input :value="formatDate(rejectionReason.audited_at) || '无'" readonly />
         </el-form-item>
         <el-form-item label="审核人ID">
           <el-input :value="rejectionReason.audited_by || '无'" readonly />
@@ -213,6 +213,9 @@ export default {
         ElMessage.error('获取证书失败: ' + (error.response?.data?.message || '未知错误'));
         this.certifications = [];
       }
+    },
+    formatDate(dateString) {
+      return new Date(dateString).toLocaleString();
     },
     goToAddNewCert() {
       this.$router.push('/expert/cert/new');
