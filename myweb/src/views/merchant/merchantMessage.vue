@@ -6,11 +6,11 @@
       <ul class="users">
         <li
           v-for="user in users"
-          :key="user.id"
+          :key="user.chat_id"
           @click="selectUser(user)"
-          :class="{ active: selectedUser === user }"
+          :class="{ active: selectedUser?.chat_id === user.chat_id }"
         >
-          {{ user.name }}
+          {{ user.other_user_name }}
         </li>
       </ul>
     </div>
@@ -18,28 +18,40 @@
     <!-- 右侧聊天区域 -->
     <div class="chat-container" v-if="selectedUser">
       <div class="chat-header">
-        <img :src="selectedUser.avatar" alt="用户头像">
-        <span>{{ selectedUser.name }}</span>
+        <img :src="selectedUser.other_user_avatar" alt="用户头像" />
+        <span>{{ selectedUser.other_user_name }}</span>
       </div>
+
       <div class="chat-messages">
         <div
           class="message"
           v-for="message in selectedUser.messages"
           :key="message.id"
         >
-          <div v-if="message.isReceived" class="message-bubble received-bubble">
-            {{ message.content }}
+          <div
+            v-if="message.isReceived"
+            class="message-bubble received-bubble"
+          >
+            {{ message.type === 'image' ? '[图片]' : message.content }}
           </div>
           <div v-else class="message-bubble sent-bubble">
-            {{ message.content }}
+            {{ message.type === 'image' ? '[图片]' : message.content }}
           </div>
         </div>
       </div>
+
       <div class="chat-input">
         <div class="input-toolbar">
-          <button class="photo-btn" @click="sendPhoto">
+          <button class="photo-btn" @click="triggerFileInput">
             <i class="el-icon-picture"></i>
           </button>
+          <input
+            type="file"
+            ref="fileInput"
+            accept="image/*"
+            style="display: none"
+            @change="handleFileChange"
+          />
         </div>
         <div class="input-area">
           <textarea
@@ -54,87 +66,161 @@
   </div>
 </template>
 
-<script>
-import { ref, onMounted } from 'vue';
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
+import axios from 'axios'
+import { ElMessage } from 'element-plus'
+import { useUserStore } from '@/stores/user'
 
-export default {
-  setup() {
-    const users = ref([
-      {
-        id: 1,
-        name: '农户1',
-        avatar: 'https://via.placeholder.com/35',
-        messages: [
-          { id: 1, content: '你好，商户1', isReceived: true },
-          { id: 2, content: '这是一个测试消息', isReceived: true },
-        ],
-      },
-      {
-        id: 2,
-        name: '农户2',
-        avatar: 'https://via.placeholder.com/35',
-        messages: [{ id: 1, content: '你好，商户2', isReceived: true }],
-      },
-      {
-        id: 3,
-        name: '农户3',
-        avatar: 'https://via.placeholder.com/35',
-        messages: [{ id: 1, content: '你好，商户3', isReceived: true }],
-      },
-      {
-        id: 4,
-        name: '农户4',
-        avatar: 'https://via.placeholder.com/35',
-        messages: [{ id: 1, content: '你好，商户4', isReceived: true }],
-      },
-    ]);
+const userStore = useUserStore()
+const users = ref([])
+const selectedUser = ref(null)
+const newMessage = ref('')
+const fileInput = ref(null)
 
-    const selectedUser = ref(null);
-    const newMessage = ref('');
+let pollingTimer = null
 
-    const selectUser = (user) => {
-      selectedUser.value = user;
-    };
+// 获取会话列表
+const fetchChatList = async () => {
+  try {
+    const res = await axios.get('/api/chat/list', {
+      headers: { Authorization: `Bearer ${userStore.token}` }
+    })
+    users.value = res.data.map(chat => ({
+      ...chat,
+      messages: []
+    }))
+  } catch (err) {
+    console.error('获取会话列表失败:', err)
+    ElMessage.error('获取会话列表失败')
+  }
+}
 
-    const sendMessage = () => {
-      if (newMessage.value.trim() !== '' && selectedUser.value) {
-        const newMessageObj = {
-          id: selectedUser.value.messages.length + 1,
-          content: newMessage.value,
-          isReceived: false,
-        };
-        selectedUser.value.messages.push(newMessageObj);
-        newMessage.value = '';
+// 获取消息记录
+const selectUser = async (user) => {
+  selectedUser.value = user
+  await fetchMessages()
+  startPolling()
+}
+
+// 拉取消息记录
+const fetchMessages = async () => {
+  if (!selectedUser.value) return
+  try {
+    const res = await axios.get(`/api/chat/${selectedUser.value.chat_id}/messages`, {
+      headers: { Authorization: `Bearer ${userStore.token}` }
+    })
+    selectedUser.value.messages = res.data.map(msg => ({
+      id: msg.message_id,
+      content: msg.content,
+      isReceived: msg.sender_id !== userStore.userId,
+      type: msg.type,
+      timestamp: msg.timestamp
+    }))
+  } catch (err) {
+    console.error('获取消息记录失败:', err)
+    ElMessage.error('获取消息记录失败')
+  }
+}
+
+// 发送文本消息
+const sendMessage = async () => {
+  if (!newMessage.value.trim()) return
+  try {
+    const res = await axios.post('/api/chat/send', {
+      content: newMessage.value,
+      other_user_id: selectedUser.value.other_user_id
+    }, {
+      headers: { Authorization: `Bearer ${userStore.token}` }
+    })
+    selectedUser.value.messages.push({
+      id: res.data.message_id,
+      content: newMessage.value,
+      isReceived: false,
+      type: 'text',
+      timestamp: res.data.timestamp
+    })
+    newMessage.value = ''
+  } catch (err) {
+    console.error('发送消息失败:', err)
+    ElMessage.error('发送消息失败')
+  }
+}
+
+// 触发文件选择
+const triggerFileInput = () => {
+  fileInput.value?.click()
+}
+
+// 处理文件上传
+const handleFileChange = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  try {
+    const formData = new FormData()
+    formData.append('image', file)
+
+    const uploadRes = await axios.post('/api/upload/image', formData, {
+      headers: {
+        Authorization: `Bearer ${userStore.token}`,
+        'Content-Type': 'multipart/form-data'
       }
-    };
+    })
 
-    const sendPhoto = () => {
-      if (selectedUser.value) {
-        const newMessageObj = {
-          id: selectedUser.value.messages.length + 1,
-          content: '[图片]',
-          isReceived: false,
-        };
-        selectedUser.value.messages.push(newMessageObj);
-      }
-    };
+    const imageUrl = uploadRes.data.url
+    await sendImageMessage(imageUrl)
+  } catch (err) {
+    console.error('图片上传失败:', err)
+    ElMessage.error('图片上传失败')
+  } finally {
+    fileInput.value.value = ''
+  }
+}
 
-    onMounted(() => {
-      if (users.value.length > 0) {
-        selectedUser.value = users.value[0];
-      }
-    });
+// 发送图片消息
+const sendImageMessage = async (imageUrl) => {
+  try {
+    const res = await axios.post('/api/chat/send', {
+      image_url: imageUrl,
+      other_user_id: selectedUser.value.other_user_id
+    }, {
+      headers: { Authorization: `Bearer ${userStore.token}` }
+    })
+    selectedUser.value.messages.push({
+      id: res.data.message_id,
+      content: '[图片]',
+      isReceived: false,
+      type: 'image',
+      timestamp: res.data.timestamp
+    })
+  } catch (err) {
+    console.error('发送图片消息失败:', err)
+    ElMessage.error('发送图片消息失败')
+  }
+}
 
-    return {
-      users,
-      selectedUser,
-      newMessage,
-      selectUser,
-      sendMessage,
-      sendPhoto,
-    };
-  },
-};
+// 启动轮询
+const startPolling = () => {
+  stopPolling()
+  pollingTimer = setInterval(fetchMessages, 5000)
+}
+
+// 停止轮询
+const stopPolling = () => {
+  if (pollingTimer) {
+    clearInterval(pollingTimer)
+    pollingTimer = null
+  }
+}
+
+onMounted(() => {
+  fetchChatList()
+})
+
+onUnmounted(() => {
+  stopPolling()
+})
 </script>
 
 <style scoped>

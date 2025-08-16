@@ -83,7 +83,7 @@ const handleLogin = async () => {
     userStore.username = response.data.user.username;
     userStore.role = response.data.user.role;
     userStore.userId = response.data.user.id;
-
+    // console.log(userStore.token);
     // 路由跳转
     switch (userStore.role) {
       case 'admin':

@@ -5,6 +5,10 @@
     <div class="form-container">
       <form @submit.prevent="submitActivity" class="activity-form">
         <div class="input-group">
+          <label for="record_id">种植编号:</label>
+          <el-input id="record_id" v-model="formData.record_id" placeholder="种植编号" disabled style="width: 200px;" />
+        </div>
+        <div class="input-group">
           <label for="product_name">作物种类:</label>
           <el-input id="product_name" v-model="formData.product_name" placeholder="作物种类" disabled style="width: 200px;" />
         </div>
@@ -24,13 +28,22 @@
           <div class="history-timeline">
             <div v-for="record in historicalRecords" :key="record.activity_id" class="history-item">
               <div class="history-details">
-                <p>{{ record.activity_date }} - {{ getChineseActivityType(record.activity_type) }}: {{ record.description }}</p>
+                <p>{{ formatDate(record.created_at) }} - {{ getChineseActivityType(record.activity_type) }}: {{ record.description }}</p>
               </div>
               <div class="history-images">
-                <div class="history-image-wrapper" v-for="(image, index) in record.images.split(',')" :key="index">
-                  <img :src="`http://localhost:3000/uploads/activity-images/${image}`" alt="历史记录图像" class="history-image" @click="openImage(image)"/>
+                <div v-if="record.images && record.images.split(',').length" class="history-image-wrapper"
+                     v-for="(image, index) in record.images.split(',')"
+                     :key="index">
+                  <img :src="`http://localhost:3000/uploads/activity-images/${image}`"
+                       alt="历史记录图像"
+                       class="history-image"
+                       @click="openImage(image)" />
                 </div>
+<!--                <div v-else>-->
+<!--                  <p>暂无图片记录</p> &lt;!&ndash; 可选：显示一个提示信息 &ndash;&gt;-->
+<!--                </div>-->
               </div>
+
             </div>
           </div>
         </div>
@@ -179,7 +192,7 @@ const dialogVisible = ref(false);
 const selectedImage = ref('');
 
 const openImage = (image) => {
-  selectedImage.value = image;
+  selectedImage.value = `http://localhost:3000/uploads/activity-images/${image}`;
   dialogVisible.value = true;
 };
 
@@ -307,6 +320,15 @@ const getChineseActivityType = (type) => {
   };
   return typeMapping[type] || type; // 如果未找到对应类型，返回原值
 };
+
+// 格式化日期
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从0开始，所以加1
+  const day = String(date.getDate()).padStart(2, '0'); // 一位数补零
+  return `${year}/${month}/${day}`;
+}
 
 </script>
 

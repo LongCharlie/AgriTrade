@@ -25,21 +25,24 @@
 
     <el-row gutter="20">
       <el-col :span="8">
-        <el-card class="data-card">
+        <el-card class="text-card" @click="seeData(weekOrderSum, 'week')">
           <h3>周订单总金额</h3>
-          <el-tag class="data-tag">¥ {{ weekOrderSum }}</el-tag>
+          <el-tag class="text-tag">点击查看</el-tag>
+<!--          <el-tag class="data-tag">¥ {{ weekOrderSum }}</el-tag>-->
         </el-card>
       </el-col>
       <el-col :span="8">
-        <el-card class="data-card">
+        <el-card class="text-card" @click="seeData(monthOrderSum, 'month')">
           <h3>月订单总金额</h3>
-          <el-tag class="data-tag">¥ {{ monthOrderSum }}</el-tag>
+          <el-tag class="text-tag">点击查看</el-tag>
+<!--          <el-tag class="data-tag">¥ {{ monthOrderSum }}</el-tag>-->
         </el-card>
       </el-col>
       <el-col :span="8">
-        <el-card class="data-card">
+        <el-card class="text-card" @click="seeData(yearOrderSum, 'year')">
           <h3>年订单总金额</h3>
-          <el-tag class="data-tag">¥ {{ yearOrderSum }}</el-tag>
+          <el-tag class="text-tag">点击查看</el-tag>
+<!--          <el-tag class="data-tag">¥ {{ yearOrderSum }}</el-tag>-->
         </el-card>
       </el-col>
     </el-row>
@@ -85,14 +88,19 @@
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { useUserStore } from '../../stores/user';
+import { useAdminDataStore } from '../../stores/adminData';
+import {useRouter} from "vue-router";
+const router = useRouter();
 
 const userStore = useUserStore();
+const adminDataStore = useAdminDataStore();
+
 const buyerCount = ref(0);
 const farmerCount = ref(0);
 const expertCount = ref(0);
-const weekOrderSum = ref(0);
-const monthOrderSum = ref(0);
-const yearOrderSum = ref(0);
+const weekOrderSum = ref([]);
+const monthOrderSum = ref([]);
+const yearOrderSum = ref([]);
 const agricultureCount = ref(14);
 
 // 新增蔬菜列表
@@ -147,6 +155,14 @@ const getWeekData = async () => {
 
   }
 };
+
+
+const seeData = (orderSum, msg) => {
+  adminDataStore.currentData = orderSum;
+  adminDataStore.msg = msg;
+  router.push('/admin/data/sum');
+};
+
 onMounted(() => {
   fetchData();
   getWeekData();
@@ -175,6 +191,26 @@ h1 {
 .data-tag {
   font-size: 24px;
   color: #409EFF;
+}
+
+.text-card {
+  text-align: center;
+  min-height: 150px;
+  margin-bottom: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  transition: all 0.6s;
+  cursor: pointer; /* 添加鼠标指针样式 */
+}
+
+.text-card:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.text-tag {
+  font-size: 16px;
+  color: #409EFF;
+
 }
 
 .vegetable-list {

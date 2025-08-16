@@ -88,6 +88,55 @@ router.post('/certificates',
   }
 );
 
+// 获取专家所有审核通过的证书（公开接口，无需认证）
+router.get('/certificates/expert/:expertId', async (req, res) => {
+  try {
+    const expertId = req.params.expertId;
+    
+    // 验证专家是否存在
+    const expertExists = await require('../model').getExpertById(expertId);
+    if (!expertExists) {
+      return res.status(404).json({ 
+        success: false,
+        error: '专家未找到' 
+      });
+    }
+
+    const result = await require('../model').query(
+      `SELECT 
+        certificate_id,
+        expert_id,
+        certificate_name,
+        certificate_image,
+        obtain_time,
+        level,
+        valid_period,
+        authorizing_unit,
+        description,
+        status,
+        CASE WHEN certificate_image IS NOT NULL 
+             THEN CONCAT('/uploads/certificates/', certificate_image) 
+             ELSE NULL 
+        END as image_url
+      FROM certificates 
+      WHERE expert_id = $1 AND is_audited = 'approved'
+      ORDER BY obtain_time DESC`,
+      [expertId]
+    );
+    
+    res.json({
+      success: true,
+      certificates: result.rows
+    });
+  } catch (error) {
+    console.error('获取专家证书失败:', error);
+    res.status(500).json({ 
+      success: false,
+      error: '获取专家证书失败' 
+    });
+  }
+});
+
 // 证书审核（管理员）
 router.patch('/certificates/:id/approve', 
   authMiddleware.authenticateToken, 

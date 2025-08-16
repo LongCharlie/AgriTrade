@@ -215,6 +215,53 @@ router.patch('/questions/:id/status', authMiddleware.authenticateToken, authMidd
   }
 });
 
+// 农户删除自己发布的问题
+router.delete('/question/:id', authMiddleware.authenticateToken, authMiddleware.checkRole([ROLES.FARMER]), async (req, res) => {
+  try {
+    const questionId = req.params.id;
+    const userId = req.user.userId;
+    
+    // 获取问题详情以检查是否存在和权限
+    const question = await require('../model').getQuestionById(questionId);
+    if (!question) {
+      return res.status(404).json({ error: '问题未找到' });
+    }
+    
+    // 检查问题是否属于当前用户
+    if (question.farmer_id !== userId) {
+      return res.status(403).json({ error: '无权删除此问题' });
+    }
+    
+    // 获取问题相关的图片
+    const images = await require('../model').getQuestionImages(questionId);
+    
+    // 删除数据库中的问题记录
+    await require('../model').query('DELETE FROM questions WHERE question_id = $1', [questionId]);
+    
+    // 删除问题相关的图片文件
+    if (images && images.length > 0) {
+      images.forEach(img => {
+        try {
+          fs.unlinkSync(path.join(questionImagesDir, img.image_url));
+        } catch (err) {
+          console.error(`删除图片文件失败: ${img.image_url}`, err);
+        }
+      });
+    }
+    
+    // 删除问题相关的图片记录
+    await require('../model').query('DELETE FROM question_images WHERE question_id = $1', [questionId]);
+    
+    // 删除问题相关的回答
+    await require('../model').query('DELETE FROM answers WHERE question_id = $1', [questionId]);
+    
+    res.json({ message: '问题删除成功' });
+  } catch (error) {
+    console.error('删除问题错误:', error);
+    res.status(500).json({ error: '删除问题失败' });
+  }
+});
+
 // 删除问题图片
 router.delete('/questions/:id/images/:imageId', authMiddleware.authenticateToken, authMiddleware.checkRole([ROLES.FARMER]), async (req, res) => {
   try {
