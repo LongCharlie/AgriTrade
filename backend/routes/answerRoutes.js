@@ -235,30 +235,26 @@ router.patch('/answers/:id',
 );
 
 // 删除回答
-<<<<<<< HEAD
 router.delete('/answer/:id',
-=======
-router.delete('/answer/:id', 
->>>>>>> 28da22c6b1ae88a086f5916583a63be90f091691
-  authMiddleware.authenticateToken, 
-  authMiddleware.checkRole([ROLES.EXPERT]),
-  async (req, res) => {
-    try {
-      const answerId = req.params.id;
-      const expertId = req.user.userId;
+    authMiddleware.authenticateToken,
+    authMiddleware.checkRole([ROLES.EXPERT]),
+    async (req, res) => {
+      try {
+        const answerId = req.params.id;
+        const expertId = req.user.userId;
 
-      const isDeleted = await require('../model').deleteAnswer(answerId, expertId);
-      
-      if (!isDeleted) {
-        return res.status(404).json({ error: '回答不存在或无权删除' });
+        const isDeleted = await require('../model').deleteAnswer(answerId, expertId);
+
+        if (!isDeleted) {
+          return res.status(404).json({ error: '回答不存在或无权删除' });
+        }
+
+        res.json({ message: '回答删除成功' });
+      } catch (error) {
+        console.error('删除回答错误:', error);
+        res.status(500).json({ error: '删除回答失败' });
       }
-
-      res.json({ message: '回答删除成功' });
-    } catch (error) {
-      console.error('删除回答错误:', error);
-      res.status(500).json({ error: '删除回答失败' });
     }
-  }
 );
 
 // 点赞回答

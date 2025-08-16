@@ -1,13 +1,13 @@
 <template>
   <div>
     <el-container>
-      <el-aside width="0px">
-        <expert-common-aside></expert-common-aside>
-      </el-aside>
+<!--      <el-aside width="0px">-->
+<!--        <expert-common-aside></expert-common-aside>-->
+<!--      </el-aside>-->
       <el-container>
-        <el-header>
-          <expert-common-header></expert-common-header>
-        </el-header>
+<!--        <el-header>-->
+<!--          <expert-common-header></expert-common-header>-->
+<!--        </el-header>-->
         <el-main>
           <div class="certificate-upload-container">
             <h2>{{ isEditing ? '编辑证书' : '上传证书' }}</h2>

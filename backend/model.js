@@ -251,13 +251,33 @@ const updateAnswer = async (answerId, expertId, content) => {
   return result.rows[0];
 };
 
+// // 删除回答
+// const deleteAnswer = async (answerId, expertId) => {
+//   const { rowCount } = await pool.query(
+//     `DELETE FROM answers
+//      WHERE answer_id = $1 AND expert_id = $2`,
+//     [answerId, expertId]
+//   );
+//   return rowCount > 0;
+// };
 // 删除回答
 const deleteAnswer = async (answerId, expertId) => {
   const { rowCount } = await pool.query(
-    `DELETE FROM answers 
+      `DELETE FROM answers 
      WHERE answer_id = $1 AND expert_id = $2`,
-    [answerId, expertId]
+      [answerId, expertId]
   );
+
+  // 如果成功删除回答，则将专家的回答计数减一
+  if (rowCount > 0) {
+    await pool.query(
+        `UPDATE experts 
+       SET answer_count = GREATEST(answer_count - 1, 0)
+       WHERE expert_id = $1`,
+        [expertId]
+    );
+  }
+
   return rowCount > 0;
 };
 
