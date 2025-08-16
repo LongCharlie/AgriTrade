@@ -42,6 +42,7 @@ const routes = [
         path: '/expert',
         redirect: '/expert/home', //removal
         component: expertMain,
+        // meta: { requiresAuth: true, role: ['expert'] },
         //subrouter
         children: [
             { path: '/expert/home', component: expertHome },
@@ -58,7 +59,7 @@ const routes = [
     {
         path: '/expert/detail/:id',
         component: expertDetail,
-        //meta: { requiresAuth: true } // 需要登录才能访问，连了数据库再开
+        // meta: { requiresAuth: true, role: ['expert'] },
     },
     {
         path: '/expert/ques/:id/answer',
@@ -74,7 +75,8 @@ const routes = [
             { path: 'home', component: () => import("../views/farmer/farmerMain.vue") },  // 默认子路由
             { path: 'purchases', component: () => import("../views/farmer/farmerPurchases.vue") },
             { path: 'purchases/quote', component: () => import("../views/farmer/farmerPurchasesQuote.vue") },
-            { path: 'purchases/quotemodify', component: () => import("../views/farmer/farmerPurchasesQuoteModify.vue") },
+            { path: 'purchases/quoteModify', component: () => import("../views/farmer/farmerPurchasesQuoteModify.vue") },
+            { path: 'purchases/quoteSee', component: () => import("../views/farmer/farmerPurchasesQuoteSee.vue") },
             { path: 'orders', component: () => import("../views/farmer/farmerOrders.vue") },
             { path: 'messages', component: () => import("../views/farmer/farmerMessages.vue") },
             { path: 'planting', component: () => import("../views/farmer/farmerPlanting.vue") },
@@ -103,6 +105,7 @@ const routes = [
             { path: 'user/edit', component: () => import("../views/admin/adminUserEdit.vue") },
             { path: 'user/new', component: () => import("../views/admin/adminUserNew.vue") },
             { path: 'data', component: () => import("../views/admin/adminData.vue") },
+            { path: 'data/sum', component: () => import("../views/admin/adminDataSum.vue") },
             { path: 'orders', component: () => import("../views/admin/adminOrders.vue") },
             { path: 'cert', component: () => import("../views/admin/adminCert.vue") },
             { path: 'ques', component: () => import("../views/admin/adminQues.vue") },
@@ -115,8 +118,9 @@ const routes = [
     },
       {
           path: '/merchant',
-          redirect: 'merchant/Main',
+          redirect: 'merchant/main',
           component: Merchant,
+          // meta: { requiresAuth: true, role: ['buyer'] },
           children: [
               {path: '', name: 'Main', component: MerchantMain},
               {path: 'order', name: 'Order', component: MerchantOrder},

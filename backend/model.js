@@ -10,7 +10,7 @@ const pool = new Pool({
   host: '22.tcp.cpolar.top',
   database: 'agriculture db',
   password: '12345678',
-  port: 10679,
+  port: 11731,
   ssl: false,
 });
 
@@ -1216,6 +1216,7 @@ const getFarmerOrders = async (farmerId) => {
   const result = await pool.query(
     `SELECT
       o.order_id,
+      o.application_id,
       o.buyer_id,
       u.username AS buyer_name,
       u.phone AS buyer_phone,

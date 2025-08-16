@@ -20,8 +20,9 @@
       ></el-input>
       <el-select v-model="filterOption" placeholder="选择筛选" style="width: 200px; margin-bottom: 20px;">
         <el-option label="全部" value="all"></el-option>
-        <el-option label="已报价" value="quoted"></el-option>
         <el-option label="未报价" value="notQuoted"></el-option>
+        <el-option label="已报价" value="quoted"></el-option>
+        <el-option label="已确认" value="ordered"></el-option>
       </el-select>
       <el-button type="primary" @click="performSearch">确认搜索</el-button>
     </div>
@@ -36,7 +37,8 @@
         <el-table-column label="操作">
           <template #default="scope">
             <el-button @click="handleQuote(scope.row)" type="text" v-if="!isQuoted(scope.row)">[去报价]</el-button>
-            <el-button @click="handleModify(scope.row)" type="text" v-else>[修改]</el-button>
+            <el-button @click="handleModify(scope.row)" type="text" v-if="isQuoted(scope.row) && !isOrdered(scope.row)">[修改]</el-button>
+            <el-button @click="handleSee(scope.row)" type="text" v-if="isOrdered(scope.row)">[查看]</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -77,6 +79,7 @@ const userStore = useUserStore();
 // 用于存储采购需求数据和已报价数据
 const motableData = ref([]);
 const moquotedIds = ref([]);
+const orderData = ref([]);
 const filteredTableData = ref([]);
 const pageSize = ref(5); // 每页显示的项目数
 const currentPage = ref(1); // 当前页码
@@ -122,6 +125,18 @@ const fetchData = async () => {
     moquotedIds.value = simulatedMoquotedIds; // 使用模拟数据
   }
 
+  try {
+    const response = await axios.get('http://localhost:3000/api/all', {
+      headers: {
+        'Authorization': `Bearer ${token}` // 设置 Authorization 头
+      }
+    });
+    orderData.value = response.data || []; // 假设 API 返回的数据就是我们需要的格式
+    filteredTableData.value = [...orderData.value]; // 同步过滤后的数据
+    console.log('订单数据'+ orderData.value);
+  } catch (error) {
+    console.error('获取订单数据失败，使用模拟数据', error);
+  }
   // 初始化过滤后的数据
   filteredTableData.value = motableData.value;
 };
@@ -130,14 +145,19 @@ const fetchData = async () => {
 const performSearch = () => {
   filteredTableData.value = motableData.value.filter(item => {
     const matchesProduct = item.product_name.includes(searchProduct.value);
-    const matchesaddress = item.address.includes(searchaddress.value);
+    const matchesAddress = item.address.includes(searchaddress.value);
     const matchesQuantity = searchQuantity.value ? item.quantity >= searchQuantity.value : true;
     const matchesFilterOption =
         filterOption.value === 'all' ||
         (filterOption.value === 'quoted' && moquotedIds.value.some(quoted => quoted.demand_id === item.demand_id)) ||
-        (filterOption.value === 'notQuoted' && !moquotedIds.value.some(quoted => quoted.demand_id === item.demand_id));
+        (filterOption.value === 'notQuoted' && !moquotedIds.value.some(quoted => quoted.demand_id === item.demand_id)) ||
+        (filterOption.value === 'ordered' &&
+            moquotedIds.value.some(quoted =>
+                quoted.demand_id === item.demand_id &&
+                orderData.value.some(order => order.application_id === quoted.application_id))
+        );
 
-    return matchesProduct && matchesaddress && matchesQuantity && matchesFilterOption;
+    return matchesProduct && matchesAddress && matchesQuantity && matchesFilterOption;
   });
   currentPage.value = 1; // 重置为第一页
 };
@@ -158,6 +178,13 @@ const isQuoted = (row) => {
   return moquotedIds.value.some(quoted => quoted.demand_id === row.demand_id);
 };
 
+// 判断是否已报价
+const isOrdered = (row) => {
+  return moquotedIds.value.some(quoted =>
+      quoted.demand_id === row.demand_id &&
+      orderData.value.some(order => order.application_id === quoted.application_id));
+};
+
 // 跳转到报价页面
 const handleQuote = (row) => {
   demandStore.currentDemand = row; // 保存当前行的表格信息到 Store
@@ -174,7 +201,27 @@ const handleModify = (row) => {
   } else {
     quoteStore.currentQuote = null;
   }
-  router.push('/farmer/purchases/quotemodify'); // 跳转到修改页面
+  router.push('/farmer/purchases/quoteModify'); // 跳转到修改页面
+};
+
+// 跳转到查看页面
+const handleSee = (row) => {
+  demandStore.currentDemand = row; // 保存当前行的表格信息到 Store
+  // 查找对应的报价信息
+  const currentQuote = moquotedIds.value.find(quoted => quoted.demand_id === row.demand_id);
+  if (currentQuote) {
+    quoteStore.currentQuote = currentQuote;
+  } else {
+    quoteStore.currentQuote = null;
+  }
+  //查找订单ID
+  const currentOrder = orderData.value.find(order => order.application_id === currentQuote.application_id);
+  if (currentOrder) {
+    quoteStore.currentOrder = currentOrder;
+  } else {
+    quoteStore.currentOrder = null;
+  }
+  router.push('/farmer/purchases/quoteSee'); // 跳转到修改页面
 };
 
 // 组件挂载后获取数据
