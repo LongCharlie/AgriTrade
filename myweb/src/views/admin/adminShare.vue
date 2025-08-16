@@ -92,38 +92,43 @@
 </template>
 
 <script>
-import axios from 'axios';
+import axios from 'axios'
+import { useUserStore } from '@/stores/user'
 
 export default {
+  setup() {
+    const userStore = useUserStore()
+    return { userStore }
+  },
   data() {
     return {
-      filterStatus: '',         // 筛选状态
-      currentPage: 1,           // 当前页码
-      pageSize: 5,              // 每页显示数量
-      allArticles: [],          // 全部经验文章数据
-    };
+      filterStatus: '',
+      currentPage: 1,
+      pageSize: 5,
+      allArticles: []
+    }
   },
   computed: {
     filteredArticles() {
-      if (!this.filterStatus) return this.allArticles;
-      return this.allArticles.filter(a => a.status === this.filterStatus);
+      if (!this.filterStatus) return this.allArticles
+      return this.allArticles.filter(a => a.status === this.filterStatus)
     },
     pagedArticles() {
-      const start = (this.currentPage - 1) * this.pageSize;
-      return this.filteredArticles.slice(start, start + this.pageSize);
+      const start = (this.currentPage - 1) * this.pageSize
+      return this.filteredArticles.slice(start, start + this.pageSize)
     }
   },
   methods: {
     formatDate(dateStr) {
-      const date = new Date(dateStr);
-      return date.toLocaleString(); // 可根据需要自定义格式
+      const date = new Date(dateStr)
+      return date.toLocaleString()
     },
     handlePageChange(page) {
-      this.currentPage = page;
+      this.currentPage = page
     },
     async refreshData() {
       try {
-        const token = localStorage.getItem('token'); // 假设已保存 token
+        const token = this.userStore.token
         const res = await axios.get('http://localhost:3000/api/experiences', {
           headers: {
             Authorization: `Bearer ${token}`
@@ -131,58 +136,57 @@ export default {
           params: {
             status: this.filterStatus || undefined
           }
-        });
+        })
         this.allArticles = res.data.map(item => ({
           id: item.experience_id,
           title: item.title,
           content: item.content,
           author: item.author,
           createTime: item.create_time,
-          status: item.audit_status // 'pending' | 'approved' | 'rejected'
-        }));
-        this.currentPage = 1; // 刷新数据后回到第一页
+          status: item.audit_status
+        }))
+        this.currentPage = 1
       } catch (error) {
-        console.error('获取经验失败:', error);
-        alert('获取数据失败');
+        console.error('获取经验失败:', error)
+        alert('获取数据失败')
       }
     },
     async approveArticle(article) {
-      await this.updateStatus(article, 'approved');
+      await this.updateStatus(article, 'approved')
     },
     async rejectArticle(article) {
-      await this.updateStatus(article, 'rejected');
+      await this.updateStatus(article, 'rejected')
     },
     async updateStatus(article, newStatus) {
       try {
-        const token = localStorage.getItem('token');
-        const res = await axios.patch(
-          `/experiences/${article.id}/status`,
+        const token = this.userStore.token
+        await axios.patch(
+          `http://localhost:3000/api/experiences/${article.id}/status`,
           { status: newStatus },
           {
             headers: {
               Authorization: `Bearer ${token}`
             }
           }
-        );
-        article.status = newStatus;
-        alert(`经验《${article.title}》已${newStatus === 'approved' ? '通过' : '拒绝'}`);
+        )
+        article.status = newStatus
+        alert(`经验《${article.title}》已${newStatus === 'approved' ? '通过' : '拒绝'}`)
       } catch (error) {
-        console.error(`${newStatus === 'approved' ? '通过' : '拒绝'}失败:`, error);
-        alert('操作失败');
+        console.error(`${newStatus === 'approved' ? '通过' : '拒绝'}失败:`, error)
+        alert('操作失败')
       }
     }
   },
   mounted() {
-    this.refreshData();
+    this.refreshData()
   },
   watch: {
     filterStatus() {
-      this.refreshData();
+      this.refreshData()
     }
   }
-};
+}
 </script>
-
 
 
 <style scoped>
@@ -190,7 +194,6 @@ export default {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
 body {

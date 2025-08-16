@@ -403,7 +403,7 @@ export default {
 
 /* 确保内容区域有足够空间 */
 .questions-container {
-  //padding: 20px;
+  padding: 20px;
   min-height: calc(100vh - 120px); /* 根据实际布局调整 */
 }
 

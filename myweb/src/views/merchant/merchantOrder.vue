@@ -11,8 +11,8 @@
             start-placeholder="开始日期"
             end-placeholder="结束日期"
             class="filter-input"
-          ></el-date-picker>
-        </div>
+          />
+          </div>
         <div class="filter-group">
           <h3><i class="fas fa-apple-alt"></i> 产品种类</h3>
           <input 
@@ -298,16 +298,10 @@
 <script>
 import { ref, computed, onMounted } from 'vue';
 export default {
-  data() {
-    return {
-      dateRange: [] // 用于绑定日期选择器的值
-    };
-  },
-
   setup() {
     // 订单数据 - 模拟后端返回格式
     const orders = ref([]);
-    
+    const dateRange = ref([]);
     // 筛选条件
     const filters = ref({
       startDate: '',
@@ -472,7 +466,7 @@ export default {
       }
     };
     
-// 模拟API请求 - 提交售后申请
+    // 模拟API请求 - 提交售后申请
     const submitRefundApi = async () => {
       try {
         // 使用条件编译来区分真实API和模拟数据，避免不可达代码
@@ -524,6 +518,7 @@ export default {
         productType: '',
         status: ''
       };
+      dateRange.value = []; 
       fetchOrders(); // 重新获取所有订单
     };
     
@@ -655,13 +650,13 @@ export default {
     });
     
     return {
+      dateRange,
       orders,
       filters,
       totalOrders,
       totalAmount,
       pendingOrders,
       filteredOrders,
-      applyFilters,
       resetFilters,
       getStatusClass,
       confirmReceipt,
@@ -706,7 +701,6 @@ body {
 
 #app {
   max-width: 1400px;
-  margin: 0 auto;
 }
 
 header {
@@ -759,12 +753,7 @@ h1 {
   opacity: 0.9;
 }
 
-.filters {
-  border: 1px solid #e7e7e7;
-  border-radius: 4px;
-  padding: 16px;
-  background-color: #ffffff;
-}
+
 
 .filter-horizontal {
   display: flex;
@@ -779,7 +768,7 @@ h1 {
 .filter-group h3 {
   margin: 0 0 8px;
   font-size: 14px;
-  color: #333;
+  color: #000000d2;
 }
 
 .filter-input {
@@ -791,8 +780,8 @@ h1 {
   box-sizing: border-box;
 }
 
-.filter-input::placeholder {
-  color: #000000;
+.filter-input {
+  color: #808080;
 }
 
 .filter-buttons {
@@ -807,15 +796,6 @@ h1 {
   font-size: 14px;
   cursor: pointer;
   transition: background-color 0.3s;
-}
-
-.btn-primary {
-  background-color: #409eff;
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: #66b1ff;
 }
 
 .btn-reset {
@@ -835,14 +815,13 @@ h1 {
 }
 
 .table-container {
-  overflow-x: auto;
   padding: 20px;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 1000px;
+  min-width: 800px;
 }
 
 th {
@@ -960,7 +939,6 @@ tr:hover {
   width: 90%;
   max-width: 500px;
   max-height: 90vh;
-  overflow-y: auto;
   position: relative;
 }
 

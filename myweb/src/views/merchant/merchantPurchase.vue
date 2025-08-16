@@ -39,19 +39,15 @@
                 <span class="value">{{ purchase.creationDate }}</span>
               </div>
             </div>
-
-            <div class="meta-row">
-              <div class="meta-item">
-                <span class="label"> 收货地址</span>
-                <span class="value">{{ purchase.deliveryAddress }}</span>
-              </div>
-            </div>
           </div>
         </div>
 
         <div class="action-buttons">
           <button class="action-btn detail-btn" @click.stop="viewPurchase(purchase)">
            查看申请
+          </button>
+          <button class="action-btn close-btn" @click.stop="closePurchase(purchase)">
+           关闭申请
           </button>
         </div>
       </div>
@@ -209,6 +205,11 @@ const viewPurchase = (purchase) => {
   router.push(`/merchant/purchases/${purchase.id}`)
 }
 
+// 查看某个采购详情/申请
+const closePurchase = (purchase) => {
+  router.push(`/merchant/purchases/${purchase.id}`)
+}
+
 const statusClass = (status) => {
   const s = normalizeStatus(status)
   return {
@@ -339,7 +340,7 @@ header::before {
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
   transition: all 0.4s ease;
   position: relative;
-  height: 350px;
+  height: 250px;
   display: flex;
   flex-direction: column;
   border-top: 4px solid #ffffff;
@@ -467,6 +468,12 @@ header::before {
   background: linear-gradient(135deg, #29b5f671, #0289d1ac);
   color: white;
   box-shadow: 0 4px 10px rgba(41, 182, 246, 0.25);
+}
+
+.close-btn {
+  background: linear-gradient(135deg, #f7898971, #f23939ac);
+  color: white;
+  box-shadow: 0 4px 10px rgba(254, 255, 166, 0.25);
 }
 
 .modify-btn {

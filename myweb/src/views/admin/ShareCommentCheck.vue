@@ -72,8 +72,13 @@
 
 <script>
 import axios from 'axios';
+import { useUserStore } from '@/stores/user';
 
 export default {
+  setup() {
+    const userStore = useUserStore();
+    return { userStore };
+  },
   data() {
     return {
       filter: {
@@ -124,7 +129,7 @@ export default {
     },
     async fetchComments() {
       try {
-        const token = localStorage.getItem('token');
+        const token = this.userStore.token;
         const res = await axios.get('http://localhost:3000/api/comments/pending', {
           headers: {
             Authorization: `Bearer ${token}`
@@ -144,7 +149,6 @@ export default {
         this.$message.error('评论加载失败');
       }
     },
-
     async approveComment(comment) {
       await this.updateCommentStatus(comment, 'approved');
     },
@@ -153,9 +157,9 @@ export default {
     },
     async updateCommentStatus(comment, newStatus) {
       try {
-        const token = localStorage.getItem('token');
+        const token = this.userStore.token;
         await axios.patch(
-          `/api/comments/${comment.comment_id}/status`,
+          `http://localhost:3000/api/comments/${comment.comment_id}/status`,
           { status: newStatus },
           {
             headers: {
