@@ -1,196 +1,373 @@
 <template>
-  <div>
-    <h1>种植详情</h1>
-    <div class="form-container">
-      <form class="activity-form">
-        <div class="input-group">
-          <label for="product_name">作物种类:</label>
-          <el-input id="product_name" v-model="formData.product_name" placeholder="作物种类" disabled style="width: 200px;" />
-        </div>
+  <div class="container">
+    <!-- 左侧用户列表 -->
+    <div class="user-list">
+      <h2>我的消息</h2>
+      <ul class="users">
+        <li
+          v-for="user in users"
+          :key="user.chat_id"
+          @click="selectUser(user)"
+          :class="{ active: selectedUser?.chat_id === user.chat_id }"
+        >
+          {{ user.other_user_name }}
+        </li>
+      </ul>
+    </div>
 
-        <div class="input-group">
-          <label for="created_at">开始日期:</label>
-          <el-input id="created_at" v-model="formData.created_at" placeholder="开始日期" disabled style="width: 200px;" />
-        </div>
+    <!-- 右侧聊天区域 -->
+    <div class="chat-container" v-if="selectedUser">
+      <div class="chat-header">
+        <img :src="selectedUser.other_user_avatar" alt="用户头像" />
+        <span>{{ selectedUser.other_user_name }}</span>
+      </div>
 
-        <div class="input-group">
-          <label for="province">省份:</label>
-          <el-input id="province" v-model="formData.province" placeholder="省份" disabled style="width: 200px;" />
-        </div>
-
-        <div class="input-group">
-          <label for="history">历史记录:</label>
-          <div class="history-timeline">
-            <div v-for="record in historicalRecords" :key="record.activity_id" class="history-item">
-              <div class="history-details">
-                <p>{{ record.activity_date }} - {{ getChineseActivityType(record.activity_type) }}: {{ record.description }}</p>
-              </div>
-              <div class="history-images">
-                <div class="history-image-wrapper" v-for="(image, index) in record.images.split(',')" :key="index">
-                  <img :src="`http://localhost:3000/uploads/activity-images/${image}`" alt="历史记录图像" class="history-image" @click="openImage(image)"/>
-                </div>
-              </div>
-            </div>
+      <div class="chat-messages">
+        <div
+          class="message"
+          v-for="message in selectedUser.messages"
+          :key="message.id"
+        >
+          <div
+            v-if="message.isReceived"
+            class="message-bubble received-bubble"
+          >
+            {{ message.type === 'image' ? '[图片]' : message.content }}
+          </div>
+          <div v-else class="message-bubble sent-bubble">
+            {{ message.type === 'image' ? '[图片]' : message.content }}
           </div>
         </div>
+      </div>
 
-        <el-dialog v-model="dialogVisible" title="" @close="resetImage" append-to-body >
-          <img :src="selectedImage" class="enlarged-image" />
-        </el-dialog>
-      </form>
+      <div class="chat-input">
+        <div class="input-toolbar">
+          <button class="photo-btn" @click="triggerFileInput">
+            <i class="el-icon-picture"></i>
+          </button>
+          <input
+            type="file"
+            ref="fileInput"
+            accept="image/*"
+            style="display: none"
+            @change="handleFileChange"
+          />
+        </div>
+        <div class="input-area">
+          <textarea
+            v-model="newMessage"
+            @keyup.enter="sendMessage"
+            placeholder="输入消息..."
+          ></textarea>
+          <button @click="sendMessage">发送</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import axios from 'axios';
-// import { ElMessage } from 'element-plus';
-import { useUserStore } from '../../stores/user';
+import { ref, onMounted, onUnmounted } from 'vue'
+import axios from 'axios'
+import { ElMessage } from 'element-plus'
+import { useUserStore } from '@/stores/user'
 
-const userStore = useUserStore();
-const token = userStore.token; // 从用户存储中获取 token
+const userStore = useUserStore()
+const users = ref([])
+const selectedUser = ref(null)
+const newMessage = ref('')
+const fileInput = ref(null)
 
-import { useRoute } from 'vue-router';
-const route = useRoute();
-const recordId = route.params.record_id; // 获取 record_id
+let pollingTimer = null
 
-
-// 更新的表单数据结构
-const formData = ref({
-  record_id: recordId,
-  product_name: '',
-  province: '',
-  growth_status: '',
-  created_at: '',
-  activity_id: '',
-  activity_date: '',
-  activity_type: '',
-  description: '',
-  images: '',
-});
-
-//种植信息
-const fetchRecords = async () => {
+// 获取会话列表
+const fetchChatList = async () => {
   try {
-    const growthRecordsResponse = await axios.get(`http://localhost:3000/api/planting_record/${recordId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    formData.value.product_name = growthRecordsResponse.product_name;
-    formData.value.province = growthRecordsResponse.province;
-    formData.value.created_at = growthRecordsResponse.created_at;
-    formData.value.growth_status = growthRecordsResponse.growth_status;
-    console.log(growthRecordsResponse.data);
-  } catch (error) {
-    console.error('获取种植信息失败，使用模拟数据:', error);
+    const res = await axios.get('/api/chat/list', {
+      headers: { Authorization: `Bearer ${userStore.token}` }
+    })
+    users.value = res.data.map(chat => ({
+      ...chat,
+      messages: []
+    }))
+  } catch (err) {
+    console.error('获取会话列表失败:', err)
+    ElMessage.error('获取会话列表失败')
   }
-};
+}
 
+// 获取消息记录
+const selectUser = async (user) => {
+  selectedUser.value = user
+  await fetchMessages()
+  startPolling()
+}
 
-// 历史记录
-const historicalRecords = ref([]);
-// 模拟数据
-const mockHistoricalRecords = [
-];
-const fetchHistoricalRecords = async () => {
-  const recordId = formData.value.record_id; // 从表单数据中获取 record_id
+// 拉取消息记录
+const fetchMessages = async () => {
+  if (!selectedUser.value) return
   try {
-    const response = await axios.get(`http://localhost:3000/api/historical-activity/${recordId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      }
-    });
-    historicalRecords.value = response.data;
-    console.log(response.data);
-  } catch (error) {
-    console.error('获取历史活动失败，使用模拟数据:', error);
-    // 使用模拟数据
-    historicalRecords.value = mockHistoricalRecords;
+    const res = await axios.get(`/api/chat/${selectedUser.value.chat_id}/messages`, {
+      headers: { Authorization: `Bearer ${userStore.token}` }
+    })
+    selectedUser.value.messages = res.data.map(msg => ({
+      id: msg.message_id,
+      content: msg.content,
+      isReceived: msg.sender_id !== userStore.userId,
+      type: msg.type,
+      timestamp: msg.timestamp
+    }))
+  } catch (err) {
+    console.error('获取消息记录失败:', err)
+    ElMessage.error('获取消息记录失败')
   }
-};
+}
 
-const dialogVisible = ref(false);
-const selectedImage = ref('');
+// 发送文本消息
+const sendMessage = async () => {
+  if (!newMessage.value.trim()) return
+  try {
+    const res = await axios.post('/api/chat/send', {
+      content: newMessage.value,
+      other_user_id: selectedUser.value.other_user_id
+    }, {
+      headers: { Authorization: `Bearer ${userStore.token}` }
+    })
+    selectedUser.value.messages.push({
+      id: res.data.message_id,
+      content: newMessage.value,
+      isReceived: false,
+      type: 'text',
+      timestamp: res.data.timestamp
+    })
+    newMessage.value = ''
+  } catch (err) {
+    console.error('发送消息失败:', err)
+    ElMessage.error('发送消息失败')
+  }
+}
 
-const openImage = (image) => {
-  selectedImage.value = image;
-  dialogVisible.value = true;
-};
+// 触发文件选择
+const triggerFileInput = () => {
+  fileInput.value?.click()
+}
 
-const resetImage = () => {
-  selectedImage.value = '';
-};
+// 处理文件上传
+const handleFileChange = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
 
-// 在组件挂载时初始化表单数据和获取历史记录
-onMounted(async () => {
-  await fetchHistoricalRecords();
-  await fetchRecords();
-});
+  try {
+    const formData = new FormData()
+    formData.append('image', file)
 
+    const uploadRes = await axios.post('/api/upload/image', formData, {
+      headers: {
+        Authorization: `Bearer ${userStore.token}`,
+        'Content-Type': 'multipart/form-data'
+      }
+    })
 
-// 添加一个函数用于将英文类型翻译为中文
-const getChineseActivityType = (type) => {
-  const typeMapping = {
-    seeding: '播种',
-    fertilizing: '施肥',
-    pesticide: '喷药',
-    harvest: '收获',
-    other: '其他',
-  };
-  return typeMapping[type] || type; // 如果未找到对应类型，返回原值
-};
+    const imageUrl = uploadRes.data.url
+    await sendImageMessage(imageUrl)
+  } catch (err) {
+    console.error('图片上传失败:', err)
+    ElMessage.error('图片上传失败')
+  } finally {
+    fileInput.value.value = ''
+  }
+}
 
+// 发送图片消息
+const sendImageMessage = async (imageUrl) => {
+  try {
+    const res = await axios.post('/api/chat/send', {
+      image_url: imageUrl,
+      other_user_id: selectedUser.value.other_user_id
+    }, {
+      headers: { Authorization: `Bearer ${userStore.token}` }
+    })
+    selectedUser.value.messages.push({
+      id: res.data.message_id,
+      content: '[图片]',
+      isReceived: false,
+      type: 'image',
+      timestamp: res.data.timestamp
+    })
+  } catch (err) {
+    console.error('发送图片消息失败:', err)
+    ElMessage.error('发送图片消息失败')
+  }
+}
+
+// 启动轮询
+const startPolling = () => {
+  stopPolling()
+  pollingTimer = setInterval(fetchMessages, 5000)
+}
+
+// 停止轮询
+const stopPolling = () => {
+  if (pollingTimer) {
+    clearInterval(pollingTimer)
+    pollingTimer = null
+  }
+}
+
+onMounted(() => {
+  fetchChatList()
+})
+
+onUnmounted(() => {
+  stopPolling()
+})
 </script>
 
 <style scoped>
-.activity-form {
-  margin-top: 50px;
-  margin-left: 20px;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Microsoft YaHei", sans-serif;
 }
-.input-group {
+
+.container {
+  display: flex;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  height: 100vh;
+}
+
+.user-list {
+  width: 250px;
+  background-color: #fff;
+  border-right: 1px solid #ddd;
+  padding: 20px 0;
+}
+
+.user-list h2 {
+  padding: 0 20px 15px;
+  font-size: 18px;
+  color: #333;
+  border-bottom: 1px solid #eee;
+}
+
+.users {
+  list-style: none;
+  padding: 0;
+  margin-top: 10px;
+}
+
+.users li {
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.users li:hover {
+  background-color: #f5f5f5;
+}
+
+.users li.active {
+  background-color: #7b7b7b1d;
+  border-left: 3px solid #000000;
+}
+
+.chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+}
+
+.chat-header {
+  padding: 15px 20px;
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
 }
-.input-group label {
-  margin-right: 5px;
-  min-width: 100px;
+
+.chat-header img {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  margin-right: 10px;
 }
-.history-timeline {
+
+.chat-messages {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
-.history-item {
+
+.message {
+  margin-bottom: 15px;
   display: flex;
-  align-items: flex-start; /* 对齐方式调整为 flex-start */
-  margin-bottom: 10px;
 }
-.history-details {
-  margin-right: 10px; /* 加一些右边距以便与图片分开 */
+
+.message-bubble {
+  padding: 10px 15px;
+  border-radius: 18px;
+  max-width: 70%;
+  word-break: break-word;
 }
-.history-images {
+
+.received-bubble {
+  background-color: #f1f1f1;
+  margin-right: auto;
+  border-bottom-left-radius: 2px;
+}
+
+.sent-bubble {
+  background-color: #dcf8c6;
+  margin-left: auto;
+  border-bottom-right-radius: 2px;
+}
+
+.chat-input {
   display: flex;
-  flex-wrap: wrap;   /* 使得图像可以换行，适应容器 */
+  flex-direction: column;
+  border-top: 1px solid #eee;
 }
-.history-image-wrapper {
-  display: flex; /* 使用flex，使得图片在横向排列时更加灵活 */
-  flex-direction: column; /* 使得文字显示在图片上方 */
-  align-items: center; /* 图像居中对齐 */
+
+.input-toolbar {
+  display: flex;
+  padding: 0px;
+  background-color: #fff;
 }
-.history-image {
-  width: auto; /* 定义宽度 */
-  height: 60px; /* 保持图片的纵横比例 */
-  margin-top: 5px; /* 文字和图片之间的间隙 */
-  margin-left: 10px;
-  border: 1px solid #D0D0D0; /* 添加浅灰色边框 */
-  cursor: pointer; /* 添加鼠标指针样式 */
+
+.photo-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  margin-right: 10px;
+  color: #666;
 }
-.enlarged-image {
-  max-width: 100%; /* 确保图片在对话框中不溢出 */
-  max-height: 80vh; /* 设置最大高度为视口的80% */
-  display: block; /* 使其为块级元素 */
-  margin: 0 auto; /* 在对话框中居中 */
+
+.input-area {
+  display: flex;
+  flex: 1;
+}
+
+textarea {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  outline: none;
+  resize: none;
+  min-height: 100px;
+}
+
+button {
+  padding: 8px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+  align-self: flex-end;
+  margin-right: 10px;
 }
 </style>

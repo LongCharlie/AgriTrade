@@ -165,7 +165,6 @@ const fetchPurchases = async () => {
 
 onMounted(fetchPurchases)
 
-// 只看“我的”采购：优先按 ownerId 过滤；若数据不含 ownerId，则不强制过滤
 const myPurchases = computed(() => {
   const uid = userStore.userId
   const hasOwnerKey = purchases.value.some(p => p.ownerId !== undefined && p.ownerId !== null && p.ownerId !== '')
@@ -196,7 +195,6 @@ const toggleShowClosed = () => {
 
 // 新增采购
 const addPurchase = () => {
-  // 根据你的路由实际情况调整
   router.push('/merchant/addpurchase')
 }
 
