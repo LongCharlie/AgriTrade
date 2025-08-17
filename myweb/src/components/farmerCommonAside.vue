@@ -60,7 +60,15 @@ export default {
         return '种植';
       } else if (currentPath.startsWith('/share')) {
         return '分享';
+      } else if (currentPath.startsWith('/sharedetails')) {
+        return '分享';
       } else if (currentPath.startsWith('/questions')) {
+        return '提问';
+      } else if (currentPath.startsWith('/ques')) {
+        return '提问';
+      } else if (currentPath.startsWith('/answer')) {
+        return '提问';
+      } else if (currentPath.startsWith('/post-question')) {
         return '提问';
       } else if (currentPath.startsWith('/profile')) {
         return '';
@@ -121,7 +129,12 @@ export default {
   height: 100vh; /* 全屏高度 */
   margin: 0;
   padding: 0;
-  position: relative;
+  position: fixed;
+  z-index: 100;     /* 确保在内容之上 */
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 160px;
 }
 
 .el-menu-vertical-demo {
