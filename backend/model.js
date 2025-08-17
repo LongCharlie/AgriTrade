@@ -354,7 +354,7 @@ const getQuestions = async (filter = {}) => {
   let query = `
     SELECT 
       q.*,
-      u.username as farmer_name
+      u.username
     FROM questions q
     LEFT JOIN users u ON q.farmer_id = u.user_id
   `;

@@ -102,8 +102,8 @@
               :on-remove="handleRemove"
               list-type="picture-card"
               v-model:file-list="fileList">
-            <el-icon v-if="fileList.length === 0 && !editingCert.image_url"><Plus /></el-icon>
-            <div v-if="fileList.length === 0 && !editingCert.image_url" class="el-upload__text">
+            <el-icon><Plus /></el-icon>
+            <div class="el-upload__text">
               点击上传图片 <br/>
               <span style="font-size: 12px; color: #999;">支持jpg/png格式，不超过5MB</span>
             </div>
@@ -115,7 +115,7 @@
             <el-image
                 :src="editingCert.image_url.startsWith('http') ? editingCert.image_url : `http://localhost:3000${editingCert.image_url}`"
                 class="certificate-image-preview"
-                fit="cover"
+                fit="scale-down"
                 :preview-src-list="[editingCert.image_url.startsWith('http') ? editingCert.image_url : `http://localhost:3000${editingCert.image_url}`]"
                 hide-on-click-modal>
             </el-image>

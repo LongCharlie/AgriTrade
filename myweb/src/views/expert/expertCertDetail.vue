@@ -69,7 +69,7 @@
                       <el-image
                           :src="`http://localhost:3000${certificate.image_url}`"
                           class="certificate-image"
-                          fit="contain"
+                          fit="scale-down"
                           :preview-src-list="[`http://localhost:3000${certificate.image_url}`]"
                           hide-on-click-modal>
                         <div slot="error" class="image-slot">
@@ -430,11 +430,11 @@ export default {
 }
 
 .image-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 310px;
-  border: 1px solid #eee;
+  //display: flex;
+  //justify-content: center;
+  //align-items: center;
+  height: 800px;
+  //border: 1px solid #eee;
   border-radius: 4px;
   overflow: hidden;
 }

@@ -308,9 +308,9 @@
               <label>证书图片：</label>
               <el-image
                   :src="`http://localhost:3000${selectedCertificate.image_url}`"
-                  :preview-src-list="[selectedCertificate.image_url]"
+                  :preview-src-list="[`http://localhost:3000${selectedCertificate.image_url}`]"
                   class="certificate-detail-image"
-                  fit="contain"
+                  fit="scale-down"
                   lazy
               >
                 <div slot="error" class="image-slot">
@@ -513,7 +513,7 @@ export default {
 
 .certificate-detail-image {
   width: 100%;
-  max-height: 300px;
+  max-height: 800px;
   border-radius: 4px;
   border: 1px solid #ebeef5;
 }

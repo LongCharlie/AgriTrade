@@ -521,7 +521,7 @@
         <el-avatar
             @click="$router.push(`/expert/detail/${answer.expert_id}`)"
             :size="40"
-            :src="answer.avatar_url || defaultAvatar"
+            :src="`http://localhost:3000${answer.expert_avatar_url}`"
         ></el-avatar>
         <div>
           <strong>{{ answer.real_name }}</strong>

@@ -139,9 +139,9 @@ router.get('/question/:id/answers', async (req, res) => {
     const answers = await require('../model').query(
       `SELECT 
         a.*,
-        e.real_name as expert_real_name,
-        e.title as expert_title,
-        u.avatar_url as expert_avatar,
+        e.real_name,
+        e.title,
+        u.avatar_url,
         CASE WHEN u.avatar_url IS NOT NULL 
              THEN CONCAT('/uploads/avatars/', u.avatar_url) 
              ELSE NULL 
