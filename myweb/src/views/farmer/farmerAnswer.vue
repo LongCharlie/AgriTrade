@@ -23,7 +23,7 @@
               </div>
 
               <div>
-                <p><strong>提问者：</strong>{{ question.username || '匿名' }}</p>
+                <p><strong>提问者：</strong>{{ question.farmer_name || '匿名' }}</p>
                 <p><strong>时间：</strong>{{ formatDate(question.created_at) }}</p>
                 <p><strong>内容：</strong>{{ question.content }}</p>
 

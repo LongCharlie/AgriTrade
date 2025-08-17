@@ -40,7 +40,7 @@ export default {
         { path: "/cert", name: "证书审核" },
         { path: "/ques", name: "提问/回答删除" },
         { path: "/share", name: "经验分享审核" },
-        { path: "/sharecomment", name: "经验分享评论审核" }
+        { path: "/shareComment", name: "经验分享评论审核" }
       ],
       // menuHeight: 0 // 初始化菜单高度
     };
@@ -63,8 +63,12 @@ export default {
         return '证书审核';
       } else if (currentPath.startsWith('/ques')) {
         return '提问/回答删除';
+      } else if (currentPath.startsWith('/answer')) {
+        return '提问/回答删除';
       } else if (currentPath.startsWith('/share')) {
         return '经验分享审核';
+      } else if (currentPath.startsWith('/shareComment')) {
+        return '经验分享评论审核';
       }
       return '首页'; // 默认值
     },

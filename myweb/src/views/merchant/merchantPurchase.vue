@@ -39,19 +39,15 @@
                 <span class="value">{{ purchase.creationDate }}</span>
               </div>
             </div>
-
-            <div class="meta-row">
-              <div class="meta-item">
-                <span class="label"> 收货地址</span>
-                <span class="value">{{ purchase.deliveryAddress }}</span>
-              </div>
-            </div>
           </div>
         </div>
 
         <div class="action-buttons">
           <button class="action-btn detail-btn" @click.stop="viewPurchase(purchase)">
            查看申请
+          </button>
+          <button class="action-btn close-btn" @click.stop="closePurchase(purchase)">
+           关闭申请
           </button>
         </div>
       </div>
@@ -169,7 +165,6 @@ const fetchPurchases = async () => {
 
 onMounted(fetchPurchases)
 
-// 只看“我的”采购：优先按 ownerId 过滤；若数据不含 ownerId，则不强制过滤
 const myPurchases = computed(() => {
   const uid = userStore.userId
   const hasOwnerKey = purchases.value.some(p => p.ownerId !== undefined && p.ownerId !== null && p.ownerId !== '')
@@ -200,12 +195,16 @@ const toggleShowClosed = () => {
 
 // 新增采购
 const addPurchase = () => {
-  // 根据你的路由实际情况调整
   router.push('/merchant/addpurchase')
 }
 
 // 查看某个采购详情/申请
 const viewPurchase = (purchase) => {
+  router.push(`/merchant/purchases/${purchase.id}`)
+}
+
+// 查看某个采购详情/申请
+const closePurchase = (purchase) => {
   router.push(`/merchant/purchases/${purchase.id}`)
 }
 
@@ -339,7 +338,7 @@ header::before {
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
   transition: all 0.4s ease;
   position: relative;
-  height: 350px;
+  height: 250px;
   display: flex;
   flex-direction: column;
   border-top: 4px solid #ffffff;
@@ -467,6 +466,12 @@ header::before {
   background: linear-gradient(135deg, #29b5f671, #0289d1ac);
   color: white;
   box-shadow: 0 4px 10px rgba(41, 182, 246, 0.25);
+}
+
+.close-btn {
+  background: linear-gradient(135deg, #f7898971, #f23939ac);
+  color: white;
+  box-shadow: 0 4px 10px rgba(254, 255, 166, 0.25);
 }
 
 .modify-btn {

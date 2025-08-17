@@ -73,10 +73,6 @@
 
           <div v-else>
             <div class="info-row">
-              <div class="info-label">昵称</div>
-              <input class="info-input" v-model="draftProfile.nickname" />
-            </div>
-            <div class="info-row">
               <div class="info-label">联系电话</div>
               <input class="info-input" v-model="draftProfile.phone" />
             </div>
@@ -764,7 +760,7 @@ h2 {
 }
 
 .btn-logout {
-  background: #E74C3C;
+  background: #ff190095;
   color: white;
   box-shadow: 0 4px 6px rgba(231, 76, 60, 0.3);
 }

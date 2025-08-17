@@ -215,7 +215,8 @@ export default {
       }
     },
     formatDate(dateString) {
-      return new Date(dateString).toLocaleString();
+      if (!dateString) return '';
+      return new Date(dateString).toISOString().split('T')[0];
     },
     goToAddNewCert() {
       this.$router.push('/expert/cert/new');
@@ -320,10 +321,6 @@ export default {
     showRejectionReason(cert) {
       this.rejectionReason = cert;
       this.reasonDialogVisible = true;
-    },
-    formatDate(dateString) {
-      if (!dateString) return '';
-      return new Date(dateString).toLocaleDateString();
     },
     // 处理文件选择
     handleFileChange(file, fileList) {

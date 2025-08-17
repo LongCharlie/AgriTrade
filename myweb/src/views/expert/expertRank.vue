@@ -44,7 +44,10 @@
       </el-table-column>
 
       <!-- 姓名 -->
-      <el-table-column prop="username" label="专家姓名" align="center" />
+      <el-table-column prop="real_name" label="姓名" align="center" />
+
+<!--      &lt;!&ndash; 职称 &ndash;&gt;-->
+<!--      <el-table-column prop="title" label="职称" align="center" />-->
 
       <!-- 专业领域 -->
       <el-table-column prop="expertise" label="专业领域" align="center" />

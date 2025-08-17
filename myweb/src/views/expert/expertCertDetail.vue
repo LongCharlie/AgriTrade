@@ -1,16 +1,16 @@
 <template>
   <div>
     <el-container>
-      <el-aside width="0px">
-        <expert-common-aside></expert-common-aside>
-      </el-aside>
+<!--      <el-aside width="0px">-->
+<!--        <expert-common-aside></expert-common-aside>-->
+<!--      </el-aside>-->
       <el-container>
-        <el-header>
-          <expert-common-header></expert-common-header>
-        </el-header>
+<!--        <el-header>-->
+<!--          <expert-common-header></expert-common-header>-->
+<!--        </el-header>-->
         <el-main>
           <div class="certificate-detail-container">
-            <el-page-header @back="goBack" content="证书详情"></el-page-header>
+<!--            <el-page-header @back="goBack" content="证书详情"></el-page-header>-->
 
             <el-card class="certificate-card" shadow="hover">
               <div class="card-header">

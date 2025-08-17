@@ -1,50 +1,34 @@
 <template>
   <div class="container">
     <div class="content-wrapper">
+      <!-- 发布采购表单 -->
       <section class="form-section">
         <h2><i class="fas fa-edit"></i> 需求信息</h2>
-
         <div class="form-group">
           <label for="crop">作物种类:</label>
           <el-select
-              v-model="formData.crop"
-              placeholder="请选择作物种类"
-              clearable
-              filterable
+            v-model="formData.crop"
+            placeholder="请选择作物种类"
+            clearable
+            filterable
+            @change="loadPriceData"
           >
             <el-option
-                v-for="(product, index) in crops"
-                :key="product + index"
-                :label="product"
-                :value="product"
+              v-for="(product, index) in crops"
+              :key="product + index"
+              :label="product"
+              :value="product"
             />
           </el-select>
         </div>
 
         <div class="form-group">
           <label for="quantity">需求数量 (kg)</label>
-          <input type="number" id="quantity" v-model="formData.quantity" placeholder="请输入采购数量">
-        </div>
-
-        <div class="form-group">
-          <label for="deliveryAddress">收货地址</label>
-          <el-cascader
-            v-model="selectedText"
-            :options="areaOptions"
-            :props="{ value: 'label', label: 'label', children: 'children' }"
-            @change="handleLocationChange"
-            placeholder="请选择省、市、区"
-            clearable
-          />
-        </div>
-        
-        <div class="form-group" style="grid-column: span 2;">
-          <label>详细地址</label>
-          <input 
-            type="text" 
-            v-model="detailAddress"
-            placeholder="街道、门牌号等详细信息"
-            class="form-control"
+          <input
+            type="number"
+            id="quantity"
+            v-model="formData.quantity"
+            placeholder="请输入采购数量"
           />
         </div>
 
@@ -58,158 +42,135 @@
         </div>
       </section>
 
-      <section class="prediction-section">
-        <div class="prediction-header">
-          <h2><i class="fas fa-chart-line"></i> 价格参考</h2>
-          <select id="productFilter" v-model="selectedCrop">
-            <option v-for="(crop, index) in crops" :key="crop + index" :value="crop">{{ crop }}</option>
-          </select>
+      <!-- 价格信息展示 -->
+      <section v-if="priceData.data.length" class="price-section">
+        <div class="price-title">
+          {{ priceData.product }} - {{ priceData.province }} 平均价格
         </div>
-        
-        <p class="update-info">最近更新: {{ lastUpdate }}</p>
-
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>省份</th>
-                <th>今日价格 (元/公斤)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in priceData" :key="row.province" :class="{highlight: row.highlight}">
-                <td>{{ row.province }}</td>
-                <td>{{ row.price }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <el-table :data="priceData.data" border class="price-table">
+          <el-table-column prop="province" label="省份" width="150" />
+          <el-table-column prop="avg_price" label="均价 (元/斤)" />
+        </el-table>
+        <div class="trend-chart" ref="trendChart"></div>
       </section>
     </div>
   </div>
 </template>
 
-<script>
-import { pcaTextArr} from "element-china-area-data";
+<script setup>
+import { ref, onMounted, nextTick } from 'vue'
+import * as echarts from 'echarts'
+import axios from 'axios'
+import { useUserStore } from '@/stores/user'
+import { useRouter } from 'vue-router'
 
-export default {
-  data() {
-    return {
-      areaOptions: pcaTextArr,
-      province: '',             // 存储选择的省份
-      city: '',                 // 存储选择的城市
-      district: '',             // 存储选择的区县
-      detailAddress: '',        // 存储详细地址
-      selectedText: [],
-      selectedLocation: [],     // 用于绑定级联选择器的值（代码数组）
-      crops: [
-        '辣椒', '白菜', '菠菜', '葱', '豆角', 
+const userStore = useUserStore()
+const router = useRouter()
+// 表单数据
+const formData = ref({
+  crop: '',
+  quantity: ''
+})
+
+// 作物选项
+const crops = ref(['辣椒', '白菜', '菠菜', '葱', '豆角', 
         '番茄', '黄瓜', '萝卜', '南瓜', '茄子', 
-        '山药', '蒜', '土豆', '莴苣'
-      ],
-      formData: {
-        crop: '辣椒',
-        quantity: '',
-        address: ''
-      },
-      selectedCrop: '辣椒',
-      lastUpdate: '2025-08-02 10:30',
-      priceData: []
-    };
-  },
-  watch: {
-    selectedCrop(newCrop) {
-      this.updatePriceData(newCrop);
-    }
-  },
-  mounted() {
-    this.updatePriceData('辣椒');
-  },
-  methods: {
-    // 处理地址选择变化
-   handleLocationChange(textArr) {
-    [this.province, this.city, this.district] = textArr || [];
-  },
-    
-    updatePriceData(crop) {
-      // 模拟不同作物的价格数据
-      const mockData = {
-        '辣椒': [
-          { province: '北京', price: '¥6.80', weekChange: 1.2, monthChange: 5.4, highlight: true },
-          { province: '上海', price: '¥7.20', weekChange: 0.8, monthChange: 4.8 },
-          { province: '广东', price: '¥6.50', weekChange: -0.5, monthChange: 3.7 },
-          { province: '浙江', price: '¥6.90', weekChange: 1.5, monthChange: 5.1 },
-          { province: '四川', price: '¥6.20', weekChange: -1.2, monthChange: 2.9 }
-        ],
-        '白菜': [
-          { province: '北京', price: '¥2.50', weekChange: 0.4, monthChange: 3.2 },
-          { province: '上海', price: '¥2.80', weekChange: -0.3, monthChange: 2.7, highlight: true },
-          { province: '广东', price: '¥2.30', weekChange: 0.7, monthChange: 4.1 },
-          { province: '浙江', price: '¥2.60', weekChange: -0.8, monthChange: 1.9 },
-          { province: '四川', price: '¥2.20', weekChange: 1.1, monthChange: 3.5 }
-        ],
-        '番茄': [
-          { province: '北京', price: '¥5.20', weekChange: 2.1, monthChange: 8.3 },
-          { province: '上海', price: '¥5.60', weekChange: 1.8, monthChange: 7.5, highlight: true },
-          { province: '广东', price: '¥4.90', weekChange: -0.4, monthChange: 5.2 },
-          { province: '浙江', price: '¥5.30', weekChange: 1.2, monthChange: 6.8 },
-          { province: '四川', price: '¥4.80', weekChange: 0.9, monthChange: 6.1 }
-        ],
-        '土豆': [
-          { province: '北京', price: '¥3.20', weekChange: 0.5, monthChange: 2.1 },
-          { province: '上海', price: '¥3.50', weekChange: 0.3, monthChange: 1.8 },
-          { province: '广东', price: '¥2.90', weekChange: -0.2, monthChange: 1.2, highlight: true },
-          { province: '浙江', price: '¥3.30', weekChange: 0.7, monthChange: 2.3 },
-          { province: '四川', price: '¥2.80', weekChange: 0.9, monthChange: 2.5 }
-        ]
-      };
-      
-      // 如果没有特定作物的数据，使用辣椒的数据
-      this.priceData = mockData[crop] || mockData['辣椒'];
-      
-      // 更新最后更新时间
-      const now = new Date();
-      this.lastUpdate = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        '山药', '蒜', '土豆', '莴苣'])
+
+// 价格数据
+const priceData = ref({ product: '', province: '', data: [] })
+const trendData = ref([])
+
+const province = '甘肃省' // 这里你可以绑定到用户选择的省份
+
+// 获取价格数据
+const loadPriceData = async () => {
+  if (!formData.value.crop) return
+
+  const { data } = await axios.get('http://localhost:3000/api/product-price', {
+    params: { productName: formData.value.crop, province },
+    headers: { Authorization: `Bearer ${userStore.token}` }
+  })
+  priceData.value = data
+
+  const resTrend = await axios.get('http://localhost:3000/api/price-trends', {
+    params: { product: formData.value.crop, province },
+    headers: { Authorization: `Bearer ${userStore.token}` }
+  })
+  trendData.value = resTrend.data
+
+  await nextTick()
+  drawChart()
+}
+
+// 绘制价格趋势图
+const drawChart = () => {
+  const chart = echarts.init(document.querySelector('.trend-chart'))
+  chart.setOption({
+    title: { text: '价格趋势', left: 'center' },
+    tooltip: { trigger: 'axis' },
+    xAxis: { type: 'category', data: trendData.value.map(t => t.update_date) },
+    yAxis: { type: 'value' },
+    series: [
+      {
+        data: trendData.value.map(t => t.avg),
+        type: 'line',
+        smooth: true
+      }
+    ]
+  })
+}
+
+// 发布采购
+const submitForm = async () => {
+  await axios.post(
+    'http://localhost:3000/api/demands',
+    {
+      product_name: formData.value.crop,
+      quantity: formData.value.quantity
     },
-    
-    submitForm() {
-      // 检查是否选择了完整的省市区
-      if (!this.province || !this.city || !this.district) {
-        this.$message.error('请选择完整的省市区');
-        return;
-      }
-      
-      // 组合完整地址
-      const fullAddress = `${this.province}${this.city}${this.district}${this.detailAddress}`;
-      
-      if (!this.formData.crop) {
-        this.$message.error('请选择作物种类');
-        return;
-      }
-      
-      if (!this.formData.quantity || isNaN(this.formData.quantity) || this.formData.quantity <= 0) {
-        this.$message.error('请输入有效的需求数量');
-        return;
-      }
-      
-      if (!this.detailAddress) {
-        this.$message.error('请输入详细地址');
-        return;
-      }
-      
-      this.$message.success(`采购需求发布成功！作物：${this.formData.crop}，数量：${this.formData.quantity}公斤，地址：${fullAddress}`);
-      this.resetForm();
-    },
-    
-    resetForm() {
-      this.$router.push('/purchases');
+    {
+      headers: { Authorization: `Bearer ${userStore.token}` }
     }
-  }
-};
+  )
+  alert('采购发布成功')
+  resetForm()
+}
+
+// 重置表单
+const resetForm = () => {
+  router.push('/merchant/purchases');
+}
 </script>
 
 <style scoped>
-/* 原有样式保持不变 */
+
+.form-section {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.price-section {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 20px;
+}
+
+.price-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.trend-chart {
+  margin-top: 20px;
+  height: 300px;
+}
+
 * {
   margin: 0;
   padding: 0;
