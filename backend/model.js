@@ -261,21 +261,17 @@ const updateAnswer = async (answerId, expertId, content) => {
 //   return rowCount > 0;
 // };
 // 删除回答
+// 删除回答（修改现有方法）
 const deleteAnswer = async (answerId, expertId) => {
   const { rowCount } = await pool.query(
-      `DELETE FROM answers 
+    `DELETE FROM answers 
      WHERE answer_id = $1 AND expert_id = $2`,
-      [answerId, expertId]
+    [answerId, expertId]
   );
 
   // 如果成功删除回答，则将专家的回答计数减一
   if (rowCount > 0) {
-    await pool.query(
-        `UPDATE experts 
-       SET answer_count = GREATEST(answer_count - 1, 0)
-       WHERE expert_id = $1`,
-        [expertId]
-    );
+    await decrementExpertAnswerCount(expertId);
   }
 
   return rowCount > 0;
@@ -1363,14 +1359,85 @@ const incrementExpertAnswerCount = async (expertId) => {
   return result.rows[0]?.answer_count;
 };
 
+// 增加问题的回答计数
+const incrementQuestionAnswerCount = async (questionId) => {
+  const result = await pool.query(
+    'UPDATE questions SET answer_count = COALESCE(answer_count, 0) + 1 WHERE question_id = $1 RETURNING answer_count',
+    [questionId]
+  );
+  return result.rows[0]?.answer_count;
+};
+
+// 减少问题的回答计数
+const decrementQuestionAnswerCount = async (questionId) => {
+  const result = await pool.query(
+    'UPDATE questions SET answer_count = GREATEST(COALESCE(answer_count, 0) - 1 WHERE question_id = $1 RETURNING answer_count',
+    [questionId]
+  );
+  return result.rows[0]?.answer_count;
+};
+
+
+// 减少专家回答计数
+const decrementExpertAnswerCount = async (expertId) => {
+  const result = await pool.query(
+    'UPDATE experts SET answer_count = GREATEST(COALESCE(answer_count, 0) - 1, 0) WHERE expert_id = $1 RETURNING answer_count',
+    [expertId]
+  );
+  return result.rows[0]?.answer_count;
+};
+
+// 管理员删除回答（新增方法）
+const adminDeleteAnswer = async (answerId) => {
+  // 先获取回答信息以获取专家ID
+  const answer = await getAnswerById(answerId);
+  if (!answer) {
+    throw new Error('回答不存在');
+  }
+
+  // 删除回答
+  const { rowCount } = await pool.query(
+    'DELETE FROM answers WHERE answer_id = $1',
+    [answerId]
+  );
+
+  // 如果成功删除回答，则将专家的回答计数减一
+  if (rowCount > 0 && answer.expert_id) {
+    await decrementExpertAnswerCount(answer.expert_id);
+  }
+
+  return rowCount > 0;
+};
+
+const getBuyerDemands = async (buyerId) => {
+  const { rows } = await pool.query(`
+    SELECT 
+      demand_id,
+      product_name,
+      quantity,
+      status,
+      TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI:SS') AS created_at,
+      TO_CHAR(updated_at, 'YYYY-MM-DD HH24:MI:SS') AS updated_at
+    FROM purchase_demands
+    WHERE buyer_id = $1
+    ORDER BY updated_at DESC
+  `, [buyerId]);
+  return rows;
+};
+
 // 导出所有数据库操作方法
 module.exports = {
   checkUserExists,
   getTotalBuyerCount,
+  decrementExpertAnswerCount,
    getWeeklyOrderSummary,
    getMonthlyOrderSummary,
+   adminDeleteAnswer,
    getYearlyOrderSummary,
   createUser,
+  getBuyerDemands,
+  incrementQuestionAnswerCount,
+  decrementQuestionAnswerCount,
   getPendingCertificates,
   updateCertificateStatus,
   getDemandApplicationsWithFarmerInfo,
