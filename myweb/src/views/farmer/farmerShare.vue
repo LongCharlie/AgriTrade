@@ -132,7 +132,7 @@ const pagination = ref({ currentPage: 1, pageSize: 10 })
 // ====== 数据获取 ======
 const fetchExperiences = async () => {
   try {
-    const { data } = await axios.get('http://localhost:3000/api/experiences')
+    const { data } = await axios.get('http://localhost:3000/api/experience')
     experiences.value = data
   } catch (err) {
     ElMessage.error('获取经验列表失败')

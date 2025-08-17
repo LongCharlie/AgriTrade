@@ -95,7 +95,7 @@ router.get('/experiences/:id/author', async (req, res) => {
 });
 
 // 获取所有经验分享（带作者信息）
-router.get('/experiences', async (req, res) => {
+router.get('/experience', async (req, res) => {
   try {
     const experiences = await require('../model').getAllExperiencesWithAuthor();
     res.json(experiences);

@@ -347,7 +347,7 @@ const fileInput = ref(null)
 // 获取订单列表
 const fetchOrders = async () => {
   try {
-    const res = await axios.get('/merchant/orders/all', {
+    const res = await axios.get('http://localhost:3000/merchant/orders/all', {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
     orders.value = res.data.map(row => ({
