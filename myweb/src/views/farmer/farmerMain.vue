@@ -86,7 +86,6 @@ const goToQuestionForm = () => {
 </script>
 
 <style scoped>
-
 .info-cards .info-card {
   margin-top: 40px;
   margin-bottom: 20px; /* 统一每个卡片的下边距 */

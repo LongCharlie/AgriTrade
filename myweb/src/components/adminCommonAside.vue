@@ -125,7 +125,12 @@ export default {
   height: 100vh; /* 全屏高度 */
   margin: 0;
   padding: 0;
-  position: relative; /* 为绝对定位的子元素提供基准 */
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 180px;     /* 侧栏宽度 */
+  z-index: 100;     /* 确保在内容之上 */
 }
 
 .el-menu-vertical-demo {

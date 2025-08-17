@@ -1,13 +1,13 @@
 <template>
-  <div>
-    <el-container style="height: 100vh;">
+  <div class="container-fluid">
+    <el-container style="height: 95vh; ">
       <el-aside class="aside" width="200px" style="overflow: hidden;">
         <CommonAside></CommonAside>
         <CommonHeader></CommonHeader>
       </el-aside>
-      <el-container style="overflow: auto; margin-top: 91px;">
+      <el-container class="content" style="overflow: auto; margin-top: 91px;">
         <el-main style="padding-top: 0;">
-          <router-view style="margin-left: 20px;" />
+          <router-view style="margin-left: 0px;margin-right: 40px;" />
         </el-main>
       </el-container>
     </el-container>
