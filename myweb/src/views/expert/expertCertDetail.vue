@@ -433,7 +433,7 @@ export default {
   //display: flex;
   //justify-content: center;
   //align-items: center;
-  height: 800px;
+  height: 600px;
   //border: 1px solid #eee;
   border-radius: 4px;
   overflow: hidden;

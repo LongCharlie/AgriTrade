@@ -304,7 +304,7 @@ export default {
 /* 问题卡片样式微调 */
 .question-card {
   margin-bottom: 20px;
-  background-color: #F7FFF9;
+  //background-color: #F7FFF9;
 }
 
 /* 确保内容区域有足够空间 */

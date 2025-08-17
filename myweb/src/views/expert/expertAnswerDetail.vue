@@ -234,11 +234,11 @@
                 </div>
               </div>
 
-              <div class="answer-actions">
+<!--              <div class="answer-actions">-->
 <!--                <el-button type="text" icon="el-icon-thumb">-->
 <!--                  {{ answer.upvotes || 0 }} 有用-->
 <!--                </el-button>-->
-              </div>
+<!--              </div>-->
             </el-card>
           </div>
         </el-main>

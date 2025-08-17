@@ -23,7 +23,7 @@
 <!--              </div>-->
 
 <!--              <div>-->
-<!--                <p><strong>提问者：</strong>{{ question.username || '匿名' }}</p>-->
+<!--                <p><strong>提问者：</strong>{{ question.farmer_name || '匿名' }}</p>-->
 <!--                <p><strong>时间：</strong>{{ formatDate(question.created_at) }}</p>-->
 <!--                <p><strong>内容：</strong>{{ question.content }}</p>-->
 
@@ -38,7 +38,7 @@
 <!--                        :preview-src-list="getPreviewList(question.images)"-->
 <!--                        :initial-index="index"-->
 <!--                        class="question-image"-->
-<!--                        fit="cover"-->
+<!--                        fit="scale-down"-->
 <!--                        lazy-->
 <!--                    >-->
 <!--                      <div slot="error" class="image-slot">-->
@@ -92,7 +92,7 @@
 <!--        <el-avatar-->
 <!--            @click="$router.push(`/expert/detail/${answer.expert_id}`)"-->
 <!--            :size="40"-->
-<!--            :src="answer.avatar_url || defaultAvatar"-->
+<!--            :src="`http://localhost:3000${answer.expert_avatar_url}`"-->
 <!--        ></el-avatar>-->
 <!--        <div>-->
 <!--          <strong>{{ answer.real_name }}</strong>-->
@@ -103,28 +103,38 @@
 <!--                </div>-->
 <!--                <div class="answer-content">{{ answer.content }}</div>-->
 
-<!--                &lt;!&ndash; 回答图片展示 &ndash;&gt;-->
-<!--                <div v-if="answer.images && answer.images.length > 0" class="answer-images">-->
-<!--                  <div class="image-gallery">-->
-<!--                    <el-image-->
-<!--                        v-for="(image, index) in answer.images"-->
-<!--                        :key="image.id"-->
-<!--                        :src="`http://localhost:3000${image.url}`"-->
-<!--                        :preview-src-list="getAnswerPreviewList(answer.images)"-->
-<!--                        :initial-index="index"-->
-<!--                        class="answer-image"-->
-<!--                        fit="cover"-->
-<!--                        lazy-->
-<!--                    >-->
-<!--                      <div slot="error" class="image-slot">-->
-<!--                        <i class="el-icon-picture-outline"></i>-->
-<!--                      </div>-->
-<!--                    </el-image>-->
-<!--                  </div>-->
-<!--                </div>-->
+<!--&lt;!&ndash;                &lt;!&ndash; 回答图片展示 &ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;                <div v-if="answer.images && answer.images.length > 0" class="answer-images">&ndash;&gt;-->
+<!--&lt;!&ndash;                  <div class="image-gallery">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <el-image&ndash;&gt;-->
+<!--&lt;!&ndash;                        v-for="(image, index) in answer.images"&ndash;&gt;-->
+<!--&lt;!&ndash;                        :key="image.id"&ndash;&gt;-->
+<!--&lt;!&ndash;                        :src="`http://localhost:3000${image.url}`"&ndash;&gt;-->
+<!--&lt;!&ndash;                        :preview-src-list="getAnswerPreviewList(answer.images)"&ndash;&gt;-->
+<!--&lt;!&ndash;                        :initial-index="index"&ndash;&gt;-->
+<!--&lt;!&ndash;                        class="answer-image"&ndash;&gt;-->
+<!--&lt;!&ndash;                        fit="cover"&ndash;&gt;-->
+<!--&lt;!&ndash;                        lazy&ndash;&gt;-->
+<!--&lt;!&ndash;                    >&ndash;&gt;-->
+<!--&lt;!&ndash;                      <div slot="error" class="image-slot">&ndash;&gt;-->
+<!--&lt;!&ndash;                        <i class="el-icon-picture-outline"></i>&ndash;&gt;-->
+<!--&lt;!&ndash;                      </div>&ndash;&gt;-->
+<!--&lt;!&ndash;                    </el-image>&ndash;&gt;-->
+<!--&lt;!&ndash;                  </div>&ndash;&gt;-->
+<!--&lt;!&ndash;                </div>&ndash;&gt;-->
 
 <!--                <div class="answer-footer">-->
-<!--                  <el-button type="text" icon="el-icon-thumb">{{ answer.upvotes || 0 }} 有用</el-button>-->
+<!--&lt;!&ndash;                  <el-button type="text" icon="el-icon-thumb">{{ answer.upvotes || 0 }} 有用</el-button>&ndash;&gt;-->
+<!--                  &lt;!&ndash; 添加删除按钮 &ndash;&gt;-->
+<!--                  <el-button-->
+<!--                      v-if="answer.expert_id === userStore.userId"-->
+<!--                      type="text"-->
+<!--                      icon="el-icon-delete"-->
+<!--                      @click.stop="deleteAnswer(answer.answer_id)"-->
+<!--                      style="color: #f56c6c; margin-left: 10px;"-->
+<!--                  >-->
+<!--                    删除回答-->
+<!--                  </el-button>-->
 <!--                </div>-->
 <!--              </el-card>-->
 <!--            </div>-->
@@ -140,7 +150,7 @@
 <!--import expertCommonAside from "@/components/expertCommonAside.vue";-->
 <!--import expertCommonHeader from "@/components/expertCommonHeader.vue";-->
 <!--import axios from "axios";-->
-<!--import { ElMessage } from 'element-plus';-->
+<!--import { ElMessage, ElMessageBox } from 'element-plus';-->
 <!--import { Plus } from '@element-plus/icons-vue';-->
 
 <!--export default {-->
@@ -248,6 +258,37 @@
 <!--        console.error('提交回答失败:', error);-->
 <!--      } finally {-->
 <!--        this.submitting = false;-->
+<!--      }-->
+<!--    },-->
+<!--    // 删除回答功能-->
+<!--    async deleteAnswer(answerId) {-->
+<!--      try {-->
+<!--        await ElMessageBox.confirm(-->
+<!--            '确定要删除这个回答吗？此操作不可恢复',-->
+<!--            '确认删除',-->
+<!--            {-->
+<!--              confirmButtonText: '确定',-->
+<!--              cancelButtonText: '取消',-->
+<!--              type: 'warning'-->
+<!--            }-->
+<!--        );-->
+
+<!--        const token = this.userStore.token;-->
+<!--        await axios.delete(`http://localhost:3000/api/answer/${answerId}`, {-->
+<!--          headers: {-->
+<!--            Authorization: `Bearer ${token}`-->
+<!--          }-->
+<!--        });-->
+
+<!--        ElMessage.success('回答删除成功');-->
+<!--        // 重新获取回答列表-->
+<!--        this.fetchAnswers();-->
+<!--        this.fetchQuestion();-->
+<!--      } catch (error) {-->
+<!--        if (error !== 'cancel') {-->
+<!--          ElMessage.error('删除回答失败: ' + (error.response?.data?.error || error.message));-->
+<!--          console.error('删除回答失败:', error);-->
+<!--        }-->
 <!--      }-->
 <!--    },-->
 <!--    // 获取问题图片预览列表-->
@@ -406,7 +447,7 @@
 <!--  border-radius: 4px;-->
 <!--  overflow: hidden;-->
 <!--  cursor: pointer;-->
-<!--  border: 1px solid #eee;-->
+<!--  //border: 1px solid #eee;-->
 <!--}-->
 
 <!--.image-slot {-->
@@ -467,7 +508,7 @@
                         :preview-src-list="getPreviewList(question.images)"
                         :initial-index="index"
                         class="question-image"
-                        fit="cover"
+                        fit="scale-down"
                         lazy
                     >
                       <div slot="error" class="image-slot">
@@ -532,31 +573,9 @@
                 </div>
                 <div class="answer-content">{{ answer.content }}</div>
 
-                <!-- 回答图片展示 -->
-                <div v-if="answer.images && answer.images.length > 0" class="answer-images">
-                  <div class="image-gallery">
-                    <el-image
-                        v-for="(image, index) in answer.images"
-                        :key="image.id"
-                        :src="`http://localhost:3000${image.url}`"
-                        :preview-src-list="getAnswerPreviewList(answer.images)"
-                        :initial-index="index"
-                        class="answer-image"
-                        fit="cover"
-                        lazy
-                    >
-                      <div slot="error" class="image-slot">
-                        <i class="el-icon-picture-outline"></i>
-                      </div>
-                    </el-image>
-                  </div>
-                </div>
-
-                <div class="answer-footer">
-<!--                  <el-button type="text" icon="el-icon-thumb">{{ answer.upvotes || 0 }} 有用</el-button>-->
+                <div class="answer-footer" v-if="answer.expert_id === userStore.userId">
                   <!-- 添加删除按钮 -->
                   <el-button
-                      v-if="answer.expert_id === userStore.userId"
                       type="text"
                       icon="el-icon-delete"
                       @click.stop="deleteAnswer(answer.answer_id)"
@@ -788,6 +807,8 @@ export default {
 
 .answer-footer {
   text-align: right;
+  padding-top: 10px;
+  border-top: 1px solid #f0f0f0;
 }
 
 .tag {
@@ -851,12 +872,6 @@ export default {
   padding: 0 10px;
 }
 
-.answer-footer {
-  text-align: right;
-  padding-top: 10px;
-  border-top: 1px solid #f0f0f0;
-}
-
 /* 问题图片样式 */
 .question-images, .answer-images {
   margin-top: 20px;
@@ -876,7 +891,7 @@ export default {
   border-radius: 4px;
   overflow: hidden;
   cursor: pointer;
-  border: 1px solid #eee;
+  //border: 1px solid #eee;
 }
 
 .image-slot {
