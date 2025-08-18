@@ -83,7 +83,7 @@ let pollingTimer = null
 // 获取会话列表
 const fetchChatList = async () => {
   try {
-    const res = await axios.get('/api/chat/list', {
+    const res = await axios.get('http://localhost:3000/api/list', {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
     users.value = res.data.map(chat => ({

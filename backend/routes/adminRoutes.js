@@ -123,8 +123,6 @@ router.patch('/users/:id',
     }
 });
 
-
-
 // // 管理员更新用户信息
 // router.patch('/users/:id',
 //   authMiddleware.authenticateToken,
