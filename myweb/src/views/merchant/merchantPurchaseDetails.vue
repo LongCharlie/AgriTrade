@@ -107,12 +107,15 @@ import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import { useUserStore } from '@/stores/user' // ✅ 引入 Pinia 用户状态
 import { ElMessage } from 'element-plus'
+import {useSeeRecordStore} from "@/stores/seeRecord";
 
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore() // ✅ 获取用户状态
 const demandId = route.params.id
+const seeRecordStore = useSeeRecordStore();
+
 
 const applications = ref([])
 const totalApplications = ref(0)
@@ -155,13 +158,14 @@ const goBack = () => {
   router.back()
 }
 
-const handleAction = (farmerName, action, recordId = null) => {
+const handleAction = (farmerName, action, recordId) => {
   if (action === 'profile') {
     router.push(`/farmer/profile/${farmerName}`)
   } else if (action === 'message') {
     alert(`确认与 ${farmerName} 的报价`)
-  } else if (action === 'record' && recordId) {
-    router.push(`/farmer/record/${recordId}`)
+  } else if (action === 'record') { //别改
+    seeRecordStore.recordId =  recordId;
+    router.push(`purchaseDetail/record`)
   }
 }
 
