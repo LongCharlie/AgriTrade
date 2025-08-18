@@ -9,7 +9,7 @@
       <!-- 第二名 -->
       <div class="podium-item second" v-if="topExperts[1]">
         <div class="podium-rank">2</div>
-        <el-avatar class="avatar" shadow="hover" @click="viewDetails(topExperts[1].expert_id)" :src="topExperts[1].avatar_url" size="large" />
+        <el-avatar class="avatar" shadow="hover" @click="viewDetails(topExperts[1].expert_id)" :src="`http://localhost:3000/uploads/avatars/${topExperts[1].avatar_url}`" size="large" />
         <div class="podium-name">{{ topExperts[1].real_name }}</div>
         <div class="podium-score">{{ topExperts[1].answer_count }} 回答</div>
       </div>
@@ -17,7 +17,7 @@
       <!-- 第一名 -->
       <div class="podium-item first" v-if="topExperts[0]">
         <div class="podium-rank">1</div>
-        <el-avatar class="avatar" shadow="hover" @click="viewDetails(topExperts[0].expert_id)" :src="topExperts[0].avatar_url" size="large" />
+        <el-avatar class="avatar" shadow="hover" @click="viewDetails(topExperts[0].expert_id)" :src="`http://localhost:3000/uploads/avatars/${topExperts[0].avatar_url}`" size="large" />
         <div class="podium-name">{{ topExperts[0].real_name }}</div>
         <div class="podium-score">{{ topExperts[0].answer_count }} 回答</div>
       </div>
@@ -25,7 +25,7 @@
       <!-- 第三名 -->
       <div class="podium-item third" v-if="topExperts[2]">
         <div class="podium-rank">3</div>
-        <el-avatar class="avatar" shadow="hover" @click="viewDetails(topExperts[2].expert_id)" :src="topExperts[2].avatar_url" size="large" />
+        <el-avatar class="avatar" shadow="hover" @click="viewDetails(topExperts[2].expert_id)" :src="`http://localhost:3000/uploads/avatars/${topExperts[2].avatar_url}`" size="large" />
         <div class="podium-name">{{ topExperts[2].real_name }}</div>
         <div class="podium-score">{{ topExperts[2].answer_count }} 回答</div>
       </div>
@@ -44,7 +44,10 @@
       </el-table-column>
 
       <!-- 姓名 -->
-      <el-table-column prop="username" label="专家姓名" align="center" />
+      <el-table-column prop="real_name" label="姓名" align="center" />
+
+<!--      &lt;!&ndash; 职称 &ndash;&gt;-->
+<!--      <el-table-column prop="title" label="职称" align="center" />-->
 
       <!-- 专业领域 -->
       <el-table-column prop="expertise" label="专业领域" align="center" />
@@ -160,6 +163,7 @@ export default {
       try {
         const response = await axios.get('http://localhost:3000/api/expert-rankings');
         this.rankList = response.data;
+        console.log(this.rankList);
       } catch (error) {
         console.error('获取专家排名失败:', error);
       }

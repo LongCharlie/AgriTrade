@@ -45,9 +45,9 @@
         <div class="card-header">
           <span class="question-title" v-html="highlightSearchText(question.title, true)"></span>
           <div class="tag">
-            <el-tag :type="question.answer_count === 0 ? 'warning' : 'success'">
-              {{ question.answer_count === 0 ? '未回答' : '已回答' }}
-            </el-tag>
+<!--            <el-tag :type="question.answer_count === 0 ? 'warning' : 'success'">-->
+<!--              {{ question.answer_count === 0 ? '未回答' : '已回答' }}-->
+<!--            </el-tag>-->
             <el-tag v-if="filter === 'mine' || (filter === 'all' && question.farmer_id === userStore.userId)" :type="question.status === 'open' ? 'success' : 'info'">
               {{ question.status === 'open' ? '开启' : '关闭' }}
             </el-tag>
@@ -418,7 +418,7 @@ export default {
 /* 问题卡片样式微调 */
 .question-card {
   margin-bottom: 20px;
-  background-color: #F7FFF9;
+  //background-color: #F7FFF9;
 }
 
 /* 确保内容区域有足够空间 */

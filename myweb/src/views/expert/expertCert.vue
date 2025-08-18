@@ -102,8 +102,8 @@
               :on-remove="handleRemove"
               list-type="picture-card"
               v-model:file-list="fileList">
-            <el-icon v-if="fileList.length === 0 && !editingCert.image_url"><Plus /></el-icon>
-            <div v-if="fileList.length === 0 && !editingCert.image_url" class="el-upload__text">
+            <el-icon><Plus /></el-icon>
+            <div class="el-upload__text">
               点击上传图片 <br/>
               <span style="font-size: 12px; color: #999;">支持jpg/png格式，不超过5MB</span>
             </div>
@@ -115,7 +115,7 @@
             <el-image
                 :src="editingCert.image_url.startsWith('http') ? editingCert.image_url : `http://localhost:3000${editingCert.image_url}`"
                 class="certificate-image-preview"
-                fit="cover"
+                fit="scale-down"
                 :preview-src-list="[editingCert.image_url.startsWith('http') ? editingCert.image_url : `http://localhost:3000${editingCert.image_url}`]"
                 hide-on-click-modal>
             </el-image>
@@ -215,7 +215,8 @@ export default {
       }
     },
     formatDate(dateString) {
-      return new Date(dateString).toLocaleString();
+      if (!dateString) return '';
+      return new Date(dateString).toISOString().split('T')[0];
     },
     goToAddNewCert() {
       this.$router.push('/expert/cert/new');
@@ -320,10 +321,6 @@ export default {
     showRejectionReason(cert) {
       this.rejectionReason = cert;
       this.reasonDialogVisible = true;
-    },
-    formatDate(dateString) {
-      if (!dateString) return '';
-      return new Date(dateString).toLocaleDateString();
     },
     // 处理文件选择
     handleFileChange(file, fileList) {

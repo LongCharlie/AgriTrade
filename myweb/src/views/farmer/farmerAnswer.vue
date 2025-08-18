@@ -23,7 +23,7 @@
               </div>
 
               <div>
-                <p><strong>提问者：</strong>{{ question.username || '匿名' }}</p>
+                <p><strong>提问者：</strong>{{ question.farmer_name || '匿名' }}</p>
                 <p><strong>时间：</strong>{{ formatDate(question.created_at) }}</p>
                 <p><strong>内容：</strong>{{ question.content }}</p>
 
@@ -38,7 +38,7 @@
                         :preview-src-list="getPreviewList(question.images)"
                         :initial-index="index"
                         class="question-image"
-                        fit="cover"
+                        fit="scale-down"
                         lazy
                     >
                       <div slot="error" class="image-slot">
@@ -70,9 +70,9 @@
                 <div class="answer-header">
       <span class="expert-info">
         <el-avatar
-            @click.stop="$router.push(`/expert/detail/${answer.expert_id}`)"
+            @click.stop="$router.push(`/farmer/detail/${answer.expert_id}`)"
             :size="40"
-            :src="answer.avatar_url || defaultAvatar"
+            :src="`http://localhost:3000${answer.expert_avatar_url}`"
         ></el-avatar>
         <div>
           <strong>{{ answer.real_name }}</strong>
@@ -82,17 +82,17 @@
                   <span class="answer-time">{{ formatDate(answer.answered_at) }}</span>
                 </div>
                 <div class="answer-content">{{ answer.content }}</div>
-                <div class="answer-footer">
-<!--                  <el-button type="text" icon="el-icon-thumb">{{ answer.upvotes || 0 }} 有用</el-button>-->
-                  <el-button
-                      v-if="question.user_id === userStore.userId"
-                      type="text"
-                      icon="el-icon-delete"
-                      @click="deleteAnswer(answer.answer_id)"            style="color: #f56c6c; margin-left: 10px;"
-                  >
-                    删除
-                  </el-button>
-                </div>
+<!--                <div class="answer-footer">-->
+<!--&lt;!&ndash;                  <el-button type="text" icon="el-icon-thumb">{{ answer.upvotes || 0 }} 有用</el-button>&ndash;&gt;-->
+<!--                  <el-button-->
+<!--                      v-if="question.user_id === userStore.userId"-->
+<!--                      type="text"-->
+<!--                      icon="el-icon-delete"-->
+<!--                      @click="deleteAnswer(answer.answer_id)"            style="color: #f56c6c; margin-left: 10px;"-->
+<!--                  >-->
+<!--                    删除-->
+<!--                  </el-button>-->
+<!--                </div>-->
               </el-card>
             </div>
           </div>
@@ -363,7 +363,7 @@ export default {
   border-radius: 4px;
   overflow: hidden;
   cursor: pointer;
-  border: 1px solid #eee;
+  //border: 1px solid #eee;
 }
 
 .image-slot {

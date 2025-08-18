@@ -1,16 +1,16 @@
 <template>
   <div>
     <el-container>
-      <el-aside width="0px">
-        <expert-common-aside></expert-common-aside>
-      </el-aside>
+<!--      <el-aside width="0px">-->
+<!--        <expert-common-aside></expert-common-aside>-->
+<!--      </el-aside>-->
       <el-container>
-        <el-header>
-          <expert-common-header></expert-common-header>
-        </el-header>
+<!--        <el-header>-->
+<!--          <expert-common-header></expert-common-header>-->
+<!--        </el-header>-->
         <el-main>
           <div class="certificate-detail-container">
-            <el-page-header @back="goBack" content="证书详情"></el-page-header>
+<!--            <el-page-header @back="goBack" content="证书详情"></el-page-header>-->
 
             <el-card class="certificate-card" shadow="hover">
               <div class="card-header">
@@ -69,7 +69,7 @@
                       <el-image
                           :src="`http://localhost:3000${certificate.image_url}`"
                           class="certificate-image"
-                          fit="contain"
+                          fit="scale-down"
                           :preview-src-list="[`http://localhost:3000${certificate.image_url}`]"
                           hide-on-click-modal>
                         <div slot="error" class="image-slot">
@@ -430,11 +430,11 @@ export default {
 }
 
 .image-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 310px;
-  border: 1px solid #eee;
+  //display: flex;
+  //justify-content: center;
+  //align-items: center;
+  height: 600px;
+  //border: 1px solid #eee;
   border-radius: 4px;
   overflow: hidden;
 }

@@ -201,8 +201,8 @@
 <!--</style>-->
 <template>
   <div class="expert-detail-container">
-<!--    &lt;!&ndash; 返回按钮 &ndash;&gt;-->
-<!--    <el-button @click="$router.back()" icon="ArrowLeftBold" plain style="background-color: #4C9148; color: #eeeeee">返回</el-button>-->
+    <!--    &lt;!&ndash; 返回按钮 &ndash;&gt;-->
+    <!--    <el-button @click="$router.back()" icon="ArrowLeftBold" plain style="background-color: #4C9148; color: #eeeeee">返回</el-button>-->
 
     <!-- 加载状态 -->
     <div v-if="loading" class="loading">加载中...</div>
@@ -224,7 +224,7 @@
           <p><strong>所属机构：</strong>{{ expert.institution || '暂无' }}</p>
           <p><strong>专业领域：</strong>{{ expert.expertise || '暂无' }}</p>
           <p><strong>回答数：</strong>{{ expert.answer_count || 0 }}</p>
-<!--          <p><strong>专家排名：</strong>{{ expert.expert_rank || '暂无' }}</p>-->
+          <!--          <p><strong>专家排名：</strong>{{ expert.expert_rank || '暂无' }}</p>-->
           <p><strong>个人简介：</strong></p>
           <p class="bio">{{ expert.bio || '暂无简介' }}</p>
 
@@ -308,9 +308,9 @@
               <label>证书图片：</label>
               <el-image
                   :src="`http://localhost:3000${selectedCertificate.image_url}`"
-                  :preview-src-list="[`http://localhost:3000${selectedCertificate.image_url}`]"
+                  :preview-src-list="[selectedCertificate.image_url]"
                   class="certificate-detail-image"
-                  fit="scale-down"
+                  fit="contain"
                   lazy
               >
                 <div slot="error" class="image-slot">
@@ -513,9 +513,9 @@ export default {
 
 .certificate-detail-image {
   width: 100%;
-  max-height: 800px;
+  max-height: 300px;
   border-radius: 4px;
-  //border: 1px solid #ebeef5;
+  border: 1px solid #ebeef5;
 }
 
 .image-slot, .no-image-placeholder {

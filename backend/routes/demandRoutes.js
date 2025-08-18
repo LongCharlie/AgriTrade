@@ -288,4 +288,27 @@ const applications = await require('../model').query(
   }
 );
 
+// 获取当前买家的采购需求列表
+router.get('/buyer/demands', 
+  authMiddleware.authenticateToken, 
+  authMiddleware.checkRole([ROLES.BUYER]), 
+  async (req, res) => {
+    try {
+      const buyerId = req.user.userId;
+      const demands = await require('../model').getBuyerDemands(buyerId);
+      
+      res.json({
+        success: true,
+        data: demands
+      });
+    } catch (error) {
+      console.error('获取采购需求列表失败:', error);
+      res.status(500).json({ 
+        success: false,
+        error: '获取采购需求列表失败' 
+      });
+    }
+  }
+);
+
 module.exports = router;
