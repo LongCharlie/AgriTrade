@@ -34,7 +34,6 @@
       </el-table-column>
       <el-table-column label="操作" width="180" fixed="right">
         <template #default="{ row }">
-          <el-button size="small" @click="showDetail(row)">查看详情</el-button>
           <el-button
             v-if="row.status === 'pending'"
             size="small"
@@ -135,12 +134,13 @@ export default {
             Authorization: `Bearer ${token}`
           }
         });
+        console.log('接口返回的数据:', res.data);
         this.comments = res.data.map(c => ({
           ...c,
-          creation_date: c.creation_date,
+          creation_date: c.created_at,
           status: c.status,
-          commenter: c.commenter,
-          article_title: c.article_title,
+          commenter: c.commenter_name,
+          article_title: c.experience_title,
           content: c.content
         }));
         this.pagination.current = 1;
