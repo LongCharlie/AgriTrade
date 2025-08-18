@@ -64,6 +64,7 @@
               :before-upload="beforeImageUpload"
               :on-change="handleImageChange"
               :on-remove="handleRemove"
+              :file-list="uploadFile"
           >
             <el-button>点击上传</el-button>
           </el-upload>
@@ -284,7 +285,13 @@ const submitActivity = async () => {
       }
     });
     ElMessage.success('成功提交活动');
-    router.push('/farmer/planting');
+    formData.value.activity_type = '';
+    formData.value.description = '';
+    uploadAactivityImages.value = [];
+    activityImages.value = [];
+    uploadFile.value = [];
+    await fetchHistoricalRecords();
+    // router.push('/farmer/planting');
     // location.reload(); // 刷新页面
   } catch (error) {
     console.error('提交失败:', error);
@@ -302,7 +309,8 @@ const finishPlanting = async () => {
       }
     });
     ElMessage.success('成功结束种植活动');
-    router.push('/farmer/planting');
+    formData.value.growth_status = 'harvested';
+    // router.push('/farmer/planting');
   } catch (error) {
     console.error('结束种植失败:', error);
     ElMessage.error('结束种植失败，请重试！');
