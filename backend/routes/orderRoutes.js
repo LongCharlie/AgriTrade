@@ -106,7 +106,7 @@ router.get('/merchant/orders/all',
         ORDER BY o.created_at DESC
       `;
       
-      const { rows } = await pool.query(query, [buyerId]);
+      const { rows } = await require('../model').query(query, [buyerId]);
       res.json(rows);
     } catch (error) {
       console.error('获取订单信息失败:', error);
@@ -138,7 +138,7 @@ router.get('/merchant/logistics',
         ORDER BY o.shipment_time DESC
       `;
       
-      const { rows } = await pool.query(query, [buyerId]);
+      const { rows } = await require('../model').query(query, [buyerId]);
       res.json(rows);
     } catch (error) {
       console.error('获取物流信息失败:', error);
@@ -171,7 +171,7 @@ router.get('/merchant/pending-after-sale',
         ORDER BY o.created_at DESC
       `;
       
-      const { rows } = await pool.query(query, [buyerId]);
+      const { rows } = await require('../model').query(query, [buyerId]);
       res.json(rows);
     } catch (error) {
       console.error('获取待审核售后信息失败:', error);
@@ -206,7 +206,7 @@ router.get('/merchant/reviewed-after-sale',
         ORDER BY o.resolved_at DESC
       `;
       
-      const { rows } = await pool.query(query, [buyerId]);
+      const { rows } = await require('../model').query(query, [buyerId]);
       res.json(rows);
     } catch (error) {
       console.error('获取已审核售后信息失败:', error);
@@ -240,7 +240,7 @@ router.post('/:id/after-sale',
       }
 
       // 更新订单状态和售后信息
-      const result = await pool.query(
+      const result = await require('../model').query(
         `UPDATE orders 
          SET 
            status = 'after_sale_requested',

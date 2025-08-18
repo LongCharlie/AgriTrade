@@ -159,6 +159,9 @@ CREATE TABLE `experiences`  (
   INDEX `user_id`(`user_id`) USING BTREE,
   INDEX `audit_status_idx`(`audit_status`) USING BTREE,
   FULLTEXT INDEX `content_ft_idx`(`title`, `content`),
+  ADD COLUMN reviewed_by INT NULL,
+  ADD COLUMN reviewed_at TIMESTAMP ,
+  CONSTRAINT experiences_ibfk_2 FOREIGN KEY (reviewed_by) REFERENCES users (user_id) ON DELETE SET NULL ON UPDATE RESTRICT
   CONSTRAINT `experiences_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE RESTRICT
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
