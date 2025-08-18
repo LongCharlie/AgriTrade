@@ -347,24 +347,31 @@ const fileInput = ref(null)
 // 获取订单列表
 const fetchOrders = async () => {
   try {
-    const res = await axios.get('/merchant/orders/all', {
-      headers: { Authorization: `Bearer ${userStore.token}` }
-    })
-    orders.value = res.data.map(row => ({
-      orderId: row.order_id,
-      productName: row.product_name,
-      quantity: row.quantity,
-      price: row.price,
-      destination: row.ship_address,
-      sender: row.sender,
-      contact: row.farmer_phone,
-      time: row.created_at,
-      status: row.status
-    }))
+  const res = await axios.get('http://localhost:3000/api/merchant/orders/all', {
+    headers: { Authorization: `Bearer ${userStore.token}` }
+  })
+  orders.value = res.data.map(row => ({
+    orderId: row.order_id,
+    productName: row.product_name,
+    quantity: row.quantity,
+    price: row.price,
+    destination: row.ship_address,
+    sender: row.sender,
+    contact: row.farmer_phone,
+    time: row.created_at,
+    status: row.status
+  }))
   } catch (err) {
-    console.error('获取订单失败:', err)
-    ElMessage.error('获取订单失败')
+    console.error('获取订单失败:', err.message, err.response?.data)
+    if (err.response?.status === 401) {
+      ElMessage.error('登录已过期，请重新登录')
+    } else if (err.response?.status === 500) {
+      ElMessage.error('服务器错误，请稍后重试')
+    } else {
+      ElMessage.error('获取订单失败')
+    }
   }
+
 }
 
 // 过滤后的订单

@@ -94,6 +94,7 @@
 <script>
 import axios from 'axios'
 import { useUserStore } from '@/stores/user'
+import { ElMessage } from 'element-plus';
 
 export default {
   setup() {
@@ -129,7 +130,7 @@ export default {
     async refreshData() {
       try {
         const token = this.userStore.token
-        const res = await axios.get('http://localhost:3000/api/experiences', {
+        const res = await axios.get('http://localhost:3000/api/experience', {
           headers: {
             Authorization: `Bearer ${token}`
           },
@@ -137,18 +138,19 @@ export default {
             status: this.filterStatus || undefined
           }
         })
+        console.log('经验数据返回:', res.data)
         this.allArticles = res.data.map(item => ({
-          id: item.experience_id,
-          title: item.title,
-          content: item.content,
-          author: item.author,
-          createTime: item.create_time,
-          status: item.audit_status
-        }))
+        id: item.experience_id,
+        title: item.title,
+        content: item.content,
+        author: item.author_name,
+        createTime: item.created_at,
+        status: item.audit_status
+      }))
+
         this.currentPage = 1
       } catch (error) {
-        console.error('获取经验失败:', error)
-        alert('获取数据失败')
+        ElMessage.error('经验分享数据加载失败');
       }
     },
     async approveArticle(article) {
@@ -187,7 +189,6 @@ export default {
   }
 }
 </script>
-
 
 <style scoped>
 * {

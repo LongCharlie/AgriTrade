@@ -66,6 +66,7 @@ import { useRouter } from 'vue-router'
 
 const userStore = useUserStore()
 const router = useRouter()
+
 // 表单数据
 const formData = ref({
   crop: '',
@@ -73,31 +74,43 @@ const formData = ref({
 })
 
 // 作物选项
-const crops = ref(['辣椒', '白菜', '菠菜', '葱', '豆角', 
-        '番茄', '黄瓜', '萝卜', '南瓜', '茄子', 
-        '山药', '蒜', '土豆', '莴苣'])
+const crops = ref([
+  '辣椒', '白菜', '菠菜', '葱', '豆角', 
+  '番茄', '黄瓜', '萝卜', '南瓜', '茄子', 
+  '山药', '蒜', '土豆', '莴苣'
+])
 
-// 价格数据
+// 价格数据与趋势图数据
 const priceData = ref({ product: '', province: '', data: [] })
 const trendData = ref([])
 
-const province = '甘肃省' // 这里你可以绑定到用户选择的省份
+const province = '甘肃'
 
 // 获取价格数据
 const loadPriceData = async () => {
   if (!formData.value.crop) return
 
-  const { data } = await axios.get('http://localhost:3000/api/product-price', {
-    params: { productName: formData.value.crop, province },
-    headers: { Authorization: `Bearer ${userStore.token}` }
-  })
-  priceData.value = data
+  try {
+    const { data } = await axios.get('http://localhost:3000/api/product-price', {
+      params: { productName: formData.value.crop, province },
+      headers: { Authorization: `Bearer ${userStore.token}` }
+    })
+    priceData.value = data
+  } catch (err) {
+    console.warn('价格数据获取失败:', err)
+    priceData.value = { product: '', province: '', data: [] }
+  }
 
-  const resTrend = await axios.get('http://localhost:3000/api/price-trends', {
-    params: { product: formData.value.crop, province },
-    headers: { Authorization: `Bearer ${userStore.token}` }
-  })
-  trendData.value = resTrend.data
+  try {
+    const resTrend = await axios.get('http://localhost:3000/api/price-trends', {
+      params: { product: formData.value.crop, province },
+      headers: { Authorization: `Bearer ${userStore.token}` }
+    })
+    trendData.value = resTrend.data
+  } catch (err) {
+    console.warn('趋势数据获取失败:', err)
+    trendData.value = []
+  }
 
   await nextTick()
   drawChart()
@@ -105,7 +118,13 @@ const loadPriceData = async () => {
 
 // 绘制价格趋势图
 const drawChart = () => {
-  const chart = echarts.init(document.querySelector('.trend-chart'))
+  const el = document.querySelector('.trend-chart')
+  if (!el) {
+    console.warn('图表容器未找到')
+    return
+  }
+
+  const chart = echarts.init(el)
   chart.setOption({
     title: { text: '价格趋势', left: 'center' },
     tooltip: { trigger: 'axis' },
@@ -123,25 +142,43 @@ const drawChart = () => {
 
 // 发布采购
 const submitForm = async () => {
-  await axios.post(
-    'http://localhost:3000/api/demands',
-    {
-      product_name: formData.value.crop,
-      quantity: formData.value.quantity
-    },
-    {
-      headers: { Authorization: `Bearer ${userStore.token}` }
-    }
-  )
-  alert('采购发布成功')
-  resetForm()
+  if (!formData.value.crop || !formData.value.quantity) {
+    alert('请填写完整的采购信息')
+    return
+  }
+
+  try {
+    await axios.post(
+      'http://localhost:3000/api/demands',
+      {
+        product_name: formData.value.crop,
+        quantity: formData.value.quantity
+      },
+      {
+        headers: { Authorization: `Bearer ${userStore.token}` }
+      }
+    )
+    alert('采购发布成功')
+    resetForm()
+  } catch (err) {
+    console.error('发布失败:', err)
+    alert('采购发布失败，请稍后重试')
+  }
 }
 
-// 重置表单
+// 重置表单并跳转
 const resetForm = () => {
-  router.push('/merchant/purchases');
+  formData.value.crop = ''
+  formData.value.quantity = ''
+  router.push('/merchant/purchases')
 }
+
+// 页面加载时自动触发
+onMounted(() => {
+  loadPriceData()
+})
 </script>
+
 
 <style scoped>
 

@@ -121,7 +121,7 @@ const routes = [
               {path: '', name: 'Main', component: MerchantMain},
               {path: 'order', name: 'Order', component: MerchantOrder},
               {path: 'purchases', name: 'Purchases', component: MerchantPurchase},
-              {path: 'purchases/:id', name: 'PurchaseDetail', component: merchantPurchaseDetails},
+              {path: 'purchases/:id/applications', name: 'PurchaseDetail', component: merchantPurchaseDetails},
               {path: 'purchaseDetail/record', name: 'Record', component: () => import("../views/merchant/merchantSeePlanting.vue") },
               {path: 'addPurchase', name: 'AddPurchase', component: MerchantAddPurchase},
               {path: 'home', name: 'MerchantHome', component: MerchantHome},

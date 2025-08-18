@@ -201,7 +201,6 @@ router.post('/demands/:demandId/close',
     try {
       const { demandId } = req.params;
       const buyerId = req.user.userId;
-
       // 验证需求存在且属于当前买家
       const demandCheck = await pool.query(`
         SELECT 1 FROM purchase_demands 
@@ -249,36 +248,36 @@ router.post('/demands/:demandId/close',
 );
 
 
-      // 获取申请详情
-      const applications = await require('../model').query(
-        `SELECT 
-          pa.application_id,
-          pa.quantity,
-          pa.price,
-          pa.province AS shipping_location,
-          TO_CHAR(pa.applied_at, 'YYYY-MM-DD HH24:MI:SS') AS applied_time,
-          u.username AS farmer_name,
-          u.province AS farmer_province,
-          u.city AS farmer_city,
-          pr.product_name,
-          pr.growth_status,
-          CASE 
-            WHEN u.avatar_url IS NOT NULL 
-            THEN CONCAT('/uploads/avatars/', u.avatar_url) 
-            ELSE NULL 
-          END AS farmer_avatar
-        FROM purchase_applications pa
-        JOIN users u ON pa.farmer_id = u.user_id
-        LEFT JOIN planting_records pr ON pa.record_id = pr.record_id
-        WHERE pa.demand_id = $1
-        ORDER BY pa.applied_at DESC`,
-        [demandId]
-      );
+// 获取申请详情
+const applications = await require('../model').query(
+      `SELECT 
+        pa.application_id,
+        pa.quantity,
+        pa.price,
+        pa.province AS shipping_location,
+        TO_CHAR(pa.applied_at, 'YYYY-MM-DD HH24:MI:SS') AS applied_time,
+        u.username AS farmer_name,
+        u.province AS farmer_province,
+        u.city AS farmer_city,
+        pr.product_name,
+        pr.growth_status,
+        CASE 
+          WHEN u.avatar_url IS NOT NULL 
+          THEN CONCAT('/uploads/avatars/', u.avatar_url) 
+          ELSE NULL 
+        END AS farmer_avatar
+      FROM purchase_applications pa
+      JOIN users u ON pa.farmer_id = u.user_id
+      LEFT JOIN planting_records pr ON pa.record_id = pr.record_id
+      WHERE pa.demand_id = $1
+      ORDER BY pa.applied_at DESC`,
+      [demandId]
+    );
       
-      res.json({
-        success: true,
-        data: applications.rows
-      });
+    res.json({
+      success: true,
+      data: applications.rows
+    });
     } catch (error) {
       console.error('获取采购申请失败:', error);
       res.status(400).json({ 

@@ -466,7 +466,7 @@ router.get('/users/:id',
 });
 
 // 获取所有经验帖（可按状态筛选）
-router.get('/experiences', 
+router.get('/experience', 
   authMiddleware.authenticateToken,
   checkAdmin,
   async (req, res) => {

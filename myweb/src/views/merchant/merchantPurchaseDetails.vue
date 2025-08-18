@@ -105,9 +105,13 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
+import { useUserStore } from '@/stores/user' // ✅ 引入 Pinia 用户状态
+import { ElMessage } from 'element-plus'
+
 
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore() // ✅ 获取用户状态
 const demandId = route.params.id
 
 const applications = ref([])
@@ -163,7 +167,13 @@ const handleAction = (farmerName, action, recordId = null) => {
 
 onMounted(async () => {
   try {
-    const res = await axios.get(`/api/demands/${demandId}/applications`)
+    console.log('当前 token:', userStore.token)
+
+    const res = await axios.get(`http://localhost:3000/api/demands/${demandId}/applications`, {
+      headers: {
+        Authorization: `Bearer ${userStore.token}` // ✅ 添加身份验证头
+      }
+    })
     if (res.data.success) {
       applications.value = res.data.data
       totalApplications.value = applications.value.length
@@ -174,8 +184,17 @@ onMounted(async () => {
       maxPrice.value = Math.max(...prices)
     }
   } catch (err) {
-    console.error('获取采购申请失败:', err)
+  if (err.response?.status === 401) {
+    ElMessage.error('⚠️ 无权限访问该采购申请')
+    router.push('/merchant/purchases')
+  } else if (err.response?.status === 404) {
+    ElMessage.error('❌ 采购申请不存在')
+    router.push('/merchant/purchases')
+  } else {
+    ElMessage.error('服务器错误，请稍后重试')
   }
+}
+
 })
 </script>
 
@@ -676,215 +695,3 @@ header h1::after {
   transform: translateY(0);
 }
 </style>
-
-<!-- <script>
-import { useSeeRecordStore } from '@/stores/seeRecord';
-export default {
-
-  data() {//需要有record_id
-    return {
-      searchQuery: '',
-      statusFilter: 'all',
-      regionFilter: 'all',
-      sortBy: 'latest',
-      currentPage: 1,
-      applications: [
-        {
-          status: 'pending',
-          farmerName: '李大山',
-          rating: 4.5,
-          reviews: 86,
-          product: '有机西红柿',
-          price: '¥5.50',
-          unit: '公斤',
-          shippingLocation: '山东省寿光市',
-          applicationTime: '2025-07-01 14:30',
-          farmerAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80',
-          priceValue: 5.50,
-          record_id: 2
-        },
-        {
-          status: 'approved',
-          farmerName: '张翠花',
-          rating: 5.0,
-          reviews: 142,
-          product: '绿色苹果',
-          price: '¥8.20',
-          unit: '公斤',
-          shippingLocation: '陕西省延安市',
-          applicationTime: '2025-06-28 10:15',
-          farmerAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=776&q=80',
-          priceValue: 8.20,
-          record_id: 2
-        },
-        {
-          status: 'pending',
-          farmerName: '王建国',
-          rating: 4.0,
-          reviews: 64,
-          product: '有机大米',
-          price: '¥4.80',
-          unit: '公斤',
-          shippingLocation: '黑龙江省五常市',
-          applicationTime: '2025-06-30 16:45',
-          farmerAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80',
-          priceValue: 4.80,
-          record_id: 2
-        },
-        {
-          status: 'rejected',
-          farmerName: '刘彩云',
-          rating: 3.5,
-          reviews: 45,
-          product: '生态茶叶',
-          price: '¥15.20',
-          unit: '公斤',
-          shippingLocation: '浙江省杭州市',
-          applicationTime: '2025-06-25 09:20',
-          farmerAvatar: 'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80',
-          priceValue: 15.20,
-          record_id: 2
-        },
-        {
-          status: 'approved',
-          farmerName: '陈志强',
-          rating: 4.8,
-          reviews: 120,
-          product: '高山绿茶',
-          price: '¥12.50',
-          unit: '公斤',
-          shippingLocation: '福建省武夷山市',
-          applicationTime: '2025-07-02 11:20',
-          farmerAvatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80',
-          priceValue: 12.50,
-          record_id: 2
-        },
-        {
-          status: 'pending',
-          farmerName: '杨晓红',
-          rating: 4.2,
-          reviews: 78,
-          product: '新鲜草莓',
-          price: '¥9.80',
-          unit: '公斤',
-          shippingLocation: '江苏省南京市',
-          applicationTime: '2025-07-03 09:45',
-          farmerAvatar: 'https://images.unsplash.com/photo-1600701704189-263eec2d0e0d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80',
-          priceValue: 9.80,
-          record_id: 2
-        }
-      ],
-      monthlyIncrease: 8,
-      itemsPerPage: 9
-    };
-  },
-  computed: {
-    totalApplications() {
-      return this.applications.length;
-    },
-    pendingApplications() {
-      return this.applications.filter(app => app.status === 'pending').length;
-    },
-    averagePrice() {
-      if (this.applications.length === 0) return 0;
-      const total = this.applications.reduce((sum, app) => sum + app.priceValue, 0);
-      return total / this.applications.length;
-    },
-    minPrice() {
-      if (this.applications.length === 0) return 0;
-      return Math.min(...this.applications.map(app => app.priceValue)).toFixed(2);
-    },
-    maxPrice() {
-      if (this.applications.length === 0) return 0;
-      return Math.max(...this.applications.map(app => app.priceValue)).toFixed(2);
-    },
-    filteredApplications() {
-      let apps = [...this.applications];
-      
-      if (this.statusFilter !== 'all') {
-        apps = apps.filter(app => app.status === this.statusFilter);
-      }
-      
-      if (this.regionFilter !== 'all') {
-        if (this.regionFilter === 'west') {
-          apps = apps.filter(app => app.shippingLocation.includes('陕西') || 
-                                  app.shippingLocation.includes('甘肃') || 
-                                  app.shippingLocation.includes('四川'));
-        }
-      }
-      
-      if (this.searchQuery) {
-        const query = this.searchQuery.toLowerCase();
-        apps = apps.filter(app => 
-          app.farmerName.toLowerCase().includes(query) ||
-          app.product.toLowerCase().includes(query) ||
-          app.shippingLocation.toLowerCase().includes(query)
-        );
-      }
-      
-      switch (this.sortBy) {
-        case 'latest':
-          apps.sort((a, b) => new Date(b.applicationTime) - new Date(a.applicationTime));
-          break;
-        case 'lowest':
-          apps.sort((a, b) => a.priceValue - b.priceValue);
-          break;
-        case 'highest':
-          apps.sort((a, b) => b.priceValue - a.priceValue);
-          break;
-        case 'rating':
-          apps.sort((a, b) => b.rating - a.rating);
-          break;
-      }
-      
-      return apps;
-    },
-    totalPages() {
-      return Math.ceil(this.filteredApplications.length / this.itemsPerPage);
-    },
-    paginatedApplications() {
-      const start = (this.currentPage - 1) * this.itemsPerPage;
-      const end = start + this.itemsPerPage;
-      return this.filteredApplications.slice(start, end);
-    }
-  },
-  methods: {
-    getStatusText(status) {
-      const statusMap = {
-        'pending': '待处理',
-        'approved': '已批准',
-        'rejected': '已拒绝'
-      };
-      return statusMap[status] || status;
-    },
-    handleAction(farmerName, actionType, record_id) {
-      if (actionType === 'profile') {
-        alert(`查看 ${farmerName} 的农户主页`);
-      } else if (actionType === 'message') {
-        alert(`与 ${farmerName} 互通消息`);
-      } else if (actionType === 'record') {
-        alert(`查看 ${farmerName} 的种植记录`);
-        const seeRecordStore = useSeeRecordStore();
-        seeRecordStore.setRecordId(record_id);
-        this.$router.push(`/merchant/purchaseDetail/record`);
-      }
-    },
-    changePage(page) {
-      this.currentPage = page;
-    },
-    prevPage() {
-      if (this.currentPage > 1) {
-        this.currentPage--;
-      }
-    },
-    nextPage() {
-      if (this.currentPage < this.totalPages) {
-        this.currentPage++;
-      }
-    },
-    goBack(){
-      this.$router.push('/merchant/purchases');
-    }
-  }
-};
-</script> -->

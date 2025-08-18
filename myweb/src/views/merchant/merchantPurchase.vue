@@ -46,9 +46,10 @@
           <button class="action-btn detail-btn" @click.stop="viewPurchase(purchase)">
            查看申请
           </button>
-          <button class="action-btn close-btn" @click.stop="closePurchase(purchase)">
-           关闭申请
-          </button>
+          <button class="action-btn close-btn" @click.stop="closeDemand(purchase.id)">
+          关闭申请
+        </button>
+
         </div>
       </div>
       
@@ -86,15 +87,12 @@ import { useUserStore } from '@/stores/user'
 const router = useRouter()
 const userStore = useUserStore()
 
-// 原始数据列表
 const purchases = ref([])
-
-// 视图控制
 const showClosed = ref(false)
 const currentPage = ref(1)
-const pageSize = 6 // 每页显示数量
+const pageSize = 6
+const isLoading = ref(false)
 
-//格式化日期
 const formatDate = (val) => {
   if (!val) return ''
   const d = typeof val === 'string' || typeof val === 'number' ? new Date(val) : val
@@ -103,7 +101,6 @@ const formatDate = (val) => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-//状态归一
 const normalizeStatus = (s) => {
   if (!s) return 'open'
   const t = String(s).toLowerCase()
@@ -116,13 +113,12 @@ const normalizeStatus = (s) => {
 
 const isClosed = (status) => normalizeStatus(status) === 'closed'
 
-// 正常化一条采购数据，后端字段可能不统一，这里做兼容映射
 const normalizePurchase = (d, index) => {
   const id = d.id ?? d.demand_id ?? d.purchase_id ?? d.pk ?? index + 1
   const title = d.title ?? d.product_name ?? `采购 #${id}`
   const status = normalizeStatus(d.status ?? d.state ?? d.phase)
   const quantity = d.quantity ?? d.amount ?? d.count ?? 0
-  const created = d.updated_at ?? d.creationDate ?? d.created_at ?? d.createdAt ?? d.create_time;
+  const created = d.updated_at ?? d.creationDate ?? d.created_at ?? d.createdAt ?? d.create_time
   const deliveryAddress =
     d.deliveryAddress ??
     d.delivery_address ??
@@ -141,8 +137,6 @@ const normalizePurchase = (d, index) => {
   }
 }
 
-// 拉取数据
-const isLoading = ref(false)
 const fetchPurchases = async () => {
   try {
     isLoading.value = true
@@ -151,9 +145,6 @@ const fetchPurchases = async () => {
     })
     const list = Array.isArray(res.data) ? res.data : []
     purchases.value = list.map((d, i) => normalizePurchase(d, i))
-    console.log('原始采购数据:', res.data);
-
-    // 拉取后重置页码，避免页码越界
     currentPage.value = 1
   } catch (err) {
     console.error('获取采购需求失败:', err)
@@ -172,7 +163,6 @@ const myPurchases = computed(() => {
   return purchases.value.filter(p => String(p.ownerId) === String(uid))
 })
 
-// 状态过滤
 const filteredPurchases = computed(() => {
   return myPurchases.value.filter(p => {
     const closed = isClosed(p.status)
@@ -180,32 +170,23 @@ const filteredPurchases = computed(() => {
   })
 })
 
-// 分页
 const totalPages = computed(() => Math.max(1, Math.ceil(filteredPurchases.value.length / pageSize)))
 const paginatedPurchases = computed(() => {
   const start = (currentPage.value - 1) * pageSize
   return filteredPurchases.value.slice(start, start + pageSize)
 })
 
-// 切换查看关闭/打开
 const toggleShowClosed = () => {
   showClosed.value = !showClosed.value
   currentPage.value = 1
 }
 
-// 新增采购
 const addPurchase = () => {
   router.push('/merchant/addpurchase')
 }
 
-// 查看某个采购详情/申请
 const viewPurchase = (purchase) => {
-  router.push(`/merchant/purchases/${purchase.id}`)
-}
-
-// 查看某个采购详情/申请
-const closePurchase = (purchase) => {
-  router.push(`/merchant/purchases/${purchase.id}`)
+  router.push(`/merchant/purchases/${purchase.id}/applications`)
 }
 
 const statusClass = (status) => {
@@ -217,7 +198,24 @@ const statusClass = (status) => {
   }
 }
 
-// 保证在切换视图时回到第一页
+// 关闭采购
+const closeDemand = async (demandId) => {
+  try {
+    const res = await axios.post('http://localhost:3000/api/demands/close', { id: demandId }, {
+      headers: { Authorization: `Bearer ${userStore.token}` }
+    })
+    if (res.data.success) {
+      ElMessage.success('采购已关闭')
+      await fetchPurchases() // 刷新列表
+    } else {
+      ElMessage.error(res.data.error || '关闭失败')
+    }
+  } catch (err) {
+    console.error('关闭采购失败:', err)
+    ElMessage.error(err.response?.data?.error || '服务器错误')
+  }
+}
+
 watch(showClosed, () => { currentPage.value = 1 })
 </script>
 

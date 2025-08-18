@@ -64,7 +64,7 @@ export default {
     },
     navigateTo(path) {
       if (path === 'myhome') {
-        this.$router.push('/merchant/MerchantHome');
+        this.$router.push('/merchant/home');
       } else if (path === 'publish') {
         this.$router.push('/merchant/addPurchase');
       } else if (path === 'mypurchase') {

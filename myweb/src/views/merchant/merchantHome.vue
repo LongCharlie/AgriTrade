@@ -260,7 +260,7 @@ const handleAvatarChange = async (event) => {
     })
 
     const result = await res.json()
-    const newAvatarUrl = `http://localhost:3000/uploads/avatars/${result.avatarUrl}`
+    const newAvatarUrl = `http://localhost:3000/api/uploads/avatars/${result.avatarUrl}`
 
     user.value.avatar_url = newAvatarUrl
     userStore.avatar_url = newAvatarUrl
