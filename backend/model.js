@@ -918,6 +918,7 @@ const getWeeklyOrderSummary = async () => {
       COUNT(*) AS order_count
     FROM orders o
     JOIN purchase_applications pa ON o.application_id = pa.application_id
+    where o.status = 'completed'
     GROUP BY week_start
     ORDER BY week_start DESC
   `;
@@ -935,6 +936,7 @@ const getMonthlyOrderSummary = async () => {
       COUNT(*) AS order_count
     FROM orders o
     JOIN purchase_applications pa ON o.application_id = pa.application_id
+    where o.status = 'completed'
     GROUP BY month_start
     ORDER BY month_start DESC
   `;
@@ -952,6 +954,7 @@ const getYearlyOrderSummary = async () => {
       COUNT(*) AS order_count
     FROM orders o
     JOIN purchase_applications pa ON o.application_id = pa.application_id
+    where o.status = 'completed'
     GROUP BY year_start
     ORDER BY year_start DESC
   `;
@@ -1500,6 +1503,8 @@ const sendMessage = async (senderId, other_user_id, content, image_url) => {
     timestamp: rows[0].sent_at
   };
 };
+
+
 
 // 导出所有数据库操作方法
 module.exports = {

@@ -126,6 +126,8 @@ const fetchData = async () => {
     buyerCount.value = buyerRes.data.data;
     farmerCount.value = farmerRes.data.count;
     expertCount.value = expertRes.data.count;
+
+    
     // weekOrderSum.value = weekSumRes.data.sum;
     // monthOrderSum.value = monthSumRes.data.sum;
     // yearOrderSum.value = yearSumRes.data.sum;
@@ -147,9 +149,9 @@ const getWeekData = async () => {
         'Authorization': `Bearer ${token}`
       }
     });
-    weekData.value = weekSumRes.data;
-    // weekOrderSum.value = weekSumRes.data.sum;
-    // console.log('周' + weekSumRes);
+     //weekOrderSum.value = weekSumRes.data.data.reduce((sum, item) => sum + item.total_amount, 0);
+     //weekOrderSum.value = weekSumRes.data.sum;
+     //console.log('周' + weekOrderSum.value);
   } catch (error) {
     console.error('获取周总额失败，使用模拟数据:', error);
 
