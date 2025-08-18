@@ -230,7 +230,7 @@ router.post('/:id/after-sale',
       }
 
       // 验证订单是否存在且属于当前买家
-      const orderCheck = await pool.query(
+      const orderCheck = await require('../model').query(
         'SELECT 1 FROM orders WHERE order_id = $1 AND buyer_id = $2',
         [orderId, buyerId]
       );
@@ -269,7 +269,7 @@ router.post('/:id/confirm',
       const buyerId = req.user.userId;
 
       // 验证订单是否存在且属于当前买家
-      const orderCheck = await pool.query(
+      const orderCheck = await require('../model').query(
         'SELECT 1 FROM orders WHERE order_id = $1 AND buyer_id = $2 AND status = $3',
         [orderId, buyerId, 'shipped']
       );
@@ -281,7 +281,7 @@ router.post('/:id/confirm',
       }
 
       // 更新订单状态为已完成
-      const result = await pool.query(
+      const result = await require('../model').query(
         `UPDATE orders 
          SET 
            status = 'completed',
