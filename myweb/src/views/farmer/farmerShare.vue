@@ -78,18 +78,21 @@
             class="experience-content"
             v-html="highlightSearchText(truncateText(experience.content, 150))"
           ></p>
-          <div class="experience-meta">
-            <span><i class="el-icon-user"></i> {{ experience.publisher }}</span>
-            <span><i class="el-icon-time"></i> {{ formatDate(experience.published_at) }}</span>
-          </div>
         </div>
         <div class="card-footer">
-          <el-button
-            type="primary"
-            size="small"
-            @click="viewExperienceDetail(experience.id)"
-          >查看详情</el-button>
+          <div class="footer-content">
+            <div class="experience-meta">
+              <span>{{ experience.publisher }}</span>
+              <span>{{ formatDate(experience.published_at) }}</span>
+            </div>
+            <el-button
+              type="primary"
+              size="small"
+              @click="viewExperienceDetail(experience.experience_id)"
+            >查看详情</el-button>
+          </div>
         </div>
+
       </el-card>
 
       <!-- 分页 -->
@@ -133,12 +136,20 @@ const pagination = ref({ currentPage: 1, pageSize: 10 })
 const fetchExperiences = async () => {
   try {
     const { data } = await axios.get('http://localhost:3000/api/experience')
-    experiences.value = data
+
+    // 显式字段映射，确保前端字段一致
+    experiences.value = data.map(item => ({
+      ...item,
+      publisher: item.author_name || '未知作者',
+      published_at: item.created_at || null,
+      comment_count: item.comment_count ?? 0 // 防止 undefined
+    }))
   } catch (err) {
     ElMessage.error('获取经验列表失败')
     console.error(err)
   }
 }
+
 
 // ====== 发布经验 ======
 const submitPostExperience = async () => {
@@ -251,12 +262,11 @@ const formatDate = (dateStr) => {
 
 // ====== 详情查看 ======
 const viewExperienceDetail = (id) => {
-  router.push(`/farmer/share/${id}`)
+  router.push(`/farmer/sharedetails/${id}`)
 }
 
 onMounted(fetchExperiences)
 </script>
-
 
 <style scoped>
 
@@ -330,24 +340,28 @@ onMounted(fetchExperiences)
   font-size: 15px;
 }
 
+.card-footer .footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 15px;
+}
+
+.card-footer {
+  border-top: 1px solid #eee;
+  padding-top: 5px;
+  margin-top: 5px;
+}
+
 .experience-meta {
   display: flex;
   gap: 20px;
-  margin-top: 15px;
   color: #888;
   font-size: 14px;
 }
 
 .experience-meta i {
   margin-right: 5px;
-}
-
-.card-footer {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 15px;
-  padding-top: 10px;
-  border-top: 1px solid #eee;
 }
 
 .tag {

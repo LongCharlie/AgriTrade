@@ -65,10 +65,11 @@
               <button class="action-btn profile" @click="handleAction(application.farmerName, 'message')">
                 <i class="fas fa-user"></i> 发送消息
               </button>
-              <button class="action-btn message" @click="handleAction(application.farmerName, 'affirm')">
+              <button class="action-btn message"
+                      @click="handleAction(application.farmerName, 'affirm', application.record_id, application.applicationId)">
                 <i class="fas fa-comment"></i> 确认
               </button>
-              <button class="action-btn record" @click="handleAction(application.farmerName, 'record',application.record_id)">
+              <button class="action-btn record" @click="handleAction(application.farmerName, 'record', application.record_id)">
                 <i class="fas fa-seedling"></i> 详情
               </button>
             </div>
@@ -91,11 +92,11 @@
             <i class="fas fa-chevron-right"></i>
           </button>
         </div>
-          <div class="back-btn-container">
-            <button class="back-btn" @click="goBack">
-              <i class="fas fa-arrow-left"></i> 返回
-            </button>
-          </div>
+        <div class="back-btn-container">
+          <button class="back-btn" @click="goBack">
+            <i class="fas fa-arrow-left"></i> 返回
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -141,57 +142,57 @@ const filteredApplications = computed(() => {
 
 const totalPages = computed(() => Math.ceil(applications.value.length / pageSize))
 
-const changePage = (page) => {
-  currentPage.value = page
-}
+const changePage = (page) => { currentPage.value = page }
+const prevPage = () => { if (currentPage.value > 1) currentPage.value-- }
+const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++ }
+const goBack = () => { router.back() }
 
-const prevPage = () => {
-  if (currentPage.value > 1) currentPage.value--
-}
-
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) currentPage.value++
-}
-
-const goBack = () => {
-  router.back()
-}
-
-const handleAction = (farmerName, action, recordId) => {
+// 操作方法
+const handleAction = async (farmerName, action, recordId, applicationId) => {
   if (action === 'message') {
     alert(`打开聊天窗口`)
   } else if (action === 'affirm') {
-    alert(`确认与 ${farmerName} 的报价`)
+    try {
+      const res = await axios.post(
+        `http://localhost:3000/api/applications/${applicationId}/accept`,
+        {},
+        { headers: { Authorization: `Bearer ${userStore.token}` } }
+      )
+      if (res.data.success) {
+        ElMessage.success(res.data.message || `已确认 ${farmerName} 的报价并创建订单`)
+        await fetchApplications() // 刷新数据
+      }
+    } catch (err) {
+      console.error('确认报价失败:', err)
+      ElMessage.error(err.response?.data?.error || '确认报价失败')
+    }
   } else if (action === 'record') {
     seeRecordStore.recordId = recordId
     router.push(`purchaseDetail/record`)
   }
 }
 
-// 数据获取
-onMounted(async () => {
+// 数据获取封装
+const fetchApplications = async () => {
   try {
     const res = await axios.get(`http://localhost:3000/api/demands/${demandId}/applications`, {
-      headers: {
-        Authorization: `Bearer ${userStore.token}`
-      }
+      headers: { Authorization: `Bearer ${userStore.token}` }
     })
 
     if (res.data.success) {
-      // 字段映射
       applications.value = res.data.data.map(app => ({
         farmerAvatar: app.farmer_avatar,
         farmerName: app.farmer_name,
         shippingLocation: app.shipping_location,
         applicationTime: app.applied_time,
         price: app.price,
-        unit: app.unit || 'kg', // 没有的话给个默认单位
+        unit: app.unit || 'kg',
         rating: app.rating || 0,
-        record_id: app.record_id
+        record_id: app.record_id,
+        applicationId: app.application_id // ✅ 新增字段
       }))
 
       totalApplications.value = applications.value.length
-
       const prices = applications.value.map(a => parseFloat(a.price))
       averagePrice.value = prices.length ? prices.reduce((a, b) => a + b, 0) / prices.length : 0
       minPrice.value = prices.length ? Math.min(...prices) : 0
@@ -208,8 +209,11 @@ onMounted(async () => {
       ElMessage.error('服务器错误，请稍后重试')
     }
   }
-})
+}
+
+onMounted(fetchApplications)
 </script>
+
 
 <style scoped>
 * {
