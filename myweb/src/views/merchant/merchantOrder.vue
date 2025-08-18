@@ -347,24 +347,10 @@ const fileInput = ref(null)
 // 获取订单列表
 const fetchOrders = async () => {
   try {
-    const res = await axios.get('http://localhost:3000/merchant/orders/all', {
+    const res = await axios.get('http://localhost:3000/api/merchant/orders/all', {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
     orders.value = res.data.map(row => ({
-      orderId: row.order_id,
-      productName: row.product_name,
-      quantity: row.quantity,
-      price: row.price,
-      destination: row.ship_address,
-      sender: row.sender,
-      contact: row.farmer_phone,
-      time: row.created_at,
-      status: row.status
-    }))
-  const res = await axios.get('http://localhost:3000/api/merchant/orders/all', {
-    headers: { Authorization: `Bearer ${userStore.token}` }
-  })
-  orders.value = res.data.map(row => ({
     orderId: row.order_id,
     productName: row.product_name,
     quantity: row.quantity,

@@ -466,13 +466,14 @@ router.get('/users/:id',
 });
 
 // 获取所有经验帖（可按状态筛选）
-router.get('/experience', 
+router.get('/experiences', 
   authMiddleware.authenticateToken,
   checkAdmin,
   async (req, res) => {
     try {
       const { status } = req.query;
       const experiences = await model.getAllExperiences(status);
+      console.log('经验帖查询结果:', experiences);
       res.json(experiences);
     } catch (error) {
       console.error('获取经验帖失败:', error);
@@ -492,7 +493,7 @@ router.patch('/experiences/:id/status',
       if (!status) {
         return res.status(400).json({ error: '必须提供状态值' });
       }
-
+      console.log('经验贴ID：',experienceId)
       const updatedExperience = await model.updateExperienceStatus(
         experienceId, 
         status, 

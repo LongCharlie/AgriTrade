@@ -130,14 +130,15 @@ export default {
     async refreshData() {
       try {
         const token = this.userStore.token
-        const res = await axios.get('http://localhost:3000/api/experience', {
+        const res = await axios.get('http://localhost:3000/api/experiences', {
           headers: {
             Authorization: `Bearer ${token}`
           },
           params: {
-            status: this.filterStatus || undefined
+            status: this.filterStatus
           }
         })
+        console.log('正在请求经验数据，状态为:', this.filterStatus);
         console.log('经验数据返回:', res.data)
         this.allArticles = res.data.map(item => ({
         id: item.experience_id,
@@ -150,6 +151,7 @@ export default {
 
         this.currentPage = 1
       } catch (error) {
+        console.error('经验分享数据加载失败:', error);
         ElMessage.error('经验分享数据加载失败');
       }
     },

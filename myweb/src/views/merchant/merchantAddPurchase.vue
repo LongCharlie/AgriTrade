@@ -1,11 +1,13 @@
 <template>
   <div class="container">
     <div class="content-wrapper">
-      <!-- 发布采购表单 -->
+
+      <!-- 需求信息 -->
       <section class="form-section">
         <h2><i class="fas fa-edit"></i> 需求信息</h2>
+
         <div class="form-group">
-          <label for="crop">作物种类:</label>
+          <label>作物种类:</label>
           <el-select
             v-model="formData.crop"
             placeholder="请选择作物种类"
@@ -23,10 +25,9 @@
         </div>
 
         <div class="form-group">
-          <label for="quantity">需求数量 (kg)</label>
+          <label>需求数量 (kg)</label>
           <input
             type="number"
-            id="quantity"
             v-model="formData.quantity"
             placeholder="请输入采购数量"
           />
@@ -42,73 +43,130 @@
         </div>
       </section>
 
-      <!-- 价格信息展示 -->
-      <section v-if="priceData.data.length" class="price-section">
+      <!-- 价格展示 -->
+      <section class="form-section">
+        <h2><i class="fas fa-chart-line"></i> 价格信息</h2>
+
+        <!-- 省份选择 -->
+        <div class="form-group">
+          <label>省份:</label>
+          <el-select
+            v-model="selectedProvince"
+            placeholder="请选择省份"
+            clearable
+            filterable
+            @change="loadPriceData"
+          >
+            <el-option
+              v-for="(p, index) in provinces"
+              :key="p + index"
+              :label="p"
+              :value="p"
+            />
+          </el-select>
+        </div>
+
+        <!-- 价格表 -->
         <div class="price-title">
-          {{ priceData.product }} - {{ priceData.province }} 平均价格
+          {{ productCnName }} - {{ priceData.province }} 平均价格
         </div>
         <el-table :data="priceData.data" border class="price-table">
           <el-table-column prop="province" label="省份" width="150" />
-          <el-table-column prop="avg_price" label="均价 (元/斤)" />
+          <el-table-column prop="average_price" label="均价 (元/斤)" />
         </el-table>
+        <div v-if="!priceData.data.length" class="no-data-tip">
+          暂无 {{ formData.crop }} 在 {{ selectedProvince }} 的价格数据
+        </div>
+
+        <!-- 趋势图 -->
         <div class="trend-chart" ref="trendChart"></div>
       </section>
+
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
 import axios from 'axios'
 import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 
 const userStore = useUserStore()
 const router = useRouter()
 
-// 表单数据
+// 中文 → 拼音映射表
+const cropNameMap = {
+  '辣椒': 'lajiao', '白菜': 'baicai', '菠菜': 'bocai',
+  '葱': 'cong', '豆角': 'doujiao', '番茄': 'fanqie',
+  '黄瓜': 'huanggua', '萝卜': 'luobo', '南瓜': 'nangua',
+  '茄子': 'qiezi', '山药': 'shanyao', '蒜': 'suan',
+  '土豆': 'tudou', '莴苣': 'woju'
+}
+
+// 构造反向映射表（拼音 → 中文）
+const cropNameMapReverse = {}
+for (const [cn, py] of Object.entries(cropNameMap)) {
+  cropNameMapReverse[py] = cn
+}
+
+const crops = ref(Object.keys(cropNameMap))
+const provinces = ref([
+  '北京', '天津', '上海', '重庆',
+  '河北', '山西', '辽宁', '吉林', '黑龙江',
+  '江苏', '浙江', '安徽', '福建', '江西', '山东',
+  '河南', '湖北', '湖南', '广东', '海南',
+  '四川', '贵州', '云南', '陕西', '甘肃', '青海',
+  '台湾', '内蒙古', '广西', '西藏', '宁夏', '新疆',
+  '香港', '澳门'
+])
+
+const selectedProvince = ref('甘肃')
+
 const formData = ref({
-  crop: '',
+  crop: '白菜',
   quantity: ''
 })
 
-// 作物选项
-const crops = ref([
-  '辣椒', '白菜', '菠菜', '葱', '豆角', 
-  '番茄', '黄瓜', '萝卜', '南瓜', '茄子', 
-  '山药', '蒜', '土豆', '莴苣'
-])
-
-// 价格数据与趋势图数据
 const priceData = ref({ product: '', province: '', data: [] })
 const trendData = ref([])
 
-const province = '甘肃'
+// 计算属性：显示用的中文名
+const productCnName = computed(() => {
+  const pinyin = priceData.value.product
+  return cropNameMapReverse[pinyin] || formData.value.crop || pinyin
+})
 
-// 获取价格数据
 const loadPriceData = async () => {
-  if (!formData.value.crop) return
+  if (!formData.value.crop || !selectedProvince.value) return
+
+  const cropPinyin = cropNameMap[formData.value.crop] || formData.value.crop
 
   try {
     const { data } = await axios.get('http://localhost:3000/api/product-price', {
-      params: { productName: formData.value.crop, province },
+      params: { productName: cropPinyin, province: selectedProvince.value },
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
+
     priceData.value = data
+    if (data.data.length === 0) {
+      ElMessage.warning(`暂无 ${formData.value.crop} 在 ${selectedProvince.value} 的价格数据`)
+    }
   } catch (err) {
-    console.warn('价格数据获取失败:', err)
+    ElMessage.error('价格数据加载失败，请稍后重试')
     priceData.value = { product: '', province: '', data: [] }
   }
 
   try {
     const resTrend = await axios.get('http://localhost:3000/api/price-trends', {
-      params: { product: formData.value.crop, province },
+      params: { product: cropPinyin, province: selectedProvince.value },
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
     trendData.value = resTrend.data
   } catch (err) {
-    console.warn('趋势数据获取失败:', err)
+    ElMessage.warning('价格趋势加载失败')
     trendData.value = []
   }
 
@@ -116,13 +174,9 @@ const loadPriceData = async () => {
   drawChart()
 }
 
-// 绘制价格趋势图
 const drawChart = () => {
   const el = document.querySelector('.trend-chart')
-  if (!el) {
-    console.warn('图表容器未找到')
-    return
-  }
+  if (!el) return
 
   const chart = echarts.init(el)
   chart.setOption({
@@ -130,54 +184,45 @@ const drawChart = () => {
     tooltip: { trigger: 'axis' },
     xAxis: { type: 'category', data: trendData.value.map(t => t.update_date) },
     yAxis: { type: 'value' },
-    series: [
-      {
-        data: trendData.value.map(t => t.avg),
-        type: 'line',
-        smooth: true
-      }
-    ]
+    series: [{ data: trendData.value.map(t => t.avg), type: 'line', smooth: true }]
   })
 }
 
-// 发布采购
 const submitForm = async () => {
   if (!formData.value.crop || !formData.value.quantity) {
-    alert('请填写完整的采购信息')
+    ElMessage.warning('请填写完整的采购信息')
     return
   }
+
+  const cropPinyin = cropNameMap[formData.value.crop] || formData.value.crop
 
   try {
     await axios.post(
       'http://localhost:3000/api/demands',
       {
-        product_name: formData.value.crop,
+        product_name: cropPinyin,
         quantity: formData.value.quantity
       },
-      {
-        headers: { Authorization: `Bearer ${userStore.token}` }
-      }
+      { headers: { Authorization: `Bearer ${userStore.token}` } }
     )
-    alert('采购发布成功')
+    ElMessage.success('采购发布成功')
     resetForm()
   } catch (err) {
-    console.error('发布失败:', err)
-    alert('采购发布失败，请稍后重试')
+    ElMessage.error('采购发布失败，请稍后重试')
   }
 }
 
-// 重置表单并跳转
 const resetForm = () => {
   formData.value.crop = ''
   formData.value.quantity = ''
   router.push('/merchant/purchases')
 }
 
-// 页面加载时自动触发
 onMounted(() => {
   loadPriceData()
 })
 </script>
+
 
 
 <style scoped>
