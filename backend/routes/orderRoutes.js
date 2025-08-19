@@ -215,6 +215,151 @@ router.get('/merchant/reviewed-after-sale',
   }
 );
 
+// 商户根据订单ID获取已审核的售后订单详情
+router.get('/merchant/reviewed-after-sale/:orderId', 
+  authMiddleware.authenticateToken,
+  async (req, res) => {
+    try {
+      const buyerId = req.user.userId;
+      const orderId = parseInt(req.params.orderId);
+      
+      const query = `
+        SELECT 
+          o.order_id,
+          o.after_sale_reason,
+          o.admin_reason,
+          o.status AS final_status,
+          d.product_name,
+          pa.quantity,
+          pa.price,
+          farmer.username AS farmer_name,
+          farmer.phone AS farmer_phone,
+          TO_CHAR(o.resolved_at, 'YYYY-MM-DD HH24:MI:SS') AS reviewed_at,
+          o.after_sale_reason_images
+        FROM orders o
+        JOIN purchase_applications pa ON o.application_id = pa.application_id
+        JOIN purchase_demands d ON pa.demand_id = d.demand_id
+        JOIN users farmer ON o.farmer_id = farmer.user_id
+        WHERE o.buyer_id = $1 
+          AND o.order_id = $2 
+          AND o.status IN ('after_sale_resolved', 'after_sale_rejected')
+      `;
+      
+      const { rows } = await require('../model').query(query, [buyerId, orderId]);
+      
+      if (rows.length === 0) {
+        return res.status(404).json({ error: '订单不存在或无权访问' });
+      }
+      
+      // 处理图片URL
+      const order = rows[0];
+      if (order.after_sale_reason_images) {
+        order.after_sale_reason_images = order.after_sale_reason_images
+          .split(',')
+          .map(img => `/uploads/after_sale/${img}`);
+      }
+      
+      res.json(order);
+    } catch (error) {
+      console.error('获取已审核售后详情失败:', error);
+      res.status(500).json({ error: '服务器错误' });
+    }
+  }
+);
+
+// 商户根据订单ID获取待审核的售后订单详情
+router.get('/merchant/pending-after-sale/:orderId', 
+  authMiddleware.authenticateToken,
+  async (req, res) => {
+    try {
+      const buyerId = req.user.userId;
+      const orderId = parseInt(req.params.orderId);
+      
+      const query = `
+        SELECT 
+          o.order_id,
+          o.after_sale_reason,
+          o.after_sale_reason_images,
+          d.product_name,
+          pa.quantity,
+          pa.price,
+          farmer.username AS farmer_name,
+          farmer.phone AS farmer_phone,
+          TO_CHAR(o.created_at, 'YYYY-MM-DD HH24:MI:SS') AS created_at
+        FROM orders o
+        JOIN purchase_applications pa ON o.application_id = pa.application_id
+        JOIN purchase_demands d ON pa.demand_id = d.demand_id
+        JOIN users farmer ON o.farmer_id = farmer.user_id
+        WHERE o.buyer_id = $1 
+          AND o.order_id = $2 
+          AND o.status = 'after_sale_requested'
+      `;
+      
+      const { rows } = await require('../model').query(query, [buyerId, orderId]);
+      
+      if (rows.length === 0) {
+        return res.status(404).json({ error: '订单不存在或无权访问' });
+      }
+      
+      // 处理图片URL
+      const order = rows[0];
+      if (order.after_sale_reason_images) {
+        order.after_sale_reason_images = order.after_sale_reason_images
+          .split(',')
+          .map(img => `/uploads/after_sale/${img}`);
+      }
+      
+      res.json(order);
+    } catch (error) {
+      console.error('获取待审核售后详情失败:', error);
+      res.status(500).json({ error: '服务器错误' });
+    }
+  }
+);
+
+// 商户根据订单ID获取物流信息详情
+router.get('/merchant/logistics/:orderId', 
+  authMiddleware.authenticateToken,
+  async (req, res) => {
+    try {
+      const buyerId = req.user.userId;
+      const orderId = parseInt(req.params.orderId);
+      
+      const query = `
+        SELECT 
+          o.order_id,
+          o.logistics_info,
+          d.product_name,
+          pa.quantity,
+          farmer.username AS farmer_name,
+          farmer.phone AS farmer_phone,
+          TO_CHAR(o.shipment_time, 'YYYY-MM-DD HH24:MI:SS') AS shipment_time,
+          o.status
+        FROM orders o
+        JOIN purchase_applications pa ON o.application_id = pa.application_id
+        JOIN purchase_demands d ON pa.demand_id = d.demand_id
+        JOIN users farmer ON o.farmer_id = farmer.user_id
+        WHERE o.buyer_id = $1 
+          AND o.order_id = $2 
+          AND o.status = 'shipped'
+      `;
+      
+      const { rows } = await require('../model').query(query, [buyerId, orderId]);
+      
+      if (rows.length === 0) {
+        return res.status(404).json({ error: '订单不存在或无权访问' });
+      }
+      
+      res.json(rows[0]);
+    } catch (error) {
+      console.error('获取物流信息详情失败:', error);
+      res.status(500).json({ error: '服务器错误' });
+    }
+  }
+);
+
+
+
 // 买家申请售后
 router.post('/:id/after-sale', 
   authMiddleware.authenticateToken,
@@ -245,8 +390,7 @@ router.post('/:id/after-sale',
          SET 
            status = 'after_sale_requested',
            after_sale_reason = $1,
-           after_sale_reason_images = $2,
-           updated_at = NOW()
+           after_sale_reason_images = $2
          WHERE order_id = $3
          RETURNING *`,
         [reason, images.join(','), orderId]
@@ -285,8 +429,7 @@ router.post('/:id/confirm',
         `UPDATE orders 
          SET 
            status = 'completed',
-           buyer_confirm_time = NOW(),
-           updated_at = NOW()
+           buyer_confirm_time = NOW()
          WHERE order_id = $1
          RETURNING *`,
         [orderId]

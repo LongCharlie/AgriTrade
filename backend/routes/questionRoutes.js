@@ -47,6 +47,9 @@ router.delete('/questions/:id', authMiddleware.authenticateToken, authMiddleware
     // 获取问题相关的图片
     const images = await require('../model').getQuestionImages(questionId);
     
+    // 获取问题的所有回答，以便减少专家回答计数
+    const answers = await require('../model').getAnswersByQuestionId(questionId);
+    
     // 删除数据库中的问题记录
     await require('../model').query('DELETE FROM questions WHERE question_id = $1', [questionId]);
     
@@ -64,8 +67,24 @@ router.delete('/questions/:id', authMiddleware.authenticateToken, authMiddleware
     // 删除问题相关的图片记录
     await require('../model').query('DELETE FROM question_images WHERE question_id = $1', [questionId]);
     
-    // 删除问题相关的回答
-    await require('../model').query('DELETE FROM answers WHERE question_id = $1', [questionId]);
+    // 删除问题相关的回答，并减少专家回答计数
+    if (answers && answers.length > 0) {
+      // 收集所有需要减少计数的专家ID
+      const expertIds = [...new Set(answers.map(answer => answer.expert_id))];
+      
+      // 删除回答记录
+      await require('../model').query('DELETE FROM answers WHERE question_id = $1', [questionId]);
+      
+      // 减少每个专家的回答计数
+      for (const expertId of expertIds) {
+        if (expertId) {
+          await require('../model').decrementExpertAnswerCount(expertId);
+        }
+      }
+    } else {
+      // 如果没有回答，直接删除
+      await require('../model').query('DELETE FROM answers WHERE question_id = $1', [questionId]);
+    }
     
     res.json({ message: '问题删除成功' });
   } catch (error) {
@@ -235,6 +254,9 @@ router.delete('/question/:id', authMiddleware.authenticateToken, authMiddleware.
     // 获取问题相关的图片
     const images = await require('../model').getQuestionImages(questionId);
     
+    // 获取问题的所有回答，以便减少专家回答计数
+    const answers = await require('../model').getAnswersByQuestionId(questionId);
+    
     // 删除数据库中的问题记录
     await require('../model').query('DELETE FROM questions WHERE question_id = $1', [questionId]);
     
@@ -252,8 +274,24 @@ router.delete('/question/:id', authMiddleware.authenticateToken, authMiddleware.
     // 删除问题相关的图片记录
     await require('../model').query('DELETE FROM question_images WHERE question_id = $1', [questionId]);
     
-    // 删除问题相关的回答
-    await require('../model').query('DELETE FROM answers WHERE question_id = $1', [questionId]);
+    // 删除问题相关的回答，并减少专家回答计数
+    if (answers && answers.length > 0) {
+      // 收集所有需要减少计数的专家ID
+      const expertIds = [...new Set(answers.map(answer => answer.expert_id))];
+      
+      // 删除回答记录
+      await require('../model').query('DELETE FROM answers WHERE question_id = $1', [questionId]);
+      
+      // 减少每个专家的回答计数
+      for (const expertId of expertIds) {
+        if (expertId) {
+          await require('../model').decrementExpertAnswerCount(expertId);
+        }
+      }
+    } else {
+      // 如果没有回答，直接删除
+      await require('../model').query('DELETE FROM answers WHERE question_id = $1', [questionId]);
+    }
     
     res.json({ message: '问题删除成功' });
   } catch (error) {

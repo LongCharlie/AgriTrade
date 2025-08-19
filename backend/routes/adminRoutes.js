@@ -39,14 +39,19 @@ router.get('/questions',
     }
 });
 
-// 获取单个提问详情（关联用户表）
+// 获取单个提问详情（关联用户表和图片）- 优化版本
 router.get('/questions/:id', 
   authMiddleware.authenticateToken,
   checkAdmin,
   async (req, res) => {
     try {
-      const question = await model.getQuestionWithUser(req.params.id);
-      if (!question) return res.status(404).json({ error: '问题不存在' });
+      const questionId = req.params.id;
+      const question = await model.getQuestionWithUserAndImages(questionId);
+      
+      if (!question) {
+        return res.status(404).json({ error: '问题不存在' });
+      }
+      
       res.json(question);
     } catch (error) {
       res.status(500).json({ error: error.message });
