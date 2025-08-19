@@ -18,7 +18,7 @@
         <el-option label="农民" value="farmer"></el-option>
         <el-option label="买家" value="buyer"></el-option>
         <el-option label="专家" value="expert"></el-option>
-        <el-option label="管理员" value="admin"></el-option>
+<!--        <el-option label="管理员" value="admin"></el-option>-->
       </el-select>
       <el-input
           v-model.number="searchPhone"
@@ -214,7 +214,7 @@ const handleCreateUser = () => {
 const handleEdit = (row) => {
   console.log('编辑用户', row);
   adminEditUserStore.setUserData(row); // 将用户数据保存到 store
-  router.push('/admin/user/edit'); // 跳转到报价页面
+  router.push('/admin/user/edit'); // 跳转
 };
 
 const handleDelete = async (userId) => {
