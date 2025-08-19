@@ -7,25 +7,26 @@
     </div>
     
     <!-- 轮播图区域 -->
-    <div class="carousel-container">
-      <div class="carousel" :style="{ transform: `translateX(-${currentIndex * 33.33}%)` }">
-        <div class="carousel-item" v-for="(image, index) in carouselImages" :key="index">
-          <img :src="image" alt="轮播图" style="max-width: 100%; max-height: 100%;">
+     <div class="container">
+      <div class="carousel-container">
+        <div class="carousel" :style="{ transform: `translateX(-${currentIndex * 33.33}%)` }">
+          <div class="carousel-item" v-for="(image, index) in carouselImages" :key="index">
+            <img :src="image" alt="轮播图" style="max-width: 100%; max-height: 100%;">
+          </div>
         </div>
+
+        <div class="carousel-indicators">
+          <div class="indicator" 
+              v-for="(image, index) in carouselImages" 
+              :key="index + '-indicator'"
+              :class="{ active: currentIndex === index }"
+              @click="setActiveSlide(index)"></div>
+        </div>
+
+        <div class="carousel-btn prev-btn" @click="prevSlide">❮</div>
+        <div class="carousel-btn next-btn" @click="nextSlide">❯</div>
       </div>
-
-      <div class="carousel-indicators">
-        <div class="indicator" 
-             v-for="(image, index) in carouselImages" 
-             :key="index + '-indicator'"
-             :class="{ active: currentIndex === index }"
-             @click="setActiveSlide(index)"></div>
       </div>
-
-      <div class="carousel-btn prev-btn" @click="prevSlide">❮</div>
-      <div class="carousel-btn next-btn" @click="nextSlide">❯</div>
-    </div>
-
     <!-- 功能按钮区域 -->
     <div class="actions">
       <div class="action-btn" @click="navigateTo('myhome')">我的主页</div>
@@ -42,9 +43,9 @@ export default {
     return {
       currentIndex: 0,
       carouselImages: [
-        '/images/1(.jpg',
         '/images/2.jpg',
-        '/images/3.jpg'
+        'images/3.jpg',
+        '/images/1.jpg'
       ],
       intervalId: null
     }
@@ -64,11 +65,11 @@ export default {
     },
     navigateTo(path) {
       if (path === 'myhome') {
-        this.$router.push('/merchant/home');
+        this.$router.push('/MerchantHome');
       } else if (path === 'publish') {
-        this.$router.push('/merchant/addPurchase');
+        this.$router.push('/addPurchase');
       } else if (path === 'mypurchase') {
-        this.$router.push('/merchant/purchases');
+        this.$router.push('/purchases');
       }
     }
   },
@@ -95,8 +96,14 @@ export default {
 }
 
 /* 轮播图区域 */
-.carousel-container {
+.container {
+  display: flex;
+  justify-content: center;
   width: 100%;
+}
+
+.carousel-container {
+  width: 800px;
   height: 380px;
   background-color: #eee;
   margin-bottom: 30px;
@@ -180,7 +187,7 @@ export default {
 .actions {
   display: flex;
   justify-content: space-between;
-  margin-top: 50px;
+  margin-top: 10px;
 }
 
 .action-btn {
