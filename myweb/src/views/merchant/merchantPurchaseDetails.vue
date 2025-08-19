@@ -181,7 +181,8 @@ const handleAction = async (farmerName, action, recordId, applicationId) => {
     }
   } else if (action === 'record') {
     seeRecordStore.recordId = recordId
-    router.push(`purchaseDetail/record`)
+    console.log(seeRecordStore.recordId)
+    router.push('/merchant/purchaseDetail/record')
   }
 }
 
