@@ -34,9 +34,9 @@
         <el-table-column prop="buyername" label="采购方名称" />
         <el-table-column prop="address" label="收货地" />
         <el-table-column prop="updated_at" label="更新时间" />
-        <el-table-column label="沟通">
-            <el-button @click="handleMessage(scope.row)" >发消息</el-button>
-        </el-table-column>
+<!--        <el-table-column label="沟通">-->
+<!--            <el-button @click="handleMessage(scope.row)" >发消息</el-button>-->
+<!--        </el-table-column>-->
         <el-table-column label="操作">
           <template #default="scope">
             <el-button @click="handleQuote(scope.row)" type="text" v-if="!isQuoted(scope.row)">[去报价]</el-button>
