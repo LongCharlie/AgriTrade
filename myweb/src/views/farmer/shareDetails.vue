@@ -71,9 +71,12 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
+import { useUserStore } from '@/stores/user' // 引入用户状态
+import { ElMessage } from 'element-plus'
 
 const route = useRoute()
-const experienceId = route.params.id
+const userStore = useUserStore()
+const experienceId = route.params.experience_id  
 
 const post = ref({
   title: '',
@@ -87,6 +90,9 @@ const author = ref({
   avatar: ''
 })
 
+// 存储从 detail 接口一次性拿到的所有评论
+const allComments = ref([])
+
 const comments = ref([])
 const newComment = ref('')
 
@@ -99,52 +105,61 @@ const commentPagination = ref({
 // 获取经验详情
 const fetchExperienceDetail = async () => {
   try {
-    const res = await axios.get(`/api/experience/${experienceId}`)
+    const res = await axios.get(`http://localhost:3000/api/experience/${experienceId}`)
     const data = res.data
-
-    post.value.title = data.title
-    post.value.content = data.content ? data.content.split('\n') : []
-    post.value.tips = data.tips || []
+    console.log('接口返回的数据:', data);
+    // 帖子主体
+    post.value.title       = data.title
+    post.value.content     = data.content ? data.content.split('\n') : []
+    post.value.tips        = data.tips || []
     post.value.publishDate = data.created_at || data.published_at || ''
 
-    author.value.name = data.author_name || '匿名'
-    author.value.avatar = data.author_avatar_url ? data.author_avatar_url : ''
+    // 作者信息
+    author.value.name   = data.author_name || '匿名'
+    author.value.avatar = data.author_avatar_url || ''
 
-    commentPagination.value.total = data.comments.length // 初始总数（可选）
+    // 全量评论映射并存储
+    allComments.value = (data.comments || []).map(c => ({
+        author: c.commenter_name,
+        avatar: c.commenter_avatar
+          ? `http://localhost:3000${c.commenter_avatar}`
+          : '',
+        content: c.content,
+        time: c.created_at
+      }))
+
+
+    // 初始化分页总数并渲染第一页
+    commentPagination.value.total = allComments.value.length
     fetchComments()
+
   } catch (err) {
     console.error('获取经验详情失败:', err)
   }
 }
 
-// 获取分页评论
-const fetchComments = async () => {
-  try {
-    const { currentPage, pageSize } = commentPagination.value
-    const res = await axios.get(`/api/experiences/${experienceId}/comments`, {
-      params: { page: currentPage, pageSize }
-    })
-    comments.value = res.data.comments.map(c => ({
-      author: c.username,
-      avatar: c.avatar_url ? `/uploads/avatars/${c.avatar_url}` : '',
-      content: c.content,
-      time: c.created_at
-    }))
-    commentPagination.value.total = res.data.total
-  } catch (err) {
-    console.error('获取评论失败:', err)
-  }
+// 本地分页：从 allComments 切片到 comments
+const fetchComments = () => {
+  const { currentPage, pageSize } = commentPagination.value
+  const start = (currentPage - 1) * pageSize
+  comments.value = allComments.value.slice(start, start + pageSize)
 }
 
 // 提交评论
 const submitComment = async () => {
   if (!newComment.value.trim()) return
   try {
-    await axios.post(`/api/experiences/${experienceId}/comments`, {
-      content: newComment.value
-    })
+    await axios.post(
+      `http://localhost:3000/api/experiences/${experienceId}/comments`,
+      { content: newComment.value },
+      {
+        headers: {
+          Authorization: `Bearer ${userStore.token}`
+        }
+      }
+    )
+    ElMessage.success('提交评论成功等待审核')
     newComment.value = ''
-    fetchComments()
   } catch (err) {
     console.error('提交评论失败:', err)
   }

@@ -491,7 +491,7 @@ router.patch('/experiences/:id/status',
       if (!status) {
         return res.status(400).json({ error: '必须提供状态值' });
       }
-      console.log('经验贴ID：',experienceId)
+      console.log('经验贴ID:',experienceId)
       const updatedExperience = await model.updateExperienceStatus(
         experienceId, 
         status, 

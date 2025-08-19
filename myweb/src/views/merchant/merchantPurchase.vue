@@ -140,10 +140,11 @@ const normalizePurchase = (d, index) => {
 const fetchPurchases = async () => {
   try {
     isLoading.value = true
-    const res = await axios.get('http://localhost:3000/api/demands/all', {
+    const res = await axios.get('http://localhost:3000/api/buyer/demands', {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
-    const list = Array.isArray(res.data) ? res.data : []
+
+    const list = Array.isArray(res.data?.data) ? res.data.data : []
     purchases.value = list.map((d, i) => normalizePurchase(d, i))
     currentPage.value = 1
   } catch (err) {
@@ -153,6 +154,7 @@ const fetchPurchases = async () => {
     isLoading.value = false
   }
 }
+
 
 onMounted(fetchPurchases)
 

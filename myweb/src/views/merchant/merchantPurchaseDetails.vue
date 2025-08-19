@@ -62,13 +62,14 @@
             </div>
 
             <div class="card-actions">
-              <button class="action-btn profile" @click="handleAction(application.farmerName, 'profile')">
-                <i class="fas fa-user"></i> 查看主页
+              <button class="action-btn profile" @click="handleAction(application.farmerName, 'message')">
+                <i class="fas fa-user"></i> 发送消息
               </button>
-              <button class="action-btn message" @click="handleAction(application.farmerName, 'message')">
+              <button class="action-btn message"
+                      @click="handleAction(application.farmerName, 'affirm', application.record_id, application.applicationId)">
                 <i class="fas fa-comment"></i> 确认
               </button>
-              <button class="action-btn record" @click="handleAction(application.farmerName, 'record',application.record_id)">
+              <button class="action-btn record" @click="handleAction(application.farmerName, 'record', application.record_id)">
                 <i class="fas fa-seedling"></i> 详情
               </button>
             </div>
@@ -91,11 +92,11 @@
             <i class="fas fa-chevron-right"></i>
           </button>
         </div>
-          <div class="back-btn-container">
-            <button class="back-btn" @click="goBack">
-              <i class="fas fa-arrow-left"></i> 返回
-            </button>
-          </div>
+        <div class="back-btn-container">
+          <button class="back-btn" @click="goBack">
+            <i class="fas fa-arrow-left"></i> 返回
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -105,17 +106,15 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
-import { useUserStore } from '@/stores/user' // ✅ 引入 Pinia 用户状态
+import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
-import {useSeeRecordStore} from "@/stores/seeRecord";
-
+import { useSeeRecordStore } from "@/stores/seeRecord"
 
 const route = useRoute()
 const router = useRouter()
-const userStore = useUserStore() // ✅ 获取用户状态
+const userStore = useUserStore()
+const seeRecordStore = useSeeRecordStore()
 const demandId = route.params.id
-const seeRecordStore = useSeeRecordStore();
-
 
 const applications = ref([])
 const totalApplications = ref(0)
@@ -127,6 +126,7 @@ const sortBy = ref('latest')
 const currentPage = ref(1)
 const pageSize = 5
 
+// 排序 + 分页
 const filteredApplications = computed(() => {
   let sorted = [...applications.value]
   if (sortBy.value === 'lowest') {
@@ -134,7 +134,7 @@ const filteredApplications = computed(() => {
   } else if (sortBy.value === 'highest') {
     sorted.sort((a, b) => parseFloat(b.price) - parseFloat(a.price))
   } else {
-    sorted.sort((a, b) => new Date(b.applied_time) - new Date(a.applied_time))
+    sorted.sort((a, b) => new Date(b.applicationTime) - new Date(a.applicationTime))
   }
   const start = (currentPage.value - 1) * pageSize
   return sorted.slice(start, start + pageSize)
@@ -142,65 +142,78 @@ const filteredApplications = computed(() => {
 
 const totalPages = computed(() => Math.ceil(applications.value.length / pageSize))
 
-const changePage = (page) => {
-  currentPage.value = page
-}
+const changePage = (page) => { currentPage.value = page }
+const prevPage = () => { if (currentPage.value > 1) currentPage.value-- }
+const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++ }
+const goBack = () => { router.back() }
 
-const prevPage = () => {
-  if (currentPage.value > 1) currentPage.value--
-}
-
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) currentPage.value++
-}
-
-const goBack = () => {
-  router.back()
-}
-
-const handleAction = (farmerName, action, recordId) => {
-  if (action === 'profile') {
-    router.push(`/farmer/profile/${farmerName}`)
-  } else if (action === 'message') {
-    alert(`确认与 ${farmerName} 的报价`)
-  } else if (action === 'record') { //别改
-    seeRecordStore.recordId =  recordId;
+// 操作方法
+const handleAction = async (farmerName, action, recordId, applicationId) => {
+  if (action === 'message') {
+    alert(`打开聊天窗口`)
+  } else if (action === 'affirm') {
+    try {
+      const res = await axios.post(
+        `http://localhost:3000/api/applications/${applicationId}/accept`,
+        {},
+        { headers: { Authorization: `Bearer ${userStore.token}` } }
+      )
+      if (res.data.success) {
+        ElMessage.success(res.data.message || `已确认 ${farmerName} 的报价并创建订单`)
+        await fetchApplications() // 刷新数据
+      }
+    } catch (err) {
+      console.error('确认报价失败:', err)
+      ElMessage.error(err.response?.data?.error || '确认报价失败')
+    }
+  } else if (action === 'record') {
+    seeRecordStore.recordId = recordId
     router.push(`purchaseDetail/record`)
   }
 }
 
-onMounted(async () => {
+// 数据获取封装
+const fetchApplications = async () => {
   try {
-    console.log('当前 token:', userStore.token)
-
     const res = await axios.get(`http://localhost:3000/api/demands/${demandId}/applications`, {
-      headers: {
-        Authorization: `Bearer ${userStore.token}` // ✅ 添加身份验证头
-      }
+      headers: { Authorization: `Bearer ${userStore.token}` }
     })
-    if (res.data.success) {
-      applications.value = res.data.data
-      totalApplications.value = applications.value.length
 
-      const prices = applications.value.map(app => parseFloat(app.price))
-      averagePrice.value = prices.reduce((a, b) => a + b, 0) / prices.length
-      minPrice.value = Math.min(...prices)
-      maxPrice.value = Math.max(...prices)
+    if (res.data.success) {
+      applications.value = res.data.data.map(app => ({
+        farmerAvatar: app.farmer_avatar,
+        farmerName: app.farmer_name,
+        shippingLocation: app.shipping_location,
+        applicationTime: app.applied_time,
+        price: app.price,
+        unit: app.unit || 'kg',
+        rating: app.rating || 0,
+        record_id: app.record_id,
+        applicationId: app.application_id // ✅ 新增字段
+      }))
+
+      totalApplications.value = applications.value.length
+      const prices = applications.value.map(a => parseFloat(a.price))
+      averagePrice.value = prices.length ? prices.reduce((a, b) => a + b, 0) / prices.length : 0
+      minPrice.value = prices.length ? Math.min(...prices) : 0
+      maxPrice.value = prices.length ? Math.max(...prices) : 0
     }
   } catch (err) {
-  if (err.response?.status === 401) {
-    ElMessage.error('⚠️ 无权限访问该采购申请')
-    router.push('/merchant/purchases')
-  } else if (err.response?.status === 404) {
-    ElMessage.error('❌ 采购申请不存在')
-    router.push('/merchant/purchases')
-  } else {
-    ElMessage.error('服务器错误，请稍后重试')
+    if (err.response?.status === 401) {
+      ElMessage.error('⚠️ 无权限访问该采购申请')
+      router.push('/merchant/purchases')
+    } else if (err.response?.status === 404) {
+      ElMessage.error('❌ 采购申请不存在')
+      router.push('/merchant/purchases')
+    } else {
+      ElMessage.error('服务器错误，请稍后重试')
+    }
   }
 }
 
-})
+onMounted(fetchApplications)
 </script>
+
 
 <style scoped>
 * {

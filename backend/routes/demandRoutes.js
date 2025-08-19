@@ -80,7 +80,7 @@ router.post('/communications', authMiddleware.authenticateToken, async (req, res
   res.status(201).json(newComm.rows[0]);
 });
 
-// 买家获取采购需求的所有申请（带农户信息）
+// 买家获取采购需求的所有申请（带农户信息） - 改进版
 router.get('/demands/:demandId/applications', 
   authMiddleware.authenticateToken, 
   authMiddleware.checkRole([ROLES.BUYER]), 
@@ -89,18 +89,23 @@ router.get('/demands/:demandId/applications',
       const { demandId } = req.params;
       const buyerId = req.user.userId;
       
-      // 首先验证该需求确实属于该买家
-      const demandCheck = await require('../model').query(
-        'SELECT 1 FROM purchase_demands WHERE demand_id = $1 AND buyer_id = $2',
-        [demandId, buyerId]
-      );
+      const applications = await require('../model').getDemandApplicationsWithFarmerInfo(demandId, buyerId);
       
-      if (demandCheck.rows.length === 0) {
-        return res.status(403).json({ 
-          success: false,
-          error: '采购需求不存在或无权访问' 
-        });
-      }
+      res.json({
+        success: true,
+        data: applications
+      });
+    } catch (error) {
+      console.error('获取采购申请失败:', error);
+      const statusCode = error.message.includes('无权访问') ? 403 : 400;
+      res.status(statusCode).json({ 
+        success: false,
+        error: error.message 
+      });
+    }
+  }
+);
+    
 
 // 买家通过申请并创建订单
 router.post('/applications/:applicationId/accept', 
@@ -112,10 +117,10 @@ router.post('/applications/:applicationId/accept',
       const buyerId = req.user.userId;
 
       // 开始事务
-      await pool.query('BEGIN');
+      await require('../model').query('BEGIN');
 
       // 1. 获取申请信息并验证买家权限
-      const applicationResult = await pool.query(`
+      const applicationResult = await require('../model').query(`
         SELECT pa.*, pd.buyer_id
         FROM purchase_applications pa
         JOIN purchase_demands pd ON pa.demand_id = pd.demand_id
@@ -123,7 +128,7 @@ router.post('/applications/:applicationId/accept',
       `, [applicationId]);
 
       if (applicationResult.rows.length === 0) {
-        await pool.query('ROLLBACK');
+        await require('../model').query('../model').query('ROLLBACK');
         return res.status(404).json({ error: '申请不存在' });
       }
 
@@ -131,26 +136,26 @@ router.post('/applications/:applicationId/accept',
       
       // 验证当前用户是该需求的所有者
       if (application.buyer_id !== buyerId) {
-        await pool.query('ROLLBACK');
+        await require('../model').query('ROLLBACK');
         return res.status(403).json({ error: '无权操作此申请' });
       }
 
       // 2. 拒绝该需求的其他所有申请
-      await pool.query(`
+      await require('../model').query(`
         UPDATE purchase_applications
         SET status = 'rejected'
         WHERE demand_id = $1 AND application_id != $2
       `, [application.demand_id, applicationId]);
 
       // 3. 更新当前申请状态为已接受
-      await pool.query(`
+      await require('../model').query(`
         UPDATE purchase_applications
         SET status = 'accepted'
         WHERE application_id = $1
       `, [applicationId]);
 
       // 4. 创建订单
-      const orderResult = await pool.query(`
+      const orderResult = await require('../model').query(`
         INSERT INTO orders (
           farmer_id,
           buyer_id,
@@ -170,14 +175,14 @@ router.post('/applications/:applicationId/accept',
       `, [application.farmer_id, buyerId, applicationId]);
 
       // 5. 更新需求状态为已完成
-      await pool.query(`
+      await require('../model').query(`
         UPDATE purchase_demands
         SET status = 'completed'
         WHERE demand_id = $1
       `, [application.demand_id]);
 
       // 提交事务
-      await pool.query('COMMIT');
+      await require('../model').query('COMMIT');
 
       res.status(201).json({
         success: true,
@@ -186,7 +191,7 @@ router.post('/applications/:applicationId/accept',
       });
 
     } catch (error) {
-      await pool.query('ROLLBACK');
+      await require('../model').query('ROLLBACK');
       console.error('接受申请失败:', error);
       res.status(500).json({ error: error.message });
     }
@@ -202,7 +207,7 @@ router.post('/demands/:demandId/close',
       const { demandId } = req.params;
       const buyerId = req.user.userId;
       // 验证需求存在且属于当前买家
-      const demandCheck = await pool.query(`
+      const demandCheck = await require('../model').query(`
         SELECT 1 FROM purchase_demands 
         WHERE demand_id = $1 AND buyer_id = $2 AND status = 'open'
       `, [demandId, buyerId]);
@@ -214,24 +219,24 @@ router.post('/demands/:demandId/close',
       }
 
       // 开始事务
-      await pool.query('BEGIN');
+      await require('../model').query('BEGIN');
 
       // 1. 拒绝所有关联的申请
-      await pool.query(`
+      await require('../model').query(`
         UPDATE purchase_applications
         SET status = 'rejected'
         WHERE demand_id = $1
       `, [demandId]);
 
       // 2. 关闭需求
-      const result = await pool.query(`
+      const result = require('../model').query(`
         UPDATE purchase_demands
         SET status = 'closed'
         WHERE demand_id = $1
         RETURNING *
       `, [demandId]);
 
-      await pool.query('COMMIT');
+      await require('../model').query('COMMIT');
 
       res.json({
         success: true,
@@ -240,7 +245,7 @@ router.post('/demands/:demandId/close',
       });
 
     } catch (error) {
-      await pool.query('ROLLBACK');
+      await require('../model').query('ROLLBACK');
       console.error('关闭采购需求失败:', error);
       res.status(500).json({ error: error.message });
     }
@@ -249,44 +254,44 @@ router.post('/demands/:demandId/close',
 
 
 // 获取申请详情
-const applications = await require('../model').query(
-      `SELECT 
-        pa.application_id,
-        pa.quantity,
-        pa.price,
-        pa.province AS shipping_location,
-        TO_CHAR(pa.applied_at, 'YYYY-MM-DD HH24:MI:SS') AS applied_time,
-        u.username AS farmer_name,
-        u.province AS farmer_province,
-        u.city AS farmer_city,
-        pr.product_name,
-        pr.growth_status,
-        CASE 
-          WHEN u.avatar_url IS NOT NULL 
-          THEN CONCAT('/uploads/avatars/', u.avatar_url) 
-          ELSE NULL 
-        END AS farmer_avatar
-      FROM purchase_applications pa
-      JOIN users u ON pa.farmer_id = u.user_id
-      LEFT JOIN planting_records pr ON pa.record_id = pr.record_id
-      WHERE pa.demand_id = $1
-      ORDER BY pa.applied_at DESC`,
-      [demandId]
-    );
+//const applications = await require('../model').query(
+      //`SELECT 
+       // pa.application_id,
+       // pa.quantity,
+       // pa.price,
+       // pa.province AS shipping_location,
+       // TO_CHAR(pa.applied_at, 'YYYY-MM-DD HH24:MI:SS') AS applied_time,
+       // u.username AS farmer_name,
+       // u.province AS farmer_province,
+       // u.city AS farmer_city,
+       // pr.product_name,
+       // pr.growth_status,
+       // CASE 
+        //  WHEN u.avatar_url IS NOT NULL 
+        //  THEN CONCAT('/uploads/avatars/', u.avatar_url) 
+         // ELSE NULL 
+       // END AS farmer_avatar
+      //FROM purchase_applications pa
+     // JOIN users u ON pa.farmer_id = u.user_id
+     // LEFT JOIN planting_records pr ON pa.record_id = pr.record_id
+     // WHERE pa.demand_id = $1
+     // ORDER BY pa.applied_at DESC`,
+     // [demandId]
+   // );
       
-    res.json({
-      success: true,
-      data: applications.rows
-    });
-    } catch (error) {
-      console.error('获取采购申请失败:', error);
-      res.status(400).json({ 
-        success: false,
-        error: error.message 
-      });
-    }
-  }
-);
+    //res.json({
+     //success: true,
+      //data: applications.rows
+   // });
+   // } catch (error) {
+     // console.error('获取采购申请失败:', error);
+     // res.status(400).json({ 
+      //  success: false,
+      //  error: error.message 
+     // });
+   // }
+//  }
+//);
 
 // 获取当前买家的采购需求列表
 router.get('/buyer/demands', 

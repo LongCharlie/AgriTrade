@@ -116,9 +116,9 @@ router.get('/experience/:id', async (req, res) => {
         u.username as author_name,
         u.avatar_url as author_avatar,
         CASE WHEN u.avatar_url IS NOT NULL 
-             THEN CONCAT('/uploads/avatars/', u.avatar_url) 
-             ELSE NULL 
-        END as author_avatar_url
+            THEN CONCAT('/uploads/avatars/', u.avatar_url) 
+            ELSE NULL 
+        END AS commenter_avatar
       FROM experiences e
       LEFT JOIN users u ON e.user_id = u.user_id
       WHERE e.experience_id = $1 AND e.audit_status = 'approved'`,
