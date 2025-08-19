@@ -74,7 +74,10 @@
               <td>
                 <template v-if="order.status === '待发货'">
                 </template>
-                <template v-else-if="order.status === '已发货'">
+                <template v-else-if="order.status === '待收货'">
+                  <button class="action-btn btn-confirm" @click="openShippingModal(order)">
+                    <i class="fas fa-check-circle"></i> 查看物流信息
+                  </button>
                   <button class="action-btn btn-confirm" @click="confirmReceipt(order)">
                     <i class="fas fa-check-circle"></i> 确认收货
                   </button>
@@ -352,7 +355,7 @@ const fetchOrders = async () => {
 
     const statusMap = {
       pending_shipment: '待发货',
-      shipped: '已发货',
+      shipped: '待收货',
       completed: '已完成',
       after_sale_requested: '售后中',
       after_sale_resolved: '已售后'
@@ -380,7 +383,6 @@ const fetchOrders = async () => {
     }
   }
 }
-
 
 // 过滤后的订单
 const filteredOrders = computed(() => {
@@ -436,7 +438,7 @@ const getStatusClass = (status) => {
 const openShippingModal = async (order) => {
   selectedOrder.value = order
   try {
-    const res = await axios.get('/merchant/logistics', {
+    const res = await axios.get('http://localhost:3000/merchant/logistics', {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
     const info = res.data.find(i => i.order_id === order.orderId)
@@ -559,7 +561,7 @@ const submitRefund = async () => {
   const imageUrls = uploadedFiles.value.map(f => f.url)
 
   try {
-    const res = await axios.post(`/${selectedOrder.value.orderId}/after-sale`, {
+    const res = await axios.post(`http://localhost:3000/api/${selectedOrder.value.orderId}/after-sale`, {
       reason: refundReason.value,
       images: imageUrls
     }, {
@@ -837,6 +839,7 @@ tr:hover {
   width: 90%;
   max-width: 500px;
   max-height: 90vh;
+  overflow-y: auto;
   position: relative;
 }
 
