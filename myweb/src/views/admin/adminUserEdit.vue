@@ -53,6 +53,34 @@
           <el-input v-model="user.phone"></el-input>
         </el-form-item>
 
+        <div v-if="user.role === 'expert'">
+          <!-- 专家信息 -->
+          <el-form-item label="真实姓名">
+            <el-input v-model="user.real_name" placeholder="请输入真实姓名"></el-input>
+          </el-form-item>
+
+          <el-form-item label="职称">
+            <el-input v-model="user.title" placeholder="请输入职称"></el-input>
+          </el-form-item>
+
+          <el-form-item label="所属机构">
+            <el-input v-model="user.institution" placeholder="请输入机构名称"></el-input>
+          </el-form-item>
+
+          <el-form-item label="专业领域">
+            <el-input v-model="user.expertise" placeholder="请输入专业领域"></el-input>
+          </el-form-item>
+
+          <el-form-item label="回答数量">
+            <el-input v-model="user.answer_count" disabled></el-input>
+          </el-form-item>
+
+          <el-form-item label="个人简介">
+            <el-input type="textarea" v-model="user.bio" placeholder="请填写个人简介"></el-input>
+          </el-form-item>
+        </div>
+
+
         <!-- 保存按钮 -->
         <el-form-item>
           <el-button type="primary" @click="saveProfile">保存修改</el-button>
@@ -83,7 +111,13 @@ const user = ref({
   district: '',
   phone: '',
   address_detail: '',
-  avatar_url: ''  // 使用默认头像
+  avatar_url: '',  // 使用默认头像
+  real_name: '',
+  title: '',
+  institution: '',
+  expertise: '',
+  answer_count: '',
+  bio: '',
 });
 
 const selectedLocation = ref([]);
@@ -103,7 +137,33 @@ onMounted(async () => {
   user.value.address_detail = storedUserData.address_detail;
   user.value.avatar_url = storedUserData.avatar_url;
   selectedLocation.value = user.value.user_id ? [user.value.province, user.value.city, user.value.district] : [];
+  if (user.value.role === 'expert'){
+    getExpert();
+  }
 });
+
+// 保存数据
+const getExpert = async () => {
+  try {
+    const response = await axios.get(`http://localhost:3000/api/user/expert/${user.value.user_id}`,{
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    const userData = response.data;
+    user.value.real_name = userData.real_name || '';
+    user.value.title = userData.title || '';
+    user.value.institution = userData.institution || '';
+    user.value.expertise = userData.expertise || '';
+    user.value.bio = userData.bio || '';
+    user.value.answer_count = userData.answer_count || 0;
+    ElMessage.success('获取专家信息成功');
+    console.log(user.value)
+  } catch (error) {
+    console.error('获取专家信息失败:', error);
+    ElMessage.error('获取专家信息失败，请重试');
+  }
+};
 
 // 处理位置变化
 const handleLocationChange = (value) => {
@@ -133,8 +193,20 @@ const saveProfile = async () => {
         'Authorization': `Bearer ${token}`
       }
     });
+
+    // 2. 如果是专家，再更新专家信息
+    if (user.value.role === 'expert') {
+      await axios.patch(`http://localhost:3000/api/expert/profile/admin/${user.value.user_id}`, {
+        real_name: user.value.real_name,
+        title: user.value.title,
+        institution: user.value.institution,
+        expertise: user.value.expertise,
+        bio: user.value.bio
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+    }
     ElMessage.success('保存成功');
-    router.push('/admin/user');
   } catch (error) {
     console.error('保存失败:', error);
     ElMessage.error('保存失败，请重试');

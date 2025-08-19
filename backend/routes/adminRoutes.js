@@ -411,6 +411,29 @@ router.delete('/users/:id',
     }
 });
 
+// 获取专家个人信息
+router.get('/user/expert/:id',
+    authMiddleware.authenticateToken,
+    checkAdmin, async (req, res) => {
+    try {
+        const userId =  req.params.id;
+        let userData;
+        // 专家用户获取更多信息
+        userData = await require('../model').getExpertDetails(userId);
+        if (!userData) {
+            return res.status(404).json({ error: '用户未找到' });
+        }
+        // 移除敏感信息
+        delete userData.password;
+        res.json(userData);
+    } catch (error) {
+        console.error('获取用户信息错误:', error);
+        res.status(500).json({ error: '获取用户信息失败' });
+    }
+});
+
+// 专家信息更新，放在expertRoutes,patch('/expert/profile/admin/:id
+
 // 获取所有证书
 router.get('/certificates', 
   authMiddleware.authenticateToken,
