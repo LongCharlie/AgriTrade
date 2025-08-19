@@ -11,7 +11,7 @@
       <el-input v-model="filterMonth" placeholder="月份" style="width: 120px; margin-bottom: 20px;"></el-input>
       <el-input v-model="filterDay" placeholder="日期" style="width: 120px; margin-bottom: 20px;"></el-input>
       <el-select v-model="filterOption" placeholder="选择筛选" style="width: 200px; margin-bottom: 20px;">
-        <el-option label="全部" value="all"></el-option>
+        <el-option label="全部状态" value="all"></el-option>
         <el-option label="待发货" value="pending_shipment"></el-option>
         <el-option label="已发货" value="shipped"></el-option>
         <el-option label="已完成" value="completed"></el-option>
@@ -30,6 +30,9 @@
       <el-table-column prop="province" label="收货地"></el-table-column>
       <el-table-column prop="buyer_name" label="采购方"></el-table-column>
       <el-table-column prop="buyer_phone" label="联系方式"></el-table-column>
+      <el-table-column label="沟通">
+        <el-button @click="handleMessage(scope.row)" >发消息</el-button>
+      </el-table-column>
       <el-table-column prop="created_at" label="时间"></el-table-column>
       <el-table-column prop="formatted_status" label="状态"></el-table-column>
       <el-table-column label="操作">
@@ -130,6 +133,8 @@ import axios from 'axios';
 import { useUserStore } from '../../stores/user';
 const userStore = useUserStore();
 import {ElMessage} from "element-plus";
+import {useRouter} from "vue-router";
+const router = useRouter();
 
 const statusMap = {
   pending_shipment: '待发货',
@@ -248,11 +253,17 @@ const paginatedData = computed(() => {
 // 搜索功能
 const performSearch = () => {
   filteredTableData.value = tableData.value.filter(item => {
-    const matchesId = item.order_id.toString().includes(searchId.value);
-    const matchesProduct = item.product_name.includes(searchProduct.value);
-    const matchesAddress = item.delivery_location.includes(searchAddress.value);
+    // 检查属性是否存在，如果不存在则使用空字符串
+    const orderId = item.order_id ? item.order_id.toString() : '';
+    const productName = item.product_name || '';
+    const deliveryLocation = item.delivery_location || '';
+
+    const matchesId = orderId.includes(searchId.value);
+    const matchesProduct = productName.includes(searchProduct.value);
+    const matchesAddress = deliveryLocation.includes(searchAddress.value);
 
     const matchesDate = (date) => {
+      if (!date) return false; // 如果日期不存在，返回false
       const [year, month, day] = date.split('-');
       return (!filterYear.value || year === filterYear.value) &&
           (!filterMonth.value || month === filterMonth.value) &&
@@ -274,6 +285,7 @@ const performSearch = () => {
   currentPage.value = 1; // 重置为第1页
 };
 
+
 // 分页处理
 const handlePageChange = (page) => {
   currentPage.value = page;
@@ -282,6 +294,15 @@ const handlePageChange = (page) => {
 const handleSizeChange = (newSize) => {
   pageSize.value = newSize;
   currentPage.value = 1; // 重置到第一页
+};
+
+
+// 跳转到聊天页面
+const handleMessage = (order) => {
+  currentOrder.value = order; // 保存当前订单
+  const buyerID = order.buyer_id;
+  const farmerID = userStore.userId;
+  router.push('/farmer/messages'); // 跳转
 };
 
 // 操作处理函数

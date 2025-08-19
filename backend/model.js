@@ -924,6 +924,7 @@ const getWeeklyOrderSummary = async () => {
   `;
   
   const { rows } = await pool.query(query);
+  console.log(rows);
   return rows;
 };
 
@@ -1239,7 +1240,7 @@ const getFarmerOrders = async (farmerId) => {
       o.buyer_id,
       u.username AS buyer_name,
       u.phone AS buyer_phone,
-      TO_CHAR(o.created_at, 'YYYY-MM-DD') AS created_at,
+      TO_CHAR(o.created_at, 'YYYY-MM-DD HH:MM:SS') AS created_at,
       o.status,
       o.after_sale_reason,
       o.after_sale_reason_images,

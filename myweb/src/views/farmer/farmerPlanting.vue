@@ -40,7 +40,7 @@
         <!--        </template>-->
       </el-input>
       <el-button type="primary" @click="performSearch">搜索</el-button>
-      <el-button @click="resetSearch">重置</el-button>
+<!--      <el-button @click="resetSearch">重置</el-button>-->
     </div>
 
     <el-row :gutter="40" class="crop-cards">
