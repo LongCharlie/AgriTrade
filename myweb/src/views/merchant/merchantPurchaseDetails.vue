@@ -126,6 +126,18 @@ const sortBy = ref('latest')
 const currentPage = ref(1)
 const pageSize = 5
 
+// 时间格式化函数
+const formatTime = (isoString) => {
+  const date = new Date(isoString)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
 // 排序 + 分页
 const filteredApplications = computed(() => {
   let sorted = [...applications.value]
@@ -134,7 +146,7 @@ const filteredApplications = computed(() => {
   } else if (sortBy.value === 'highest') {
     sorted.sort((a, b) => parseFloat(b.price) - parseFloat(a.price))
   } else {
-    sorted.sort((a, b) => new Date(b.applicationTime) - new Date(a.applicationTime))
+    sorted.sort((a, b) => new Date(b.rawTime) - new Date(a.rawTime)) // 用原始时间排序
   }
   const start = (currentPage.value - 1) * pageSize
   return sorted.slice(start, start + pageSize)
@@ -149,6 +161,7 @@ const goBack = () => { router.back() }
 
 // 操作方法
 const handleAction = async (farmerName, action, recordId, applicationId) => {
+  console.log('参数信息:', { farmerName, action, recordId, applicationId })
   if (action === 'message') {
     alert(`打开聊天窗口`)
   } else if (action === 'affirm') {
@@ -178,18 +191,19 @@ const fetchApplications = async () => {
     const res = await axios.get(`http://localhost:3000/api/demands/${demandId}/applications`, {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
-
+    console.log('返回数据：', res)
     if (res.data.success) {
       applications.value = res.data.data.map(app => ({
         farmerAvatar: app.farmer_avatar,
         farmerName: app.farmer_name,
-        shippingLocation: app.shipping_location,
-        applicationTime: app.applied_time,
+        shippingLocation: app.province,
+        applicationTime: formatTime(app.applied_at),
+        rawTime: app.applied_at,
         price: app.price,
         unit: app.unit || 'kg',
         rating: app.rating || 0,
         record_id: app.record_id,
-        applicationId: app.application_id // ✅ 新增字段
+        applicationId: app.application_id
       }))
 
       totalApplications.value = applications.value.length
@@ -213,6 +227,7 @@ const fetchApplications = async () => {
 
 onMounted(fetchApplications)
 </script>
+
 
 
 <style scoped>

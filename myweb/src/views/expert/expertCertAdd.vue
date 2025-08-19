@@ -89,11 +89,16 @@
                       :on-remove="handleRemove"
                       list-type="picture-card"
                       v-model:file-list="fileList">
-                    <el-icon v-if="fileList.length === 0"><Plus /></el-icon>
-                    <div v-if="fileList.length === 0" class="el-upload__text">
-                      点击上传图片 <br/>
-                      <span style="font-size: 12px; color: #999;">支持jpg/png格式，不超过5MB</span>
+                    <div v-if="fileList.length === 0" class="upload-content">
+                      <el-icon v-if="fileList.length === 0"><Plus /></el-icon>
+                      <div v-if="fileList.length === 0" class="upload-text">点击上传图片</div>
+                      <div v-if="fileList.length === 0" class="upload-hint">支持jpg/png格式，不超过5MB</div>
                     </div>
+<!--                    <el-icon v-if="fileList.length === 0"><Plus /></el-icon>-->
+<!--                    <div v-if="fileList.length === 0" class="el-upload__text">-->
+<!--                      点击上传图片 <br/>-->
+<!--                      <span style="font-size: 12px; color: #999;">支持jpg/png格式，不超过5MB</span>-->
+<!--                    </div>-->
                   </el-upload>
                   <div v-if="certificateImageUrl" class="certificate-preview">
                     <el-image
@@ -200,6 +205,7 @@ export default {
         });
 
         const certificate = response.data.certificate;
+        console.log(certificate);
         this.certificateForm = {
           certificate_name: certificate.certificate_name,
           obtain_time: certificate.obtain_time,
@@ -360,4 +366,29 @@ export default {
   color: #999;
   margin-top: 5px;
 }
+
+.upload-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.upload-text {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #606266;
+  text-align: center;
+}
+
+.upload-hint {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #999;
+  text-align: center;
+  line-height: 1.4;
+}
+
 </style>

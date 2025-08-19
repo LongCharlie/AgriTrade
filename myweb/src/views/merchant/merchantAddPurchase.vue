@@ -194,13 +194,11 @@ const submitForm = async () => {
     return
   }
 
-  const cropPinyin = cropNameMap[formData.value.crop] || formData.value.crop
-
   try {
     await axios.post(
       'http://localhost:3000/api/demands',
       {
-        product_name: cropPinyin,
+        product_name: formData.value.crop, // ✅ 使用中文作物名，如“葱”
         quantity: formData.value.quantity
       },
       { headers: { Authorization: `Bearer ${userStore.token}` } }
@@ -211,6 +209,7 @@ const submitForm = async () => {
     ElMessage.error('采购发布失败，请稍后重试')
   }
 }
+
 
 const resetForm = () => {
   formData.value.crop = ''
