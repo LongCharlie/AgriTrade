@@ -360,7 +360,6 @@ const fetchOrders = async () => {
       after_sale_requested: '售后中',
       after_sale_resolved: '已售后'
     }
-
     orders.value = res.data.map(row => ({
       orderId: row.order_id,
       productName: row.product_name,
@@ -462,7 +461,7 @@ const openRefundModal = (order) => {
 const openRefundReasonModal = async (order) => {
   selectedOrder.value = order
   try {
-    const res = await axios.get('/merchant/pending-after-sale', {
+    const res = await axios.get('http://localhost:3000/api/merchant/pending-after-sale', {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
     const detail = res.data.find(i => i.order_id === order.orderId)
@@ -482,7 +481,7 @@ const openRefundReasonModal = async (order) => {
 const openAuditReasonModal = async (order) => {
   selectedOrder.value = order
   try {
-    const res = await axios.get('/merchant/reviewed-after-sale', {
+    const res = await axios.get('http://localhost:3000/api/merchant/reviewed-after-sale', {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
     const detail = res.data.find(i => i.order_id === order.orderId)
@@ -510,7 +509,7 @@ const confirmReceipt = async (order) => {
       cancelButtonText: '取消',
       type: 'warning'
     })
-    const res = await axios.post(`/merchant/orders/${order.orderId}/confirm`, {}, {
+    const res = await axios.post(`http://localhost:3000/api/${order.orderId}/confirm`, {}, {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
     order.status = '已完成'
@@ -557,9 +556,7 @@ const submitRefund = async () => {
     ElMessage.warning('请填写售后原因')
     return
   }
-
   const imageUrls = uploadedFiles.value.map(f => f.url)
-
   try {
     const res = await axios.post(`http://localhost:3000/api/${selectedOrder.value.orderId}/after-sale`, {
       reason: refundReason.value,
@@ -582,7 +579,6 @@ onMounted(() => {
   fetchOrders()
 })
 </script>
-
 
 <style scoped>
 * {
