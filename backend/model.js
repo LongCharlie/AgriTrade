@@ -1507,7 +1507,45 @@ const sendMessage = async (senderId, other_user_id, content, image_url) => {
   };
 };
 
-
+// 获取带用户信息和图片的问题详情
+const getQuestionWithUserAndImages = async (questionId) => {
+  const query = `
+    SELECT 
+      q.*,
+      u.username,
+      u.user_id,
+      COALESCE(
+        JSON_AGG(
+          JSON_BUILD_OBJECT(
+            'image_id', qi.image_id,
+            'image_url', qi.image_url,
+            'created_at', qi.created_at
+          ) 
+          ORDER BY qi.created_at
+        ) FILTER (WHERE qi.image_id IS NOT NULL),
+        '[]'
+      ) as images
+    FROM questions q
+    LEFT JOIN users u ON q.farmer_id = u.user_id
+    LEFT JOIN question_images qi ON q.question_id = qi.question_id AND qi.is_deleted = false
+    WHERE q.question_id = $1
+    GROUP BY q.question_id, u.user_id
+  `;
+  
+  const { rows } = await pool.query(query, [questionId]);
+  
+  if (rows.length === 0) {
+    return null;
+  }
+  
+  return {
+    ...rows[0],
+    images: rows[0].images.map(img => ({
+      ...img,
+      url: `/uploads/question_images/${img.image_url}`
+    }))
+  };
+};
 
 // 导出所有数据库操作方法
 module.exports = {
@@ -1518,6 +1556,7 @@ module.exports = {
    getMonthlyOrderSummary,
    adminDeleteAnswer,
    getYearlyOrderSummary,
+   getQuestionWithUserAndImages,
   createUser,
   getBuyerDemands,
   incrementQuestionAnswerCount,
