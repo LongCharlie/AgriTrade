@@ -502,6 +502,50 @@ router.get('/experiences',
     }
 });
 
+// 获取经验分享详情（管理员专用，可查看所有状态）
+router.get('/admin/experience/:id', 
+  authMiddleware.authenticateToken,
+  checkAdmin,
+  async (req, res) => {
+    try {
+      const experienceId = req.params.id;
+
+      // 获取经验详情（不限制审核状态）
+      const experience = await require('../model').query(
+        `SELECT 
+          e.*,
+          u.username AS author_name,
+          u.avatar_url AS author_avatar,
+          CASE WHEN u.avatar_url IS NOT NULL 
+              THEN CONCAT('/uploads/avatars/', u.avatar_url) 
+              ELSE NULL 
+          END AS commenter_avatar
+        FROM experiences e
+        LEFT JOIN users u ON e.user_id = u.user_id
+        WHERE e.experience_id = $1`,
+        [experienceId]
+      );
+
+      if (experience.rows.length === 0) {
+        return res.status(404).json({ error: '经验分享不存在' });
+      }
+
+      // 获取评论（管理员可查看所有状态）
+      const comments = await require('../model').getExperienceComments(experienceId);
+
+      // 返回经验详情和评论
+      res.json({
+        ...experience.rows[0],
+        comments: comments
+      });
+
+    } catch (error) {
+      console.error('管理员获取经验详情失败:', error);
+      res.status(500).json({ error: '获取经验详情失败，请稍后再试' });
+    }
+});
+
+
 // 更新经验帖审核状态
 router.patch('/experiences/:id/status', 
   authMiddleware.authenticateToken,

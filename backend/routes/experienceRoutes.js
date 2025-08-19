@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
 const { ROLES } = authMiddleware;
+const model = require('../model');
 
 // 发布经验分享（需审核）
 router.post('/experiences', authMiddleware.authenticateToken, async (req, res) => {

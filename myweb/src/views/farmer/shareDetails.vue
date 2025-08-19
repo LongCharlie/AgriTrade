@@ -4,20 +4,20 @@
       <!-- 分享内容区域 -->
       <section class="share-content">
         <h2 class="share-title">{{ post.title }}</h2>
-        
+
         <div class="share-meta">
           <span><i class="far fa-user"></i> 作者： {{ author.name }}</span>
-          <span><i class="far fa-calendar"></i> 发布于 {{ post.publishDate }}</span>
+          <span><i class="far fa-calendar"></i> 发布于 {{ formatDate(post.publishDate) }}</span>
         </div>
-        
+
         <div class="share-text">
           <p v-for="(paragraph, index) in post.content" :key="index">{{ paragraph }}</p>
-          
+
           <ul v-if="post.tips && post.tips.length">
             <li v-for="(tip, index) in post.tips" :key="index">{{ tip }}</li>
           </ul>
         </div>
-        
+
         <div class="share-stats">
           <div class="stat-icon">
             <i class="far fa-comment"></i> {{ commentPagination.total }} 评论
@@ -25,7 +25,7 @@
         </div>
       </section>
     </div>
-    
+
     <!-- 评论区域 -->
     <section class="comments-section">
       <div class="comment-form">
@@ -41,14 +41,14 @@
           <button type="submit" class="btn-submit">提交评论</button>
         </form>
       </div>
-      
+
       <div class="comment-list">
         <div class="comment" v-for="(comment, index) in comments" :key="index">
           <img :src="comment.avatar" alt="评论者头像" class="comment-avatar">
           <div class="comment-content">
             <div class="comment-header">
               <span class="comment-author">{{ comment.author }}</span>
-              <span class="comment-time">{{ comment.time }}</span>
+              <span class="comment-time">{{ formatDate(comment.time) }}</span>
             </div>
             <p class="comment-text">{{ comment.content }}</p>
           </div>
@@ -71,12 +71,12 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
-import { useUserStore } from '@/stores/user' // 引入用户状态
+import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
 
 const route = useRoute()
 const userStore = useUserStore()
-const experienceId = route.params.experience_id  
+const experienceId = route.params.experience_id
 
 const post = ref({
   title: '',
@@ -90,9 +90,7 @@ const author = ref({
   avatar: ''
 })
 
-// 存储从 detail 接口一次性拿到的所有评论
 const allComments = ref([])
-
 const comments = ref([])
 const newComment = ref('')
 
@@ -102,43 +100,46 @@ const commentPagination = ref({
   total: 0
 })
 
+// 时间格式化函数
+const formatDate = (isoString) => {
+  const date = new Date(isoString)
+  const year = date.getFullYear()
+  const month = date.getMonth() + 1
+  const day = date.getDate()
+  const hours = date.getHours().toString().padStart(2, '0')
+  const minutes = date.getMinutes().toString().padStart(2, '0')
+  return `${year}年${month}月${day}日 ${hours}:${minutes}`
+}
+
 // 获取经验详情
 const fetchExperienceDetail = async () => {
   try {
     const res = await axios.get(`http://localhost:3000/api/experience/${experienceId}`)
     const data = res.data
-    console.log('接口返回的数据:', data);
-    // 帖子主体
+
     post.value.title       = data.title
     post.value.content     = data.content ? data.content.split('\n') : []
     post.value.tips        = data.tips || []
     post.value.publishDate = data.created_at || data.published_at || ''
 
-    // 作者信息
     author.value.name   = data.author_name || '匿名'
     author.value.avatar = data.author_avatar_url || ''
 
-    // 全量评论映射并存储
     allComments.value = (data.comments || []).map(c => ({
-        author: c.commenter_name,
-        avatar: c.commenter_avatar
-          ? `http://localhost:3000${c.commenter_avatar}`
-          : '',
-        content: c.content,
-        time: c.created_at
-      }))
+      author: c.commenter_name,
+      avatar: c.commenter_avatar ? `http://localhost:3000${c.commenter_avatar}` : '',
+      content: c.content,
+      time: c.created_at
+    }))
 
-
-    // 初始化分页总数并渲染第一页
     commentPagination.value.total = allComments.value.length
     fetchComments()
-
   } catch (err) {
     console.error('获取经验详情失败:', err)
   }
 }
 
-// 本地分页：从 allComments 切片到 comments
+// 本地分页
 const fetchComments = () => {
   const { currentPage, pageSize } = commentPagination.value
   const start = (currentPage - 1) * pageSize
@@ -158,7 +159,7 @@ const submitComment = async () => {
         }
       }
     )
-    ElMessage.success('提交评论成功等待审核')
+    ElMessage.success('提交评论成功，等待审核')
     newComment.value = ''
   } catch (err) {
     console.error('提交评论失败:', err)
@@ -174,6 +175,7 @@ onMounted(() => {
   fetchExperienceDetail()
 })
 </script>
+
 
 <style>
 * {
