@@ -72,14 +72,24 @@
     </div>
 
     <div class="pagination-container">
+<!--      <el-pagination-->
+<!--          @current-change="handlePageChange"-->
+<!--          :current-page="currentPage"-->
+<!--          :page-size="pageSize"-->
+<!--          :total="filteredTableData.length"-->
+<!--          layout="total, prev, pager, next, jumper"-->
+<!--          style="display: flex; justify-content: center; margin-top: 20px;"-->
+<!--      />-->
       <el-pagination
           @current-change="handlePageChange"
+          @size-change="handleSizeChange"
           :current-page="currentPage"
           :page-size="pageSize"
+          :page-sizes="[5, 10, 20, 50]"
           :total="filteredTableData.length"
-          layout="total, prev, pager, next, jumper"
-          style="display: flex; justify-content: center; margin-top: 20px;"
-      />
+          layout="total, sizes, prev, pager, next, jumper"
+          style=" display: flex; justify-content: center; margin-top: 20px;"
+      ></el-pagination>
     </div>
   </div>
 </template>
@@ -107,7 +117,7 @@ const adminEditUserStore = useAdminEditUserStore(); // 创建 store 实例
 // 用于存储用户数据
 const userData = ref([]);
 const filteredTableData = ref([]);
-const pageSize = ref(5); // 每页显示的项目数
+const pageSize = ref(10); // 每页显示的项目数
 const currentPage = ref(1); // 当前页码
 
 const simulatedUserData = [
@@ -188,6 +198,11 @@ const paginatedData = computed(() => {
 // 分页处理
 const handlePageChange = (page) => {
   currentPage.value = page; // 更新当前页
+};
+// 分页处理
+const handleSizeChange = (newSize) => {
+  pageSize.value = newSize;
+  currentPage.value = 1; // 重置到第一页
 };
 
 // 新建用户处理

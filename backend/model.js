@@ -918,11 +918,13 @@ const getWeeklyOrderSummary = async () => {
       COUNT(*) AS order_count
     FROM orders o
     JOIN purchase_applications pa ON o.application_id = pa.application_id
+    where o.status = 'completed'
     GROUP BY week_start
     ORDER BY week_start DESC
   `;
   
   const { rows } = await pool.query(query);
+  console.log(rows);
   return rows;
 };
 
@@ -935,6 +937,7 @@ const getMonthlyOrderSummary = async () => {
       COUNT(*) AS order_count
     FROM orders o
     JOIN purchase_applications pa ON o.application_id = pa.application_id
+    where o.status = 'completed'
     GROUP BY month_start
     ORDER BY month_start DESC
   `;
@@ -952,6 +955,7 @@ const getYearlyOrderSummary = async () => {
       COUNT(*) AS order_count
     FROM orders o
     JOIN purchase_applications pa ON o.application_id = pa.application_id
+    where o.status = 'completed'
     GROUP BY year_start
     ORDER BY year_start DESC
   `;
@@ -1236,10 +1240,11 @@ const getFarmerOrders = async (farmerId) => {
       o.buyer_id,
       u.username AS buyer_name,
       u.phone AS buyer_phone,
-      TO_CHAR(o.created_at, 'YYYY-MM-DD') AS created_at,
+      TO_CHAR(o.created_at, 'YYYY-MM-DD HH:MM:SS') AS created_at,
       o.status,
       o.after_sale_reason,
       o.after_sale_reason_images,
+      o.logistics_info,
       a.reason,
       pd.product_name,
       pa.quantity,
@@ -1257,13 +1262,14 @@ const getFarmerOrders = async (farmerId) => {
      ORDER BY o.created_at DESC`,
     [farmerId]
   );
+  // console.log(result.rows);
   return result.rows;
 };
 
 // 更新订单状态
 const updateOrderStatus_farmer = async (orderId, status) => {
   // 定义允许的状态值
-  const validStatuses = ['pending', 'shipped', 'completed', 'canceled'];
+  const validStatuses = ['pending_shipment', 'pending', 'shipped', 'completed', 'canceled'];
   if (!validStatuses.includes(status)) {
     throw new Error('无效的状态值');
   }
@@ -1371,7 +1377,7 @@ const incrementQuestionAnswerCount = async (questionId) => {
 // 减少问题的回答计数
 const decrementQuestionAnswerCount = async (questionId) => {
   const result = await pool.query(
-    'UPDATE questions SET answer_count = GREATEST(COALESCE(answer_count, 0) - 1 WHERE question_id = $1 RETURNING answer_count',
+    'UPDATE questions SET answer_count = GREATEST(COALESCE(answer_count, 0) - 1, 0) WHERE question_id = $1 RETURNING answer_count',
     [questionId]
   );
   return result.rows[0]?.answer_count;
@@ -1500,6 +1506,8 @@ const sendMessage = async (senderId, other_user_id, content, image_url) => {
     timestamp: rows[0].sent_at
   };
 };
+
+
 
 // 导出所有数据库操作方法
 module.exports = {

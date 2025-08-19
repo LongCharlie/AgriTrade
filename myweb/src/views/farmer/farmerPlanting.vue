@@ -18,10 +18,29 @@
     </el-row>
     <h2 class="planting-record-title">我的种植记录</h2>
 
+
+
     <div class="filter-buttons">
       <el-button :type="filter === 'all' ? 'primary' : 'default'" @click="filterRecords('all')">全部</el-button>
       <el-button :type="filter === 'growing' ? 'primary' : 'default'" @click="filterRecords('growing')">种植中</el-button>
       <el-button :type="filter === 'ended' ? 'primary' : 'default'" @click="filterRecords('ended')">已结束</el-button>
+    </div>
+
+    <!-- 添加搜索栏 -->
+    <div class="search-bar">
+      <el-input
+          v-model="searchTerm"
+          placeholder="搜索作物种类"
+          style="width: 200px"
+          clearable
+          @clear="handleSearchClear"
+      >
+        <!--        <template #prefix>-->
+        <!--          <el-icon><Search /></el-icon>-->
+        <!--        </template>-->
+      </el-input>
+      <el-button type="primary" @click="performSearch">搜索</el-button>
+<!--      <el-button @click="resetSearch">重置</el-button>-->
     </div>
 
     <el-row :gutter="40" class="crop-cards">
@@ -50,12 +69,14 @@
 
     <el-pagination
         @current-change="handlePageChange"
+        @size-change="handleSizeChange"
         :current-page="currentPage"
         :page-size="pageSize"
+        :page-sizes="[5, 10, 20, 50]"
         :total="filteredGrowthRecords.length"
-        layout="total, prev, pager, next, jumper"
-        style="display: flex; justify-content: center; margin-top: 20px;"
-    />
+        layout="total, sizes, prev, pager, next, jumper"
+        style=" display: flex; justify-content: center; margin-top: 20px;"
+    ></el-pagination>
   </div>
 </template>
 
@@ -65,26 +86,19 @@ import { useRouter } from 'vue-router';
 import { useUserStore } from '../../stores/user';
 import { usePlantingStore } from '../../stores/planting';
 import axios from "axios";
+import { Search } from '@element-plus/icons-vue'; // 添加搜索图标
 
 const router = useRouter();
 const userStore = useUserStore();
 const plantingStore = usePlantingStore();
 
-// const mockGrowthRecords = [
-//   { record_id: 51, product_name: '萝卜', province: '陕西省', growth_status: 'harvested', created_at: '2024-01-03' },
-//   { record_id: 56, product_name: '番茄', province: '河北省', growth_status: 'harvested', created_at: '2024-08-25' },
-//   { record_id: 57, product_name: '萝卜', province: '广东省', growth_status: 'harvested', created_at: '2024-10-11' },
-//   { record_id: 52, product_name: '南瓜', province: '陕西省', growth_status: 'growing', created_at: '2024-06-09' },
-//   { record_id: 53, product_name: '黄瓜', province: '陕西省', growth_status: 'harvested', created_at: '2023-12-14' },
-//   { record_id: 54, product_name: '番茄', province: '陕西省', growth_status: 'harvested', created_at: '2024-05-07' },
-//   { record_id: 55, product_name: '辣椒', province: '陕西省', growth_status: 'harvested', created_at: '2025-03-22' },
-// ];
-const mockGrowthRecords = [
-  ];
+const mockGrowthRecords = [];
 const growthRecords = ref(mockGrowthRecords);
 const filter = ref('all');
+const searchTerm = ref(''); // 搜索关键词
+const isSearching = ref(false); // 是否正在搜索
 
-const pageSize = ref(5); // 每页显示的条目数
+const pageSize = ref(10); // 每页显示的条目数
 const currentPage = ref(1); // 当前页
 
 onMounted(async () => {
@@ -96,20 +110,32 @@ onMounted(async () => {
       }
     });
     growthRecords.value = growthRecordsResponse.data;
-    // console.log(growthRecordsResponse.data);
   } catch (error) {
     console.error('获取种植记录数据失败，使用模拟数据:', error);
     growthRecords.value = mockGrowthRecords;
   }
 });
 
+// 修改过滤逻辑，加入搜索功能
 const filteredGrowthRecords = computed(() => {
+  let records = growthRecords.value;
+
+  // 应用状态过滤
   if (filter.value === 'growing') {
-    return growthRecords.value.filter(record => record.growth_status === 'growing');
+    records = records.filter(record => record.growth_status === 'growing');
   } else if (filter.value === 'ended') {
-    return growthRecords.value.filter(record => record.growth_status === 'harvested');
+    records = records.filter(record => record.growth_status === 'harvested');
   }
-  return growthRecords.value; // 默认返回所有记录
+
+  // 应用搜索过滤
+  if (isSearching.value && searchTerm.value) {
+    const term = searchTerm.value.toLowerCase();
+    records = records.filter(record =>
+        record.product_name.toLowerCase().includes(term)
+    );
+  }
+
+  return records;
 });
 
 // 计算分页后的列表
@@ -121,6 +147,32 @@ const paginatedRecords = computed(() => {
 // 手动更新页码
 const handlePageChange = (page) => {
   currentPage.value = page;
+};
+
+// 分页处理
+const handleSizeChange = (newSize) => {
+  pageSize.value = newSize;
+  currentPage.value = 1; // 重置到第一页
+};
+
+// 执行搜索
+const performSearch = () => {
+  if (searchTerm.value.trim()) {
+    isSearching.value = true;
+    currentPage.value = 1; // 重置到第一页
+  }
+};
+
+// 重置搜索
+const resetSearch = () => {
+  searchTerm.value = '';
+  isSearching.value = false;
+  currentPage.value = 1; // 重置到第一页
+};
+
+// 清除搜索
+const handleSearchClear = () => {
+  resetSearch();
 };
 
 // 删除记录
@@ -247,5 +299,20 @@ const filterRecords = (status) => {
 .delete-button {
   color: #f56c6c;
   font-size: 14px; /* 字体大小 */
+}
+
+/* 添加搜索栏样式 */
+.search-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.search-bar .el-input {
+  margin-right: 10px;
+}
+
+.search-bar .el-button {
+  margin-right: 10px;
 }
 </style>

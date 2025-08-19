@@ -11,7 +11,6 @@
 <!--        <span class="admin-answer-time">回答时间：{{ formatDate(answer.answered_at) }}</span>-->
 <!--      </div>-->
 <!--      <div class="admin-answer-meta">-->
-<!--&lt;!&ndash;        <span class="admin-answer-time">回答时间：{{ formatDate(answer.answered_at) }}</span>&ndash;&gt;-->
 <!--        <el-button-->
 <!--            type="danger"-->
 <!--            size="small"-->
@@ -29,6 +28,27 @@
 <!--    &lt;!&ndash; 回答内容 &ndash;&gt;-->
 <!--    <div class="answer-text">-->
 <!--      {{ answer.content }}-->
+<!--    </div>-->
+
+<!--    &lt;!&ndash; 回答图片展示 &ndash;&gt;-->
+<!--    <div v-if="answer.images && answer.images.length > 0" class="answer-images">-->
+<!--      <h4>回答图片:</h4>-->
+<!--      <div class="image-gallery">-->
+<!--        <el-image-->
+<!--            v-for="(image, index) in answer.images"-->
+<!--            :key="image.id"-->
+<!--            :src="`http://localhost:3000${image.url}`"-->
+<!--            :preview-src-list="getPreviewList(answer.images)"-->
+<!--            :initial-index="index"-->
+<!--            class="answer-image"-->
+<!--            fit="cover"-->
+<!--            lazy-->
+<!--        >-->
+<!--          <div slot="error" class="image-slot">-->
+<!--            <i class="el-icon-picture-outline"></i>-->
+<!--          </div>-->
+<!--        </el-image>-->
+<!--      </div>-->
 <!--    </div>-->
 <!--  </div>-->
 <!--</template>-->
@@ -65,7 +85,6 @@
 <!--        const answerId = this.$route.params.id;-->
 <!--        const token = this.userStore.token;-->
 
-<!--        // 实际API调用-->
 <!--        const response = await axios.get(`http://localhost:3000/api/answers/${answerId}`, {-->
 <!--          headers: {-->
 <!--            Authorization: `Bearer ${token}`-->
@@ -73,6 +92,7 @@
 <!--        });-->
 
 <!--        this.answer = response.data;-->
+<!--        console.log('获取回答详情成功',this.answer);-->
 <!--      } catch (error) {-->
 <!--        console.error('获取回答详情失败:', error);-->
 <!--        this.$message.error('获取回答详情失败');-->
@@ -114,6 +134,11 @@
 <!--        // 用户取消删除-->
 <!--        this.$message.info('已取消删除');-->
 <!--      });-->
+<!--    },-->
+
+<!--    // 获取回答图片预览列表-->
+<!--    getPreviewList(images) {-->
+<!--      return images.map(image => `http://localhost:3000${image.url}`);-->
 <!--    }-->
 <!--  }-->
 <!--};-->
@@ -169,6 +194,45 @@
 <!--  padding: 20px 0;-->
 <!--  white-space: pre-wrap;-->
 <!--}-->
+
+<!--.answer-images {-->
+<!--  margin: 20px 0;-->
+<!--}-->
+
+<!--.answer-images h4 {-->
+<!--  margin-bottom: 10px;-->
+<!--  color: #666;-->
+<!--}-->
+
+<!--.image-gallery {-->
+<!--  display: flex;-->
+<!--  flex-wrap: wrap;-->
+<!--  gap: 10px;-->
+<!--}-->
+
+<!--.answer-image {-->
+<!--  width: 150px;-->
+<!--  height: 150px;-->
+<!--  border-radius: 4px;-->
+<!--  cursor: pointer;-->
+<!--  transition: transform 0.3s;-->
+<!--  border: 1px solid #eee;-->
+<!--}-->
+
+<!--.answer-image:hover {-->
+<!--  transform: scale(1.05);-->
+<!--}-->
+
+<!--.image-slot {-->
+<!--  display: flex;-->
+<!--  justify-content: center;-->
+<!--  align-items: center;-->
+<!--  width: 100%;-->
+<!--  height: 100%;-->
+<!--  background: #f5f5f5;-->
+<!--  color: #999;-->
+<!--  font-size: 24px;-->
+<!--}-->
 <!--</style>-->
 <template>
   <div class="question-detail-container">
@@ -210,8 +274,9 @@
             v-for="(image, index) in answer.images"
             :key="image.id"
             :src="`http://localhost:3000${image.url}`"
-            :preview-src-list="getPreviewList(answer.images)"
+            :preview-src-list="previewSrcList"
             :initial-index="index"
+            :preview-teleported="true"
             class="answer-image"
             fit="cover"
             lazy
@@ -245,6 +310,16 @@ export default {
       showReplyForm: false,
       defaultAvatar: require('@/assets/profile.jpg')
     };
+  },
+
+  computed: {
+    // 添加计算属性来生成预览列表
+    previewSrcList() {
+      if (this.answer.images && this.answer.images.length > 0) {
+        return this.answer.images.map(image => `http://localhost:3000${image.url}`);
+      }
+      return [];
+    }
   },
 
   created() {
@@ -306,11 +381,6 @@ export default {
         // 用户取消删除
         this.$message.info('已取消删除');
       });
-    },
-
-    // 获取回答图片预览列表
-    getPreviewList(images) {
-      return images.map(image => `http://localhost:3000${image.url}`);
     }
   }
 };
