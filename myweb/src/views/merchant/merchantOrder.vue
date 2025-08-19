@@ -61,7 +61,7 @@
           <tbody>
             <tr v-for="order in filteredOrders" :key="order.id">
               <td>{{ order.orderId }}</td>
-              <td>{{ order.productType }}</td>
+              <td>{{ order.productName }}</td>
               <td>{{ order.quantity }}</td>
               <td>{{ order.price }}</td>
               <td>{{ order.destination }}</td>
@@ -73,17 +73,16 @@
               </td>
               <td>
                 <template v-if="order.status === '待发货'">
-                  <button class="action-btn btn-view" @click="openShippingModal(order)">
-                    <i class="fas fa-truck"></i> 发货信息
-                  </button>
                 </template>
-                <template v-else-if="order.status === '待收货'">
+                <template v-else-if="order.status === '已发货'">
                   <button class="action-btn btn-confirm" @click="confirmReceipt(order)">
                     <i class="fas fa-check-circle"></i> 确认收货
                   </button>
                   <button class="action-btn btn-refund" @click="openRefundModal(order)">
                     <i class="fas fa-undo"></i> 请求售后
                   </button>
+                </template>
+                <template v-else-if="order.status === '已完成'">
                 </template>
                 <template v-else-if="order.status === '售后中'">
                   <button class="action-btn btn-view" @click="openRefundReasonModal(order)">
@@ -344,23 +343,32 @@ const refundReason = ref('')
 const uploadedFiles = ref([])
 const fileInput = ref(null)
 
-// 获取订单列表
 const fetchOrders = async () => {
   try {
     const res = await axios.get('http://localhost:3000/api/merchant/orders/all', {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
+    console.log('订单返回数据', res)
+
+    const statusMap = {
+      pending_shipment: '待发货',
+      shipped: '已发货',
+      completed: '已完成',
+      after_sale_requested: '售后中',
+      after_sale_resolved: '已售后'
+    }
+
     orders.value = res.data.map(row => ({
-    orderId: row.order_id,
-    productName: row.product_name,
-    quantity: row.quantity,
-    price: row.price,
-    destination: row.ship_address,
-    sender: row.sender,
-    contact: row.farmer_phone,
-    time: row.created_at,
-    status: row.status
-  }))
+      orderId: row.order_id,
+      productName: row.product_name,
+      quantity: row.quantity,
+      price: row.price,
+      destination: row.ship_address,
+      sender: row.sender,
+      contact: row.farmer_phone,
+      time: row.created_at,
+      status: statusMap[row.status] || row.status // 映射状态，如果没有匹配则保留原值
+    }))
   } catch (err) {
     console.error('获取订单失败:', err.message, err.response?.data)
     if (err.response?.status === 401) {
@@ -371,8 +379,8 @@ const fetchOrders = async () => {
       ElMessage.error('获取订单失败')
     }
   }
-
 }
+
 
 // 过滤后的订单
 const filteredOrders = computed(() => {
