@@ -30,9 +30,9 @@
       <el-table-column prop="province" label="收货地"></el-table-column>
       <el-table-column prop="buyer_name" label="采购方"></el-table-column>
       <el-table-column prop="buyer_phone" label="联系方式"></el-table-column>
-      <el-table-column label="沟通">
-        <el-button @click="handleMessage(scope.row)" >发消息</el-button>
-      </el-table-column>
+<!--      <el-table-column label="沟通">-->
+<!--        <el-button @click="handleMessage(scope.row)" >发消息</el-button>-->
+<!--      </el-table-column>-->
       <el-table-column prop="created_at" label="时间"></el-table-column>
       <el-table-column prop="formatted_status" label="状态"></el-table-column>
       <el-table-column label="操作">
@@ -168,7 +168,7 @@ const currentPage = ref(1);
 
 const huifu = async () => {
   const token = userStore.token; // 获取 token
-  const orderId = 5; // 获取订单 ID
+  const orderId = 13; // 获取订单 ID
   try {
     await axios.post(`http://localhost:3000/api/${orderId}/status`, {
       status: 'pending_shipment'
@@ -311,6 +311,7 @@ const confirmDelivery = (order) => {
   dialogVisible.value = true; // 显示对话框
 };
 
+// 确认发货
 const submitDelivery = async () => {
   const token = userStore.token; // 获取 token
   const orderId = currentOrder.value.order_id; // 获取订单 ID
@@ -331,7 +332,7 @@ const submitDelivery = async () => {
     });
 
     // 更新本地订单状态
-    currentOrder.value.status = 'shipped';
+    fetchData();
     dialogVisible.value = false; // 关闭对话框
     logisticsInfo.value = ''; // 清空物流信息输入框
     console.log('发货成功');
