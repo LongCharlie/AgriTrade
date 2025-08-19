@@ -10,11 +10,8 @@
               <div class="card-header" slot="header">
                 <strong>{{ question.title }}</strong>
                 <div class="tag">
-<!--                  <el-tag :type="question.answer_count > 0 ? 'success' : 'warning'">-->
-<!--                    {{ question.answer_count > 0 ? '已回答' : '未回答' }}-->
-<!--                  </el-tag>-->
                   <el-tag
-                      v-if="question.user_id === userStore.userId"
+                      v-if="question.farmer_id === userStore.userId"
                       :type="question.status === 'open' ? 'success' : 'info'"
                   >
                     {{ question.status === 'open' ? '开启' : '关闭' }}
@@ -48,14 +45,17 @@
                   </div>
                 </div>
 
-                <!-- 回答表单 -->
-                <!--                <el-form @submit.prevent="submitAnswer" label-width="80px">-->
-                <!--                  <el-form-item label="回答">-->
-                <!--                    <el-input v-model="answerContent" type="textarea" :rows="4" placeholder="请输入回答"/>-->
-                <!--                  </el-form-item>-->
-                <!--                  <el-button type="primary" native-type="submit">提交</el-button>-->
-                <!--                  <el-button @click="$router.back()">取消</el-button>-->
-                <!--                </el-form>-->
+                <!-- 删除提问按钮 -->
+                <div v-if="question.farmer_id === userStore.userId" class="question-actions">
+                  <el-button
+                      type="danger"
+                      icon="el-icon-delete"
+                      @click="deleteQuestion"
+                      :loading="deleting"
+                  >
+                    删除提问
+                  </el-button>
+                </div>
               </div>
             </el-card>
             <!-- 回答列表 -->
@@ -68,31 +68,20 @@
                   @click.native="viewAnswerDetail(answer.answer_id)"
               >
                 <div class="answer-header">
-      <span class="expert-info">
-        <el-avatar
-            @click.stop="$router.push(`/farmer/detail/${answer.expert_id}`)"
-            :size="40"
-            :src="`http://localhost:3000${answer.expert_avatar_url}`"
-        ></el-avatar>
-        <div>
-          <strong>{{ answer.real_name }}</strong>
-          <span v-if="answer.title" class="expert-title">{{ answer.title }}</span>
-        </div>
-      </span>
+                  <span class="expert-info">
+                    <el-avatar
+                        @click.stop="$router.push(`/farmer/detail/${answer.expert_id}`)"
+                        :size="40"
+                        :src="`http://localhost:3000${answer.expert_avatar_url}`"
+                    ></el-avatar>
+                    <div>
+                      <strong>{{ answer.real_name }}</strong>
+                      <span v-if="answer.title" class="expert-title">{{ answer.title }}</span>
+                    </div>
+                  </span>
                   <span class="answer-time">{{ formatDate(answer.answered_at) }}</span>
                 </div>
                 <div class="answer-content">{{ answer.content }}</div>
-<!--                <div class="answer-footer">-->
-<!--&lt;!&ndash;                  <el-button type="text" icon="el-icon-thumb">{{ answer.upvotes || 0 }} 有用</el-button>&ndash;&gt;-->
-<!--                  <el-button-->
-<!--                      v-if="question.user_id === userStore.userId"-->
-<!--                      type="text"-->
-<!--                      icon="el-icon-delete"-->
-<!--                      @click="deleteAnswer(answer.answer_id)"            style="color: #f56c6c; margin-left: 10px;"-->
-<!--                  >-->
-<!--                    删除-->
-<!--                  </el-button>-->
-<!--                </div>-->
               </el-card>
             </div>
           </div>
@@ -105,6 +94,7 @@
 <script>
 import {useUserStore} from '@/stores/user'
 import axios from "axios";
+import { ElMessage, ElMessageBox } from 'element-plus';
 
 export default {
   setup() {
@@ -118,7 +108,8 @@ export default {
       question: {},
       answers: [],
       answerContent: '',
-      defaultAvatar: require('@/assets/profile.jpg')
+      defaultAvatar: require('@/assets/profile.jpg'),
+      deleting: false // 添加删除状态
     };
   },
   created() {
@@ -139,6 +130,7 @@ export default {
           }
         })
         this.question = response.data;
+        console.log(this.question);
       } catch (error) {
         console.error('获取问题失败:', error);
       }
@@ -193,7 +185,7 @@ export default {
     },
     async deleteAnswer(answerId) {
       try {
-        await this.$confirm('确定要删除这条回答吗？此操作不可恢复', '删除确认', {
+        await ElMessageBox.confirm('确定要删除这条回答吗？此操作不可恢复', '删除确认', {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: 'warning'
@@ -218,15 +210,55 @@ export default {
 
         this.question.answer_count -= 1;
 
-        this.$message.success('删除回答成功');
+        ElMessage.success('删除回答成功');
       } catch (error) {
-        this.$message.error('删除回答失败');
+        ElMessage.error('删除回答失败');
         console.error('删除回答失败:', error);
       }
     },
     // 获取图片预览列表
     getPreviewList(images) {
       return images.map(image => `http://localhost:3000${image.url}`);
+    },
+    // 删除问题
+    async deleteQuestion() {
+      try {
+        // 确认删除
+        await ElMessageBox.confirm(
+            '确定要删除这个问题吗？此操作不可恢复，同时会删除所有相关回答。',
+            '删除确认',
+            {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              type: 'warning'
+            }
+        );
+      } catch {
+        // 用户取消删除
+        return;
+      }
+
+      this.deleting = true;
+      try {
+        const token = this.userStore.token;
+        const questionId = this.question.question_id;
+
+        // 使用正确的API端点删除问题
+        await axios.delete(`http://localhost:3000/api/question/${questionId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        ElMessage.success('删除提问成功');
+        // 删除成功后返回上一页或跳转到问题列表页
+        this.$router.back();
+      } catch (error) {
+        ElMessage.error('删除提问失败: ' + (error.response?.data?.error || error.message));
+        console.error('删除问题失败:', error);
+      } finally {
+        this.deleting = false;
+      }
     }
   }
 };
@@ -363,7 +395,6 @@ export default {
   border-radius: 4px;
   overflow: hidden;
   cursor: pointer;
-  //border: 1px solid #eee;
 }
 
 .image-slot {
@@ -375,5 +406,13 @@ export default {
   background: #f5f5f5;
   color: #999;
   font-size: 24px;
+}
+
+/* 问题操作按钮样式 */
+.question-actions {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+  text-align: right;
 }
 </style>

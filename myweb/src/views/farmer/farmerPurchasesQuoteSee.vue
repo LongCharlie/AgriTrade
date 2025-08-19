@@ -5,13 +5,13 @@
     <el-table v-if="currentDemand" :data="[currentDemand]" style="width: 100%; border: 2px solid #dcdfe6;">
       <el-table-column property="product_name" label="产品种类" />
       <el-table-column property="quantity" label="采购量" />
-      <el-table-column property="buyerName" label="采购方" />
+      <el-table-column property="buyername" label="采购方" />
       <el-table-column property="address" label="收货地" />
       <el-table-column property="updated_at" label="更新时间" />
     </el-table>
-    <div v-else>
-      <p>未选择任何产品进行报价。</p>
-    </div>
+<!--    <div v-else>-->
+<!--      <p>未选择任何产品进行报价。</p>-->
+<!--    </div>-->
 
     <div class="form-container" v-if="currentDemand">
       <form @submit.prevent="submitQuote" class="quote-form">
@@ -30,18 +30,22 @@
           <el-input-number
               id="price"
               v-model="formData.price"
+              disabled
               style="width: 200px;"
           />
         </div>
 
         <div class="input-group">
-          <label for="price">报价 (元/kg):</label>
+          <label for="order">订单编号: </label>
           <el-input
               id="order"
               v-model="formData.orderID"
               style="width: 200px;"
+              disabled
           />
         </div>
+
+        <el-button type="primary" @click="seeOrder" class="order-button">去查看订单</el-button>
       </form>
     </div>
   </div>
@@ -51,6 +55,7 @@
 import { ref, onMounted } from 'vue';
 import { useDemandStore } from '../../stores/demand';
 import { useQuoteStore } from '../../stores/quote';
+import {useRouter} from "vue-router";
 // import { useUserStore } from '../../stores/user'; // 导入用户存储
 // import { useRouter } from 'vue-router';
 // import axios from 'axios';
@@ -59,6 +64,7 @@ import { useQuoteStore } from '../../stores/quote';
 const demandStore = useDemandStore();
 const quoteStore = useQuoteStore();
 // const userStore = useUserStore(); // 使用用户存储
+const router = useRouter();
 
 const currentDemand = demandStore.currentDemand;
 const currentQuote = quoteStore.currentQuote;
@@ -68,6 +74,11 @@ const formData = ref({
   price: currentQuote ? currentQuote.price : null,
   orderID: currentOrder ? currentOrder.order_id : null,
 });
+
+
+const seeOrder = () => {
+  router.push('/farmer/orders');
+};
 
 
 onMounted(async () => {

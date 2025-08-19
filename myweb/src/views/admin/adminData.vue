@@ -5,14 +5,14 @@
     <el-row gutter="20">
       <el-col :span="8">
         <el-card class="data-card">
-          <h3>买家数量</h3>
-          <el-tag class="data-tag">{{ buyerCount }}</el-tag>
+          <h3>农户数量</h3>
+          <el-tag class="data-tag">{{ farmerCount }}</el-tag>
         </el-card>
       </el-col>
       <el-col :span="8">
         <el-card class="data-card">
-          <h3>农户数量</h3>
-          <el-tag class="data-tag">{{ farmerCount }}</el-tag>
+          <h3>买家数量</h3>
+          <el-tag class="data-tag">{{ buyerCount }}</el-tag>
         </el-card>
       </el-col>
       <el-col :span="8">
@@ -127,10 +127,9 @@ const fetchData = async () => {
     farmerCount.value = farmerRes.data.count;
     expertCount.value = expertRes.data.count;
 
-    
-    // weekOrderSum.value = weekSumRes.data.sum;
-    // monthOrderSum.value = monthSumRes.data.sum;
-    // yearOrderSum.value = yearSumRes.data.sum;
+    weekOrderSum.value = weekSumRes.data.data || [];
+    monthOrderSum.value = monthSumRes.data.data || [];
+    yearOrderSum.value = yearSumRes.data.data || [];
     // agricultureCount.value = agriRes.data.count;
     agricultureCount.value = 14;
 

@@ -19,7 +19,7 @@
           style="width: 200px; margin-bottom: 20px;"
       ></el-input>
       <el-select v-model="filterOption" placeholder="选择筛选" style="width: 200px; margin-bottom: 20px;">
-        <el-option label="全部" value="all"></el-option>
+        <el-option label="全部状态" value="all"></el-option>
         <el-option label="未报价" value="notQuoted"></el-option>
         <el-option label="已报价" value="quoted"></el-option>
         <el-option label="已确认" value="ordered"></el-option>
@@ -30,10 +30,13 @@
       <el-table :data="paginatedData" style="width: 100%">
         <el-table-column prop="product_name" label="产品种类" />
         <el-table-column prop="quantity" label="采购量(kg)" />
-        <el-table-column prop="buyer_id" label="采购方" />
+<!--        <el-table-column prop="buyer_id" label="采购方" />-->
         <el-table-column prop="buyername" label="采购方名称" />
         <el-table-column prop="address" label="收货地" />
         <el-table-column prop="updated_at" label="更新时间" />
+<!--        <el-table-column label="沟通">-->
+<!--            <el-button @click="handleMessage(scope.row)" >发消息</el-button>-->
+<!--        </el-table-column>-->
         <el-table-column label="操作">
           <template #default="scope">
             <el-button @click="handleQuote(scope.row)" type="text" v-if="!isQuoted(scope.row)">[去报价]</el-button>
@@ -44,17 +47,29 @@
       </el-table>
     </div>
 
+<!--    <div class="pagination-container">-->
+<!--      <el-pagination-->
+<!--          @current-change="handlePageChange"-->
+<!--          :current-page="currentPage"-->
+<!--          :page-size="pageSize"-->
+<!--          :total="filteredTableData.length"-->
+<!--          layout="total, prev, pager, next, jumper"-->
+<!--          style=" display: flex;-->
+<!--                justify-content: center;-->
+<!--                margin-top: 20px;"-->
+<!--      />-->
+<!--    </div>-->
     <div class="pagination-container">
       <el-pagination
           @current-change="handlePageChange"
+          @size-change="handleSizeChange"
           :current-page="currentPage"
           :page-size="pageSize"
+          :page-sizes="[5, 10, 20, 50]"
           :total="filteredTableData.length"
-          layout="total, prev, pager, next, jumper"
-          style=" display: flex;
-                justify-content: center;
-                margin-top: 20px;"
-      />
+          layout="total, sizes, prev, pager, next, jumper"
+          style=" display: flex; justify-content: center; margin-top: 20px;"
+      ></el-pagination>
     </div>
   </div>
 </template>
@@ -81,7 +96,7 @@ const motableData = ref([]);
 const moquotedIds = ref([]);
 const orderData = ref([]);
 const filteredTableData = ref([]);
-const pageSize = ref(5); // 每页显示的项目数
+const pageSize = ref(10); // 每页显示的项目数
 const currentPage = ref(1); // 当前页码
 
 // 模拟数据
@@ -149,7 +164,9 @@ const performSearch = () => {
     const matchesQuantity = searchQuantity.value ? item.quantity >= searchQuantity.value : true;
     const matchesFilterOption =
         filterOption.value === 'all' ||
-        (filterOption.value === 'quoted' && moquotedIds.value.some(quoted => quoted.demand_id === item.demand_id)) ||
+        (filterOption.value === 'quoted' && moquotedIds.value.some(quoted =>
+                quoted.demand_id === item.demand_id &&
+                !orderData.value.some(order => order.application_id === quoted.application_id))) ||
         (filterOption.value === 'notQuoted' && !moquotedIds.value.some(quoted => quoted.demand_id === item.demand_id)) ||
         (filterOption.value === 'ordered' &&
             moquotedIds.value.some(quoted =>
@@ -172,6 +189,11 @@ const paginatedData = computed(() => {
 const handlePageChange = (page) => {
   currentPage.value = page; // 更新当前页
 };
+// 分页处理
+const handleSizeChange = (newSize) => {
+  pageSize.value = newSize;
+  currentPage.value = 1; // 重置到第一页
+};
 
 // 判断是否已报价
 const isQuoted = (row) => {
@@ -183,6 +205,14 @@ const isOrdered = (row) => {
   return moquotedIds.value.some(quoted =>
       quoted.demand_id === row.demand_id &&
       orderData.value.some(order => order.application_id === quoted.application_id));
+};
+
+// 跳转到聊天页面
+const handleMessage = (row) => {
+  demandStore.currentDemand = row; // 保存当前行的表格信息到 Store
+  const buyerID = row.buyer_id;
+  const farmerID = userStore.userId;
+  router.push('/farmer/messages'); // 跳转
 };
 
 // 跳转到报价页面

@@ -61,7 +61,7 @@
           <tbody>
             <tr v-for="order in filteredOrders" :key="order.id">
               <td>{{ order.orderId }}</td>
-              <td>{{ order.productType }}</td>
+              <td>{{ order.productName }}</td>
               <td>{{ order.quantity }}</td>
               <td>{{ order.price }}</td>
               <td>{{ order.destination }}</td>
@@ -73,17 +73,19 @@
               </td>
               <td>
                 <template v-if="order.status === '待发货'">
-                  <button class="action-btn btn-view" @click="openShippingModal(order)">
-                    <i class="fas fa-truck"></i> 发货信息
-                  </button>
                 </template>
                 <template v-else-if="order.status === '待收货'">
+                  <button class="action-btn btn-confirm" @click="openShippingModal(order)">
+                    <i class="fas fa-check-circle"></i> 查看物流信息
+                  </button>
                   <button class="action-btn btn-confirm" @click="confirmReceipt(order)">
                     <i class="fas fa-check-circle"></i> 确认收货
                   </button>
                   <button class="action-btn btn-refund" @click="openRefundModal(order)">
                     <i class="fas fa-undo"></i> 请求售后
                   </button>
+                </template>
+                <template v-else-if="order.status === '已完成'">
                 </template>
                 <template v-else-if="order.status === '售后中'">
                   <button class="action-btn btn-view" @click="openRefundReasonModal(order)">
@@ -344,23 +346,31 @@ const refundReason = ref('')
 const uploadedFiles = ref([])
 const fileInput = ref(null)
 
-// 获取订单列表
 const fetchOrders = async () => {
   try {
     const res = await axios.get('http://localhost:3000/api/merchant/orders/all', {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
+    console.log('订单返回数据', res)
+
+    const statusMap = {
+      pending_shipment: '待发货',
+      shipped: '待收货',
+      completed: '已完成',
+      after_sale_requested: '售后中',
+      after_sale_resolved: '已售后'
+    }
     orders.value = res.data.map(row => ({
-    orderId: row.order_id,
-    productName: row.product_name,
-    quantity: row.quantity,
-    price: row.price,
-    destination: row.ship_address,
-    sender: row.sender,
-    contact: row.farmer_phone,
-    time: row.created_at,
-    status: row.status
-  }))
+      orderId: row.order_id,
+      productName: row.product_name,
+      quantity: row.quantity,
+      price: row.price,
+      destination: row.ship_address,
+      sender: row.sender,
+      contact: row.farmer_phone,
+      time: row.created_at,
+      status: statusMap[row.status] || row.status // 映射状态，如果没有匹配则保留原值
+    }))
   } catch (err) {
     console.error('获取订单失败:', err.message, err.response?.data)
     if (err.response?.status === 401) {
@@ -371,7 +381,6 @@ const fetchOrders = async () => {
       ElMessage.error('获取订单失败')
     }
   }
-
 }
 
 // 过滤后的订单
@@ -428,7 +437,7 @@ const getStatusClass = (status) => {
 const openShippingModal = async (order) => {
   selectedOrder.value = order
   try {
-    const res = await axios.get('/merchant/logistics', {
+    const res = await axios.get('http://localhost:3000/merchant/logistics', {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
     const info = res.data.find(i => i.order_id === order.orderId)
@@ -452,7 +461,7 @@ const openRefundModal = (order) => {
 const openRefundReasonModal = async (order) => {
   selectedOrder.value = order
   try {
-    const res = await axios.get('/merchant/pending-after-sale', {
+    const res = await axios.get('http://localhost:3000/api/merchant/pending-after-sale', {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
     const detail = res.data.find(i => i.order_id === order.orderId)
@@ -472,7 +481,7 @@ const openRefundReasonModal = async (order) => {
 const openAuditReasonModal = async (order) => {
   selectedOrder.value = order
   try {
-    const res = await axios.get('/merchant/reviewed-after-sale', {
+    const res = await axios.get('http://localhost:3000/api/merchant/reviewed-after-sale', {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
     const detail = res.data.find(i => i.order_id === order.orderId)
@@ -500,7 +509,7 @@ const confirmReceipt = async (order) => {
       cancelButtonText: '取消',
       type: 'warning'
     })
-    const res = await axios.post(`/merchant/orders/${order.orderId}/confirm`, {}, {
+    const res = await axios.post(`http://localhost:3000/api/${order.orderId}/confirm`, {}, {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
     order.status = '已完成'
@@ -547,11 +556,9 @@ const submitRefund = async () => {
     ElMessage.warning('请填写售后原因')
     return
   }
-
   const imageUrls = uploadedFiles.value.map(f => f.url)
-
   try {
-    const res = await axios.post(`/${selectedOrder.value.orderId}/after-sale`, {
+    const res = await axios.post(`http://localhost:3000/api/${selectedOrder.value.orderId}/after-sale`, {
       reason: refundReason.value,
       images: imageUrls
     }, {
@@ -572,7 +579,6 @@ onMounted(() => {
   fetchOrders()
 })
 </script>
-
 
 <style scoped>
 * {
@@ -829,6 +835,7 @@ tr:hover {
   width: 90%;
   max-width: 500px;
   max-height: 90vh;
+  overflow-y: auto;
   position: relative;
 }
 

@@ -37,12 +37,23 @@
       </el-table-column>
     </el-table>
 
+<!--    <el-pagination-->
+<!--        @current-change="handlePageChange"-->
+<!--        :current-page="currentPage"-->
+<!--        :page-size="pageSize"-->
+<!--        :total="filteredTableData.length"-->
+<!--        layout="total, prev, pager, next, jumper"-->
+<!--        style=" display: flex; justify-content: center; margin-top: 20px;"-->
+<!--    ></el-pagination>-->
+
     <el-pagination
         @current-change="handlePageChange"
+        @size-change="handleSizeChange"
         :current-page="currentPage"
         :page-size="pageSize"
+        :page-sizes="[5, 10, 20, 50]"
         :total="filteredTableData.length"
-        layout="total, prev, pager, next, jumper"
+        layout="total, sizes, prev, pager, next, jumper"
         style=" display: flex; justify-content: center; margin-top: 20px;"
     ></el-pagination>
 
@@ -137,7 +148,7 @@ const reviewReason = ref(''); // 用于填写审核理由
 const currentOrder = ref(null); // 用于存储当前审核的订单
 const afterSaleReasonImages = ref([]); // 用于存储售后原因图片
 
-const pageSize = ref(7);
+const pageSize = ref(10);
 const currentPage = ref(1);
 
 // 模拟订单数据
@@ -224,6 +235,11 @@ const performSearch = () => {
 // 分页处理
 const handlePageChange = (page) => {
   currentPage.value = page;
+};
+// 分页处理
+const handleSizeChange = (newSize) => {
+  pageSize.value = newSize;
+  currentPage.value = 1; // 重置到第一页
 };
 
 // 查看原因的处理函数
