@@ -24,6 +24,7 @@
     "pinia-plugin-persistedstate": "^4.3.0",
     "style-resources-loader": "^1.5.0",
     "three": "^0.178.0",
+    "v-viewer": "^3.0.22",
     "vanta": "^0.5.24",
     "vue": "^3.2.13",
     "vue-echarts": "^7.0.3",

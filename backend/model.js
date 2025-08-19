@@ -1240,6 +1240,7 @@ const getFarmerOrders = async (farmerId) => {
       o.status,
       o.after_sale_reason,
       o.after_sale_reason_images,
+      o.logistics_info,
       a.reason,
       pd.product_name,
       pa.quantity,
@@ -1257,13 +1258,14 @@ const getFarmerOrders = async (farmerId) => {
      ORDER BY o.created_at DESC`,
     [farmerId]
   );
+  // console.log(result.rows);
   return result.rows;
 };
 
 // 更新订单状态
 const updateOrderStatus_farmer = async (orderId, status) => {
   // 定义允许的状态值
-  const validStatuses = ['pending', 'shipped', 'completed', 'canceled'];
+  const validStatuses = ['pending_shipment', 'pending', 'shipped', 'completed', 'canceled'];
   if (!validStatuses.includes(status)) {
     throw new Error('无效的状态值');
   }

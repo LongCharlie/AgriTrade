@@ -35,7 +35,7 @@
       <el-table-column label="操作">
         <template v-slot="scope">
           <el-button v-if="scope.row.status === 'pending_shipment'" @click="confirmDelivery(scope.row)" type="text">[确认发货]</el-button>
-          <el-button v-else-if="scope.row.status === 'shipped'" type="text" disabled>[无操作]</el-button>
+          <el-button v-else-if="scope.row.status === 'shipped'"  @click="seeLogistics(scope.row)" type="text">[发货信息]</el-button>
           <el-button v-else-if="scope.row.status === 'completed'" type="text" disabled>[无操作]</el-button>
           <el-button v-if="scope.row.status === 'after_sale_requested'" @click="viewReason(scope.row)" type="text">[查看原因]</el-button>
           <el-button v-else-if="scope.row.status === 'after_sale_resolved'" @click="viewSuccessReason(scope.row)" type="text">[查看理由]</el-button>
@@ -43,19 +43,26 @@
       </el-table-column>
     </el-table>
 
-    <el-pagination
-        @current-change="handlePageChange"
-        :current-page="currentPage"
-        :page-size="pageSize"
-        :total="filteredTableData.length"
-        layout="total, prev, pager, next, jumper"
-        style=" display: flex; justify-content: center; margin-top: 20px;"
-    ></el-pagination>
+<!--    <el-button type="primary" @click="huifu">待发货</el-button>-->
+<!--    <el-button type="primary" @click="huifu2">已完成</el-button>-->
+
+    <div class="pagination-container">
+      <el-pagination
+          @current-change="handlePageChange"
+          @size-change="handleSizeChange"
+          :current-page="currentPage"
+          :page-size="pageSize"
+          :page-sizes="[5, 10, 20, 50]"
+          :total="filteredTableData.length"
+          layout="total, sizes, prev, pager, next, jumper"
+          style=" display: flex; justify-content: center; margin-top: 20px;"
+      ></el-pagination>
+    </div>
 
     <!-- 物流信息弹窗 -->
     <el-dialog v-model="dialogVisible" title="确认发货">
       <p><strong>买家详细地址：</strong></p>
-      <div>
+      <div style="margin-bottom: 20px;">
         {{ currentOrder.province }}，{{ currentOrder.city }}，{{ currentOrder.district }}，{{ currentOrder.address_detail }}
       </div>
       <el-input
@@ -71,6 +78,18 @@
           <el-button type="primary" @click="submitDelivery">确认发货</el-button>
         </span>
       </template>
+    </el-dialog>
+
+    <!-- 查看物流信息 -->
+    <el-dialog v-model="logisticsDialogVisible" title="查看物流信息">
+      <p><strong>买家详细地址：</strong></p>
+      <div style="margin-bottom: 20px;">
+        {{ currentOrder.province }}，{{ currentOrder.city }}，{{ currentOrder.district }}，{{ currentOrder.address_detail }}
+      </div>
+      <p><strong>我的发货物流：</strong></p>
+      <div style="margin-bottom: 20px;">
+        {{ seeLogisticsInfo }}
+      </div>
     </el-dialog>
 
     <!-- 退货原因弹窗 -->
@@ -110,7 +129,7 @@ import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
 import { useUserStore } from '../../stores/user';
 const userStore = useUserStore();
-import Photo from "@/assets/platform_logo2.png";
+import {ElMessage} from "element-plus";
 
 const statusMap = {
   pending_shipment: '待发货',
@@ -130,15 +149,52 @@ const filterOption = ref('all');
 const dialogVisible = ref(false);
 const logisticsInfo = ref('');
 const reasonDialogVisible = ref(false);
+const logisticsDialogVisible = ref(false);
 const successReasonDialogVisible = ref(false);
+const seeLogisticsInfo = ref('');
 const reason = ref('');
 const after_sale_reason = ref('');
 const successReason = ref('');
 const currentOrder = ref(null); // 用于存储当前确认发货的订单
 const afterSaleReasonImages = ref([]); // 用于存储售后原因图片
 
-const pageSize = ref(5);
+const pageSize = ref(10);
 const currentPage = ref(1);
+
+const huifu = async () => {
+  const token = userStore.token; // 获取 token
+  const orderId = 5; // 获取订单 ID
+  try {
+    await axios.post(`http://localhost:3000/api/${orderId}/status`, {
+      status: 'pending_shipment'
+    }, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    // 更新本地订单状态
+    fetchData();
+    console.log('恢复成功');
+  } catch (error) {
+    console.error('恢复失败', error);
+    ElMessage.error('恢复失败，请重试');
+  }
+};
+const huifu2 = async () => {
+  const token = userStore.token; // 获取 token
+  const orderId = 5; // 获取订单 ID
+  try {
+    await axios.post(`http://localhost:3000/api/${orderId}/status`, {
+      status: 'completed'
+    }, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    // 更新本地订单状态
+    fetchData();
+    console.log('恢复成功');
+  } catch (error) {
+    console.error('恢复失败', error);
+    ElMessage.error('恢复失败，请重试');
+  }
+};
 
 // 模拟订单数据
 const simulatedTableData = [
@@ -222,6 +278,11 @@ const performSearch = () => {
 const handlePageChange = (page) => {
   currentPage.value = page;
 };
+// 分页处理
+const handleSizeChange = (newSize) => {
+  pageSize.value = newSize;
+  currentPage.value = 1; // 重置到第一页
+};
 
 // 操作处理函数
 const confirmDelivery = (order) => {
@@ -242,8 +303,8 @@ const submitDelivery = async () => {
     });
 
     // 调用接口2: 上传物流信息
-    await axios.post(`http://localhost:3000/api/${orderId}/logistics`, {
-      logisticsInfo: logisticsInfo.value
+    await axios.patch(`http://localhost:3000/api/${orderId}/logistics`, {
+      logistics_info: logisticsInfo.value
     }, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -255,8 +316,15 @@ const submitDelivery = async () => {
     console.log('发货成功');
   } catch (error) {
     console.error('发货失败', error);
-    alert('发货失败，请重试');
+    ElMessage.error('发货失败，请重试');
   }
+};
+
+const seeLogistics = (order) => {
+  console.log('查看物流', order);
+  currentOrder.value = order; // 保存当前订单
+  seeLogisticsInfo.value = order.logistics_info;
+  logisticsDialogVisible.value = true;
 };
 
 const viewReason = (order) => {

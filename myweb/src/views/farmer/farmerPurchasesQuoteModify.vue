@@ -5,7 +5,7 @@
     <el-table v-if="currentDemand" :data="[currentDemand]" style="width: 100%; border: 2px solid #dcdfe6;">
       <el-table-column property="product_name" label="产品种类" />
       <el-table-column property="quantity" label="采购量" />
-      <el-table-column property="buyerName" label="采购方" />
+      <el-table-column property="buyername" label="采购方" />
       <el-table-column property="address" label="收货地" />
       <el-table-column property="updated_at" label="更新时间" />
     </el-table>
