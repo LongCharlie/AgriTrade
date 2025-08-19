@@ -722,6 +722,8 @@ export default {
         );
 
         const token = this.userStore.token;
+        // 添加一些调试信息
+        console.log('Deleting answer with ID:', answerId);
         await axios.delete(`http://localhost:3000/api/answer/${answerId}`, {
           headers: {
             Authorization: `Bearer ${token}`
@@ -734,8 +736,15 @@ export default {
         this.fetchQuestion();
       } catch (error) {
         if (error !== 'cancel') {
-          ElMessage.error('删除回答失败: ' + (error.response?.data?.error || error.message));
+          // 更详细的错误信息
+          const errorMessage = error.response?.data?.error || error.message || '未知错误';
+          ElMessage.error('删除回答失败: ' + errorMessage);
           console.error('删除回答失败:', error);
+          console.error('错误详情:', {
+            status: error.response?.status,
+            data: error.response?.data,
+            url: `http://localhost:3000/api/answer/${answerId}`
+          });
         }
       }
     },

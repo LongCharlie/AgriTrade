@@ -1377,7 +1377,7 @@ const incrementQuestionAnswerCount = async (questionId) => {
 // 减少问题的回答计数
 const decrementQuestionAnswerCount = async (questionId) => {
   const result = await pool.query(
-    'UPDATE questions SET answer_count = GREATEST(COALESCE(answer_count, 0) - 1 WHERE question_id = $1 RETURNING answer_count',
+    'UPDATE questions SET answer_count = GREATEST(COALESCE(answer_count, 0) - 1, 0) WHERE question_id = $1 RETURNING answer_count',
     [questionId]
   );
   return result.rows[0]?.answer_count;
