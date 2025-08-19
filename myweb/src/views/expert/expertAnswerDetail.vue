@@ -7,7 +7,7 @@
 <!--            &lt;!&ndash; 回答主体内容 &ndash;&gt;-->
 <!--            <el-card class="main-answer">-->
 <!--              <div class="answer-header">-->
-<!--                <el-avatar @click="$router.push(`/expert/detail/${answer.expert_id}`)" :size="60" :src="answer.avatar_url || defaultAvatar"></el-avatar>-->
+<!--                <el-avatar @click="$router.push(`/expert/detail/${answer.expert_id}`)" :size="60" :src="`http://localhost:3000/uploads/avatars/${answer.expert_avatar}`"></el-avatar>-->
 <!--                <div class="user-info">-->
 <!--                  <h3>{{ answer.expert_name }}</h3>-->
 <!--                  <span class="expert-title">{{ answer.expert_title }}</span>-->
@@ -38,11 +38,16 @@
 <!--                </div>-->
 <!--              </div>-->
 
-<!--&lt;!&ndash;              <div class="answer-actions">&ndash;&gt;-->
-<!--&lt;!&ndash;                <el-button type="text" icon="el-icon-thumb">&ndash;&gt;-->
-<!--&lt;!&ndash;                  {{ answer.upvotes || 0 }} 有用&ndash;&gt;-->
-<!--&lt;!&ndash;                </el-button>&ndash;&gt;-->
-<!--&lt;!&ndash;              </div>&ndash;&gt;-->
+<!--              &lt;!&ndash; 添加删除按钮 &ndash;&gt;-->
+<!--              <div class="answer-actions" v-if="answer.expert_id === userStore.userId">-->
+<!--                <el-button-->
+<!--                    type="danger"-->
+<!--                    icon="el-icon-delete"-->
+<!--                    @click="deleteAnswer"-->
+<!--                    class="delete-button"-->
+<!--                >删除回答-->
+<!--                </el-button>-->
+<!--              </div>-->
 <!--            </el-card>-->
 <!--          </div>-->
 <!--        </el-main>-->
@@ -54,6 +59,7 @@
 <!--<script>-->
 <!--import axios from "axios";-->
 <!--import { useUserStore } from '@/stores/user';-->
+<!--import { ElMessage, ElMessageBox } from 'element-plus';-->
 
 <!--export default {-->
 <!--  setup() {-->
@@ -88,6 +94,7 @@
 <!--        });-->
 
 <!--        this.answer = response.data;-->
+<!--        // console.log('头像路径http://localhost:3000/uploads/avatars/', this.answer.expert_avatar)-->
 <!--        console.log('answer', this.answer)-->
 <!--      } catch (error) {-->
 <!--        console.error('获取回答详情失败:', error);-->
@@ -104,6 +111,36 @@
 <!--    getPreviewList(images) {-->
 <!--      return images.map(image => `http://localhost:3000${image.url}`);-->
 <!--    },-->
+<!--    // 删除回答功能-->
+<!--    async deleteAnswer() {-->
+<!--      try {-->
+<!--        await ElMessageBox.confirm(-->
+<!--            '确定要删除这个回答吗？此操作不可恢复',-->
+<!--            '确认删除',-->
+<!--            {-->
+<!--              confirmButtonText: '确定',-->
+<!--              cancelButtonText: '取消',-->
+<!--              type: 'warning'-->
+<!--            }-->
+<!--        );-->
+
+<!--        const token = this.userStore.token;-->
+<!--        await axios.delete(`http://localhost:3000/api/answer/${this.answer.answer_id}`, {-->
+<!--          headers: {-->
+<!--            Authorization: `Bearer ${token}`-->
+<!--          }-->
+<!--        });-->
+
+<!--        ElMessage.success('回答删除成功');-->
+<!--        // 删除成功后返回上一页-->
+<!--        this.$router.back();-->
+<!--      } catch (error) {-->
+<!--        if (error !== 'cancel') {-->
+<!--          ElMessage.error('删除回答失败: ' + (error.response?.data?.error || error.message));-->
+<!--          console.error('删除回答失败:', error);-->
+<!--        }-->
+<!--      }-->
+<!--    }-->
 <!--  }-->
 <!--};-->
 <!--</script>-->
@@ -184,6 +221,14 @@
 <!--  border-top: 1px solid #eee;-->
 <!--  padding-top: 15px;-->
 <!--  margin-top: 15px;-->
+<!--  text-align: right;-->
+<!--}-->
+
+<!--.delete-button {-->
+<!--  display: inline-flex;-->
+<!--  align-items: center;-->
+<!--  justify-content: center;-->
+<!--  //width: 60px;-->
 <!--}-->
 
 <!--.reply-form {-->
@@ -226,16 +271,23 @@
               <div v-if="answer.images && answer.images.length > 0" class="answer-images">
                 <h4>回答图片:</h4>
                 <div class="image-gallery">
+                  <!-- 修改1: 使用统一的preview-src-list -->
                   <el-image
                       v-for="(image, index) in answer.images"
                       :key="image.id"
                       :src="`http://localhost:3000${image.url}`"
-                      :preview-src-list="getPreviewList(answer.images)"
+                      :preview-src-list="previewSrcList"
                       :initial-index="index"
+                      :preview-teleported="true"
                       class="answer-image"
                       fit="cover"
                       lazy
-                  ></el-image>
+                  >
+                    <!-- 添加错误插槽 -->
+                    <div slot="error" class="image-slot">
+                      <i class="el-icon-picture-outline"></i>
+                    </div>
+                  </el-image>
                 </div>
               </div>
 
@@ -278,6 +330,15 @@ export default {
       defaultAvatar: require('@/assets/profile.jpg')
     };
   },
+  computed: {
+    // 添加计算属性来生成预览列表
+    previewSrcList() {
+      if (this.answer.images && this.answer.images.length > 0) {
+        return this.answer.images.map(image => `http://localhost:3000${image.url}`);
+      }
+      return [];
+    }
+  },
   created() {
     this.fetchAnswerDetail();
   },
@@ -295,7 +356,6 @@ export default {
         });
 
         this.answer = response.data;
-        // console.log('头像路径http://localhost:3000/uploads/avatars/', this.answer.expert_avatar)
         console.log('answer', this.answer)
       } catch (error) {
         console.error('获取回答详情失败:', error);
@@ -307,10 +367,6 @@ export default {
     },
     submitReply() {
       // 提交回复逻辑
-    },
-    // 获取问题图片预览列表
-    getPreviewList(images) {
-      return images.map(image => `http://localhost:3000${image.url}`);
     },
     // 删除回答功能
     async deleteAnswer() {
@@ -418,6 +474,18 @@ export default {
   transform: scale(1.05);
 }
 
+/* 修改2: 添加图片错误状态样式 */
+.image-slot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background: #f5f5f5;
+  color: #999;
+  font-size: 24px;
+}
+
 .answer-actions {
   border-top: 1px solid #eee;
   padding-top: 15px;
@@ -429,7 +497,6 @@ export default {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  //width: 60px;
 }
 
 .reply-form {

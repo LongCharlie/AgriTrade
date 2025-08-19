@@ -207,6 +207,7 @@ export default {
           }
         })
         question.value = response.data;
+        console.log(question.value)
       } catch (error) {
         ElMessage.error('获取问题详情失败')
         console.error('获取问题详情失败:', error)
