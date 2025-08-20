@@ -196,14 +196,12 @@ router.get('/merchant/reviewed-after-sale',
           d.product_name,
           pa.quantity,
           pa.price,
-          farmer.username AS farmer_name,
-          TO_CHAR(o.resolved_at, 'YYYY-MM-DD HH24:MI:SS') AS reviewed_at
+          farmer.username AS farmer_name
         FROM orders o
         JOIN purchase_applications pa ON o.application_id = pa.application_id
         JOIN purchase_demands d ON pa.demand_id = d.demand_id
         JOIN users farmer ON o.farmer_id = farmer.user_id
         WHERE o.buyer_id = $1 AND o.status IN ('after_sale_resolved', 'after_sale_rejected')
-        ORDER BY o.resolved_at DESC
       `;
       
       const { rows } = await require('../model').query(query, [buyerId]);
