@@ -358,8 +358,6 @@ router.get('/merchant/logistics/:orderId',
   }
 );
 
-
-
 // 买家申请售后
 router.post('/:id/after-sale', 
   authMiddleware.authenticateToken,
