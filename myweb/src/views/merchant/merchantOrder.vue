@@ -75,8 +75,8 @@
                 <template v-if="order.status === '待发货'">
                 </template>
                 <template v-else-if="order.status === '待收货'">
-                  <button class="action-btn btn-confirm" @click="openShippingModal(order)">
-                    <i class="fas fa-check-circle"></i> 查看物流信息
+                  <button class="action-btn btn-delivery" @click="openShippingModal(order)">
+                    <i class="fas fa-check-circle"></i> 查看物流
                   </button>
                   <button class="action-btn btn-confirm" @click="confirmReceipt(order)">
                     <i class="fas fa-check-circle"></i> 确认收货
@@ -122,7 +122,7 @@
           </div>
           <div class="info-row">
             <div class="info-label">产品：</div>
-            <div class="info-value">{{ selectedOrder.productType }} ({{ selectedOrder.quantity }}kg)</div>
+            <div class="info-value">{{ selectedOrder.productName }} ({{ selectedOrder.quantity }}kg)</div>
           </div>
           
           <div class="shipping-info">
@@ -437,10 +437,10 @@ const getStatusClass = (status) => {
 const openShippingModal = async (order) => {
   selectedOrder.value = order
   try {
-    const res = await axios.get('http://localhost:3000/merchant/logistics', {
+    const res = await axios.get(`http://localhost:3000/api/merchant/logistics/${order.orderId}`, {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
-    const info = res.data.find(i => i.order_id === order.orderId)
+    const info = res.data
     shippingInfo.value = info?.logistics_info || '暂无物流信息'
     shippingModalVisible.value = true
   } catch (err) {
@@ -457,42 +457,20 @@ const openRefundModal = (order) => {
   refundModalVisible.value = true
 }
 
-// 打开售后详情
+//打开售后
 const openRefundReasonModal = async (order) => {
   selectedOrder.value = order
   try {
-    const res = await axios.get('http://localhost:3000/api/merchant/pending-after-sale', {
+    const res = await axios.get(`http://localhost:3000/api/merchant/pending-after-sale/${order.orderId}`, {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
-    const detail = res.data.find(i => i.order_id === order.orderId)
-    
-    // 处理图片URL - 关键修改点
-    let evidenceImages = []
-    if (detail?.after_sale_reason_images) {
-      // 检查是否是base64编码的图片数据
-      if (detail.after_sale_reason_images.startsWith('data:image/')) {
-        evidenceImages = [detail.after_sale_reason_images]
-      } else {
-        // 处理逗号分隔的图片文件名
-        evidenceImages = detail.after_sale_reason_images
-          .split(',')
-          .filter(img => img.trim() !== '')
-          .map(img => {
-            // 确保是有效的URL或文件名
-            if (img.startsWith('http') || img.startsWith('/')) {
-              return img
-            } else {
-              return `/uploads/after_sale/${img}`
-            }
-          })
-      }
-    }
-    
+    console.log('售后数据：',refundDetail)
     refundDetail.value = {
       reason: detail?.after_sale_reason || '',
       evidenceImages: evidenceImages,
       processStatus: '待审核'
     }
+
     refundReasonModalVisible.value = true
   } catch (err) {
     console.error('获取售后详情失败:', err)
@@ -504,7 +482,7 @@ const openRefundReasonModal = async (order) => {
 const openAuditReasonModal = async (order) => {
   selectedOrder.value = order
   try {
-    const res = await axios.get('http://localhost:3000/api/merchant/reviewed-after-sale', {
+    const res = await axios.get('http://localhost:3000/api//merchant/reviewed-after-sale/:orderId', {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
     const detail = res.data.find(i => i.order_id === order.orderId)
@@ -573,27 +551,40 @@ const removeImage = (index) => {
   uploadedFiles.value.splice(index, 1)
 }
 
-// 提交售后申请
 const submitRefund = async () => {
   if (!refundReason.value.trim()) {
     ElMessage.warning('请填写售后原因')
     return
   }
-  const imageUrls = uploadedFiles.value.map(f => f.url)
+
+  if (uploadedFiles.value.length === 0) {
+    ElMessage.warning('请至少上传一张图片')
+    return
+  }
+
   try {
-    const res = await axios.post(`http://localhost:3000/api/${selectedOrder.value.orderId}/after-sale`, {
-      reason: refundReason.value,
-      images: imageUrls
-    }, {
-      headers: { Authorization: `Bearer ${userStore.token}` }
+    const formData = new FormData()
+    formData.append('reason', refundReason.value)
+
+    uploadedFiles.value.forEach(file => {
+      formData.append('images', file.raw) // raw 是原始 File 对象
     })
 
+    const res = await fetch(`http://localhost:3000/api/${selectedOrder.value.orderId}/after-sale`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${userStore.token}`
+      },
+      body: formData
+    })
+
+    const result = await res.json()
     selectedOrder.value.status = '售后中'
     ElMessage.success('售后申请已提交')
     refundModalVisible.value = false
   } catch (err) {
     console.error('提交售后失败:', err)
-    ElMessage.error('提交售后失败')
+    ElMessage.error('提交售后失败，请稍后重试')
   }
 }
 
@@ -813,6 +804,11 @@ tr:hover {
 .btn-view {
   background-color: #e0f2fe;
   color: #0369a1;
+}
+
+.btn-delivery {
+  background-color: #f2dcfc;
+  color: #70377f;
 }
 
 .btn-confirm {

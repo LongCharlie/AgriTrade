@@ -2,7 +2,8 @@
   <div>
     <h1>我的订单</h1>
     <h1>总收入: ¥ {{ totalRevenue }}</h1>
-
+    <!--    <el-button type="primary" @click="huifu">待发货</el-button>-->
+    <!--    <el-button type="primary" @click="huifu2">售后中</el-button>-->
     <div class="search-bar">
       <el-input v-model="searchId" placeholder="搜索编号" style="width: 200px; margin-bottom: 20px;"></el-input>
       <el-input v-model="searchProduct" placeholder="搜索产品种类" style="width: 200px; margin-bottom: 20px;"></el-input>
@@ -68,9 +69,6 @@
         </template>
       </el-table-column>
     </el-table>
-
-<!--    <el-button type="primary" @click="huifu">待发货</el-button>-->
-<!--    <el-button type="primary" @click="huifu2">已完成</el-button>-->
 
     <div class="pagination-container">
       <el-pagination
@@ -191,7 +189,7 @@ const currentPage = ref(1);
 
 const huifu = async () => {
   const token = userStore.token; // 获取 token
-  const orderId = 13; // 获取订单 ID
+  const orderId = 12; // 获取订单 ID
   try {
     await axios.post(`http://localhost:3000/api/${orderId}/status`, {
       status: 'pending_shipment'
@@ -208,16 +206,16 @@ const huifu = async () => {
 };
 const huifu2 = async () => {
   const token = userStore.token; // 获取 token
-  const orderId = 5; // 获取订单 ID
+  const orderId = 12; // 获取订单 ID
   try {
     await axios.post(`http://localhost:3000/api/${orderId}/status`, {
-      status: 'completed'
+      status: 'after_sale_requested'
     }, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     // 更新本地订单状态
     fetchData();
-    console.log('恢复成功');
+    console.log('恢复成功'+ orderId);
   } catch (error) {
     console.error('恢复失败', error);
     ElMessage.error('恢复失败，请重试');
