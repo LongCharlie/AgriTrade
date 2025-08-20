@@ -260,7 +260,7 @@ const fetchStats = async () => {
     ])
 
     stats.value = [
-      { value: agricultureRes.data.count, label: "农产品" },
+      { value: 14, label: "农产品" }, //agricultureRes.data.count
       { value: farmerRes.data.count, label: "农户" },
       { value: buyerRes.data.data, label: "买家" },
       { value: expertRes.data.count, label: "专家" }

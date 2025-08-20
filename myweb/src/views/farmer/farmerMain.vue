@@ -81,7 +81,7 @@ const goToRecommendations = () => {
 };
 
 const goToQuestionForm = () => {
-  router.push('/farmer/questions'); // 跳转到发布提问页面
+  router.push('/farmer/post-question'); // 跳转到发布提问页面
 };
 </script>
 

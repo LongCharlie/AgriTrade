@@ -4,7 +4,7 @@
     <div class="table-container">
       <el-table :data="orderSum" style="width: 100%">
         <el-table-column prop="period" :formatter="formatDate" label="开始日期" />
-        <el-table-column prop="total_amount" label="订单总金额" />
+        <el-table-column prop="total_amount" label="订单总金额(元)" />
         <el-table-column prop="order_count" label="订单总数量" />
       </el-table>
     </div>
