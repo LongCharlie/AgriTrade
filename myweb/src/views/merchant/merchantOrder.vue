@@ -198,7 +198,7 @@
           </div>
           <div class="info-row">
             <div class="info-label">产品：</div>
-            <div class="info-value">{{ selectedOrder.productType }} ({{ selectedOrder.quantity }}kg)</div>
+            <div class="info-value">{{ selectedOrder.productName }} ({{ selectedOrder.quantity }}kg)</div>
           </div>
           
           <div class="info-row">
@@ -244,7 +244,7 @@
           </div>
           <div class="info-row">
             <div class="info-label">产品：</div>
-            <div class="info-value">{{ selectedOrder.productType }} ({{ selectedOrder.quantity }}kg)</div>
+            <div class="info-value">{{ selectedOrder.productName }} ({{ selectedOrder.quantity }}kg)</div>
           </div>
           
           <div class="info-row">
