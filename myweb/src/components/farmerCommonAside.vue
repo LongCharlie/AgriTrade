@@ -37,7 +37,7 @@ export default {
         { path: "", name: "首页", icon: "House" },
         { path: "/purchases", name: "采购", icon: "ShoppingCart" },
         { path: "/orders", name: "订单", icon: "Tickets" },
-        { path: "/messages", name: "消息", icon: "ChatDotRound" },
+        // { path: "/messages", name: "消息", icon: "ChatDotRound" },
         { path: "/planting", name: "种植", icon: "Guide" },
         { path: "/share", name: "分享", icon: "Notification" },
         { path: "/questions", name: "提问", icon: "School" }
@@ -48,15 +48,14 @@ export default {
   computed: {
     activeMenuItem() {
       const currentPath = this.$route.path.split('/farmer')[1];
-
       if (currentPath === '' || currentPath === '/') {
         return '首页';
       } else if (currentPath.startsWith('/purchases')) {
         return '采购';
       } else if (currentPath.startsWith('/orders')) {
         return '订单';
-      } else if (currentPath.startsWith('/messages')) {
-        return '消息';
+      // } else if (currentPath.startsWith('/messages')) {
+      //   return '消息';
       } else if (currentPath.startsWith('/planting')) {
         return '种植';
       } else if (currentPath.startsWith('/share')) {
@@ -81,46 +80,16 @@ export default {
     }
   },
   mounted() {
-  //   this.calculateMenuHeight();
-  //   window.addEventListener('resize', this.throttle(this.calculateMenuHeight, 100));
   },
   beforeUnmount() {
-    // window.removeEventListener('resize', this.throttle(this.calculateMenuHeight, 100));
   },
   methods: {
-    // calculateMenuHeight() {
-    //   requestAnimationFrame(() => {
-    //     const headerElement = this.$refs.header;
-    //     const headerHeight = headerElement ? headerElement.clientHeight : 0;
-    //     this.menuHeight = window.innerHeight - headerHeight; // 仅在必要时计算
-    //   });
-    // },
     handleOpen(key, keyPath) {
       console.log(key, keyPath);
     },
     handleClose(key, keyPath) {
       console.log(key, keyPath);
     },
-    // throttle(func, limit) {
-    //   let lastFunc;
-    //   let lastRan;
-    //   return function() {
-    //     const context = this;
-    //     const args = arguments;
-    //     if (!lastRan) {
-    //       func.apply(context, args);
-    //       lastRan = Date.now();
-    //     } else {
-    //       clearTimeout(lastFunc);
-    //       lastFunc = setTimeout(function() {
-    //         if ((Date.now() - lastRan) >= limit) {
-    //           func.apply(context, args);
-    //           lastRan = Date.now();
-    //         }
-    //       }, limit - (Date.now() - lastRan));
-    //     }
-    //   };
-    // }
   }
 }
 </script>

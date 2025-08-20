@@ -252,15 +252,17 @@ let refreshInterval = null
 
 const fetchStats = async () => {
   try {
-    const [agricultureRes, farmerRes, expertRes] = await Promise.all([
+    const [agricultureRes, farmerRes, buyerRes, expertRes] = await Promise.all([
       axios.get('http://localhost:3000/api/agriculture-count'),
       axios.get('http://localhost:3000/api/farmer-count'),
+      axios.get('http://localhost:3000/api/statistics/buyer-count'),
       axios.get('http://localhost:3000/api/expert-count')
     ])
 
     stats.value = [
       { value: agricultureRes.data.count, label: "农产品" },
       { value: farmerRes.data.count, label: "农户" },
+      { value: buyerRes.data.data, label: "买家" },
       { value: expertRes.data.count, label: "专家" }
     ]
   } catch (error) {
