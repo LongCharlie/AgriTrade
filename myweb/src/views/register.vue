@@ -183,22 +183,20 @@ export default {
 <style>
 .vanta-container {
   position: relative;
-  width: 100%;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh; /* 改为最小高度100vh */
+  overflow-y: auto; /* 添加垂直滚动 */
+  padding: 20px 0; /* 上下添加内边距 */
 }
 
 .form-content {
   max-width: 400px;
-  width: 100%;
-  padding: 40px;
+  padding: 30px;
   background-color: rgba(255, 255, 255, 0.5);
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  position: absolute;
-  top: 50%;
+  position: relative;
+  margin: 20px;
   left: 220px;
-  transform: translateY(-50%);
   z-index: 2;
 }
 
