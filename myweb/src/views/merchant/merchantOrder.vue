@@ -265,28 +265,34 @@
           
           <div class="audit-section">
             <h4><i class="fas fa-user-check"></i> 审核结果</h4>
-            <div class="info-row">
-              <div class="info-label">处理结果：</div>
-              <div class="info-value">
-                <span class="status status-refunded">{{ auditDetail.processResult }}</span>
-              </div>
-            </div>
-            <div class="info-row">
-              <div class="info-label">退款金额：</div>
-              <div class="info-value">¥{{ auditDetail.refundAmount.toFixed(2) }}</div>
-            </div>
-            <div class="info-row">
-              <div class="info-label">审核说明：</div>
-              <div class="info-value">
-                <p style="background: #f0f7ff; padding: 12px; border-radius: 8px;">
-                  {{ auditDetail.auditRemark }}
-                </p>
-              </div>
-            </div>
-            <div class="info-row">
-              <div class="info-label">审核时间：</div>
-              <div class="info-value">{{ auditDetail.auditTime }}</div>
-            </div>
+                <div class="info-row">
+                  <div class="info-label">同意售后理由：</div>
+                  <div class="info-value">
+                    <span >{{ auditDetail.reason }}</span>
+                  </div>
+                </div>
+<!--            <div class="info-row">-->
+<!--              <div class="info-label">处理结果：</div>-->
+<!--              <div class="info-value">-->
+<!--                <span class="status status-refunded">{{ auditDetail.processResult }}</span>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--            <div class="info-row">-->
+<!--              <div class="info-label">退款金额：</div>-->
+<!--              <div class="info-value">¥{{ auditDetail.refundAmount.toFixed(2) }}</div>-->
+<!--            </div>-->
+<!--            <div class="info-row">-->
+<!--              <div class="info-label">审核说明：</div>-->
+<!--              <div class="info-value">-->
+<!--                <p style="background: #f0f7ff; padding: 12px; border-radius: 8px;">-->
+<!--                  {{ auditDetail.auditRemark }}-->
+<!--                </p>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--            <div class="info-row">-->
+<!--              <div class="info-label">审核时间：</div>-->
+<!--              <div class="info-value">{{ auditDetail.auditTime }}</div>-->
+<!--            </div>-->
           </div>
         </div>
         <div class="modal-footer">
@@ -338,7 +344,8 @@ const auditDetail = ref({
   refundAmount: 0,
   auditRemark: '',
   auditTime: '',
-  auditor: ''
+  auditor: '',
+  reason:'',
 })
 
 // 售后申请数据
@@ -482,19 +489,25 @@ const openRefundReasonModal = async (order) => {
 const openAuditReasonModal = async (order) => {
   selectedOrder.value = order
   try {
-    const res = await axios.get('http://localhost:3000/api//merchant/reviewed-after-sale/:orderId', {
+    const res = await axios.get(`http://localhost:3000/api/merchant/reviewed-after-sale/${order.orderId}`, {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
-    const detail = res.data.find(i => i.order_id === order.orderId)
-    auditDetail.value = {
-      refundReason: detail?.after_sale_reason || '',
-      evidenceImages: [],
-      processResult: detail?.admin_reason || '',
-      refundAmount: detail?.price || 0,
-      auditRemark: detail?.final_status || '',
-      auditTime: detail?.reviewed_at || '',
-      auditor: detail?.farmer_name || ''
-    }
+    console.log(res.data)
+    auditDetail.value.refundReason = res.data.after_sale_reason;
+        auditDetail.value.evidenceImages= res.data.after_sale_reason_images;
+        auditDetail.value.reason= res.data.admin_reason;
+        console.log(auditDetail.value)
+    // const detail = res.data.find(i => i.order_id === order.orderId)
+    // auditDetail.value = {
+    //   refundReason: detail?.after_sale_reason || '',
+    //   evidenceImages: [],
+    //   reason:detail?.admin_reason || '',
+    //   // processResult: detail?.admin_reason || '',
+    //   // refundAmount: detail?.price || 0,
+    //   // auditRemark: '',
+    //   // auditTime: '',
+    //   // auditor: detail?.farmer_name || ''
+    // }
     auditReasonModalVisible.value = true
   } catch (err) {
     console.error('获取审核详情失败:', err)
