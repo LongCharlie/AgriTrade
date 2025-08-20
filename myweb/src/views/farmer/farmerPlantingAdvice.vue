@@ -285,6 +285,7 @@ const renderTrendChart = () => {
           borderColor: 'rgba(75, 192, 192, 1)',
           backgroundColor: 'rgba(75, 192, 192, 0.2)',
           fill: true,
+          yAxisID: 'y' // 关联到第一个Y轴
         },
         {
           label: '平均单价 (元/kg)',
@@ -292,11 +293,16 @@ const renderTrendChart = () => {
           borderColor: 'rgba(153, 102, 255, 1)',
           backgroundColor: 'rgba(153, 102, 255, 0.2)',
           fill: true,
+          yAxisID: 'y1' // 关联到第二个Y轴
         }
       ]
     },
     options: {
       responsive: true,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
       plugins: {
         title: {
           display: true,
@@ -307,13 +313,40 @@ const renderTrendChart = () => {
         }
       },
       scales: {
+        x: {
+          display: true,
+          title: {
+            display: true,
+            text: '年份'
+          }
+        },
         y: {
-          beginAtZero: true
+          type: 'linear',
+          display: true,
+          position: 'left',
+          title: {
+            display: true,
+            text: '总量 (kg)'
+          },
+        },
+        y1: {
+          type: 'linear',
+          display: true,
+          position: 'right',
+          title: {
+            display: true,
+            text: '平均单价 (元/kg)'
+          },
+          // 确保两个Y轴不会重叠
+          grid: {
+            drawOnChartArea: false,
+          },
         }
       }
     }
   });
 };
+
 
 // 格式化年平均总数为两位小数
 const formatAverageTotal = (row, column, cellValue) => {

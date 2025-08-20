@@ -37,7 +37,7 @@ export default {
         { path: "/purchases", name: "采购", icon: "ShoppingCart" },
         { path: "/order", name: "订单", icon: "Tickets" },
         // { path: "/message", name: "消息", icon: "ChatDotRound" },
-        { path: "/home", name: "我的", icon: "ChatDotRound" }
+        // { path: "/home", name: "我的", icon: "ChatDotRound" }
       ],
       menuHeight: 0 // 初始化菜单高度
     }

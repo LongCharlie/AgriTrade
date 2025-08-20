@@ -8,10 +8,10 @@
         <button class="toggle-btn" @click="toggleShowClosed">
           {{ showClosed ? '查看打开采购' : '查看已关闭采购' }}
         </button>
-        <button class="add-btn" @click="addPurchase">
-          <i class="fas fa-plus"></i>
-          添加新采购
-        </button>
+<!--        <button class="add-btn" @click="addPurchase">-->
+<!--          <i class="fas fa-plus"></i>-->
+<!--          添加新采购-->
+<!--        </button>-->
       </div>
     </header>
 

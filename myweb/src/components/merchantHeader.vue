@@ -89,7 +89,7 @@ export default {
       }
     },
     navigateToProfile() {
-      this.$router.push('/merchant/home'); // 跳转到用户个人主页
+      this.$router.push('/merchant/profile'); // 跳转到用户个人主页
     },
     logout() {
       const userStore = useUserStore(); // 使用用户状态 Store
