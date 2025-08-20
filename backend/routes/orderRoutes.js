@@ -196,14 +196,12 @@ router.get('/merchant/reviewed-after-sale',
           d.product_name,
           pa.quantity,
           pa.price,
-          farmer.username AS farmer_name,
-          TO_CHAR(o.resolved_at, 'YYYY-MM-DD HH24:MI:SS') AS reviewed_at
+          farmer.username AS farmer_name
         FROM orders o
         JOIN purchase_applications pa ON o.application_id = pa.application_id
         JOIN purchase_demands d ON pa.demand_id = d.demand_id
         JOIN users farmer ON o.farmer_id = farmer.user_id
         WHERE o.buyer_id = $1 AND o.status IN ('after_sale_resolved', 'after_sale_rejected')
-        ORDER BY o.resolved_at DESC
       `;
       
       const { rows } = await require('../model').query(query, [buyerId]);
@@ -234,7 +232,6 @@ router.get('/merchant/reviewed-after-sale/:orderId',
           pa.price,
           farmer.username AS farmer_name,
           farmer.phone AS farmer_phone,
-          TO_CHAR(o.resolved_at, 'YYYY-MM-DD HH24:MI:SS') AS reviewed_at,
           o.after_sale_reason_images
         FROM orders o
         JOIN purchase_applications pa ON o.application_id = pa.application_id
@@ -284,8 +281,7 @@ router.get('/merchant/pending-after-sale/:orderId',
           pa.quantity,
           pa.price,
           farmer.username AS farmer_name,
-          farmer.phone AS farmer_phone,
-          TO_CHAR(o.created_at, 'YYYY-MM-DD HH24:MI:SS') AS created_at
+          farmer.phone AS farmer_phone
         FROM orders o
         JOIN purchase_applications pa ON o.application_id = pa.application_id
         JOIN purchase_demands d ON pa.demand_id = d.demand_id
@@ -360,7 +356,7 @@ router.get('/merchant/logistics/:orderId',
 
 
 
-// 买家申请售后
+// 买家申请售后（使用单独图片表）
 router.post('/:id/after-sale', 
   authMiddleware.authenticateToken,
   async (req, res) => {
@@ -368,11 +364,6 @@ router.post('/:id/after-sale',
       const orderId = parseInt(req.params.id);
       const { reason, images } = req.body;
       const buyerId = req.user.userId;
-
-      // 验证必填字段
-      if (!reason) {
-        return res.status(400).json({ error: '售后原因不能为空' });
-      }
 
       // 验证订单是否存在且属于当前买家
       const orderCheck = await require('../model').query(
@@ -384,20 +375,37 @@ router.post('/:id/after-sale',
         return res.status(404).json({ error: '订单不存在或无权操作' });
       }
 
-      // 更新订单状态和售后信息
+      // 开始事务
+      await require('../model').query('BEGIN');
+
+      // 更新订单状态
       const result = await require('../model').query(
         `UPDATE orders 
          SET 
            status = 'after_sale_requested',
-           after_sale_reason = $1,
-           after_sale_reason_images = $2
-         WHERE order_id = $3
+           after_sale_reason = $1
+         WHERE order_id = $2
          RETURNING *`,
-        [reason, images.join(','), orderId]
+        [reason, orderId]
       );
+
+      // 插入图片记录
+      if (images && images.length > 0) {
+        for (const image of images) {
+          await require('../model').query(
+            'INSERT INTO after_sale_images (order_id, image_url) VALUES ($1, $2)',
+            [orderId, image]
+          );
+        }
+      }
+
+      // 提交事务
+      await require('../model').query('COMMIT');
 
       res.json(result.rows[0]);
     } catch (error) {
+      // 回滚事务
+      await require('../model').query('ROLLBACK');
       console.error('申请售后失败:', error);
       res.status(500).json({ error: '服务器错误' });
     }

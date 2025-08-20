@@ -273,7 +273,7 @@
             </div>
             <div class="info-row">
               <div class="info-label">退款金额：</div>
-              <div class="info-value">¥{{ auditDetail.refundAmount.toFixed(2) }}</div>
+              
             </div>
             <div class="info-row">
               <div class="info-label">审核说明：</div>
@@ -465,9 +465,32 @@ const openRefundReasonModal = async (order) => {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
     const detail = res.data.find(i => i.order_id === order.orderId)
+    
+    // 处理图片URL - 关键修改点
+    let evidenceImages = []
+    if (detail?.after_sale_reason_images) {
+      // 检查是否是base64编码的图片数据
+      if (detail.after_sale_reason_images.startsWith('data:image/')) {
+        evidenceImages = [detail.after_sale_reason_images]
+      } else {
+        // 处理逗号分隔的图片文件名
+        evidenceImages = detail.after_sale_reason_images
+          .split(',')
+          .filter(img => img.trim() !== '')
+          .map(img => {
+            // 确保是有效的URL或文件名
+            if (img.startsWith('http') || img.startsWith('/')) {
+              return img
+            } else {
+              return `/uploads/after_sale/${img}`
+            }
+          })
+      }
+    }
+    
     refundDetail.value = {
       reason: detail?.after_sale_reason || '',
-      evidenceImages: detail?.after_sale_reason_images?.split(',') || [],
+      evidenceImages: evidenceImages,
       processStatus: '待审核'
     }
     refundReasonModalVisible.value = true
