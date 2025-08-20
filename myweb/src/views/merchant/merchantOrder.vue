@@ -75,8 +75,8 @@
                 <template v-if="order.status === '待发货'">
                 </template>
                 <template v-else-if="order.status === '待收货'">
-                  <button class="action-btn btn-confirm" @click="openShippingModal(order)">
-                    <i class="fas fa-check-circle"></i> 查看物流信息
+                  <button class="action-btn btn-delivery" @click="openShippingModal(order)">
+                    <i class="fas fa-check-circle"></i> 查看物流
                   </button>
                   <button class="action-btn btn-confirm" @click="confirmReceipt(order)">
                     <i class="fas fa-check-circle"></i> 确认收货
@@ -804,6 +804,11 @@ tr:hover {
 .btn-view {
   background-color: #e0f2fe;
   color: #0369a1;
+}
+
+.btn-delivery {
+  background-color: #f2dcfc;
+  color: #70377f;
 }
 
 .btn-confirm {
