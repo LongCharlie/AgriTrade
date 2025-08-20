@@ -15,7 +15,7 @@
       ></el-input>
       <el-select v-model="filterRole" placeholder="选择角色" style="width: 200px; margin-bottom: 20px;">
         <el-option label="全部角色" value="all"></el-option>
-        <el-option label="农民" value="farmer"></el-option>
+        <el-option label="农户" value="farmer"></el-option>
         <el-option label="买家" value="buyer"></el-option>
         <el-option label="专家" value="expert"></el-option>
 <!--        <el-option label="管理员" value="admin"></el-option>-->
@@ -156,7 +156,7 @@ const fetchData = async () => {
 // 将角色英文转换为中文
 const getRoleInChinese = (role) => {
   const roleMap = {
-    'farmer': '农民',
+    'farmer': '农户',
     'buyer': '买家',
     'expert': '专家',
     'admin': '管理员'

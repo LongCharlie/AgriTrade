@@ -70,7 +70,7 @@
     </el-table>
 
 <!--    <el-button type="primary" @click="huifu">待发货</el-button>-->
-<!--    <el-button type="primary" @click="huifu2">已完成</el-button>-->
+    <el-button type="primary" @click="huifu2">售后中</el-button>
 
     <div class="pagination-container">
       <el-pagination
@@ -191,7 +191,7 @@ const currentPage = ref(1);
 
 const huifu = async () => {
   const token = userStore.token; // 获取 token
-  const orderId = 13; // 获取订单 ID
+  const orderId = 12; // 获取订单 ID
   try {
     await axios.post(`http://localhost:3000/api/${orderId}/status`, {
       status: 'pending_shipment'
@@ -208,16 +208,16 @@ const huifu = async () => {
 };
 const huifu2 = async () => {
   const token = userStore.token; // 获取 token
-  const orderId = 5; // 获取订单 ID
+  const orderId = 12; // 获取订单 ID
   try {
     await axios.post(`http://localhost:3000/api/${orderId}/status`, {
-      status: 'completed'
+      status: 'after_sale_requested'
     }, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     // 更新本地订单状态
     fetchData();
-    console.log('恢复成功');
+    console.log('恢复成功'+ orderId);
   } catch (error) {
     console.error('恢复失败', error);
     ElMessage.error('恢复失败，请重试');
