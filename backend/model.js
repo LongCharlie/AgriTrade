@@ -895,13 +895,13 @@ const getAfterSaleOrders = async () => {
       o.status,
       o.after_sale_reason,
       o.after_sale_reason_images,
-      o.admin_reason,
       ad.decision,
-      ad.reason
+      ad.reason,
+      o.admin_reason
     FROM orders o
     JOIN purchase_applications a ON o.application_id = a.application_id
     JOIN purchase_demands d ON a.demand_id = d.demand_id
-    JOIN after_sale_audits ad ON ad.order_id = o.order_id
+    LEFT JOIN after_sale_audits ad ON ad.order_id = o.order_id
     JOIN users farmer ON o.farmer_id = farmer.user_id
     JOIN users buyer ON o.buyer_id = buyer.user_id
     WHERE o.after_sale_reason IS NOT NULL

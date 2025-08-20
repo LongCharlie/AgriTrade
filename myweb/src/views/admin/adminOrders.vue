@@ -1,7 +1,7 @@
 <template>
   <div>
     <h1>售后审核</h1>
-    <el-button type="primary" @click="huifu2">售后中</el-button>
+<!--    <el-button type="primary" @click="huifu2">删除审核理由</el-button>-->
     <div class="search-bar">
       <el-input v-model="searchId" placeholder="搜索编号" style="width: 200px; margin-bottom: 20px;"></el-input>
       <el-input v-model="searchProduct" placeholder="搜索产品种类" style="width: 200px; margin-bottom: 20px;"></el-input>
