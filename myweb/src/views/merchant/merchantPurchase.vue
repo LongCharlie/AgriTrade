@@ -200,6 +200,7 @@ const statusClass = (status) => {
 }
 
 const closeDemand = async (demandId) => {
+  console.log("demandId" + demandId);
   try {
     const res = await axios.post(
       `http://localhost:3000/api/demands/${demandId}/close`,

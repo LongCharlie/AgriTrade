@@ -252,7 +252,7 @@ router.post('/demands/:demandId/close',
       `, [demandId]);
 
       // 2. 关闭需求
-      const result = require('../model').query(`
+      const result = await require('../model').query(`
         UPDATE purchase_demands
         SET status = 'closed'
         WHERE demand_id = $1
