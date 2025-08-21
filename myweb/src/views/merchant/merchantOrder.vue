@@ -493,7 +493,10 @@ const openShippingModal = async (order) => {
 const openRefundModal = (order) => {
   selectedOrder.value = order
   refundReason.value = ''
-  uploadedFiles.value = []
+  // 活动图片数组
+  activityImages.value = ref([]);
+  uploadAactivityImages.value = ref([]);
+  uploadFile.value = ref([]);
   refundModalVisible.value = true
 }
 // 活动图片数组
@@ -604,7 +607,7 @@ const openAuditReasonModal = async (order) => {
       // auditTime: detail.reviewed_at || '',
       // auditor: detail.farmer_name || ''
     }
-console.log(auditDetail.value)
+console.log("AAA" + auditDetail.value.evidenceImages)
     auditReasonModalVisible.value = true
   } catch (err) {
     console.error('获取审核详情失败:', err)

@@ -191,6 +191,7 @@ router.get('/merchant/reviewed-after-sale',
         SELECT 
           o.order_id,
           o.after_sale_reason,
+          o.after_sale_reason_images,
           o.admin_reason,
           o.status AS final_status,
           d.product_name,
@@ -303,11 +304,11 @@ router.get('/merchant/reviewed-after-sale/:id',
 
             // 处理图片URL
             const order = rows[0];
-            if (order.after_sale_reason_images) {
-                order.after_sale_reason_images = order.after_sale_reason_images
-                    .split(',')
-                    .map(img => `/uploads/after_sale/${img}`);
-            }
+            // if (order.after_sale_reason_images) {
+            //     order.after_sale_reason_images = order.after_sale_reason_images
+            //         .split(',')
+            //         .map(img => `/uploads/after_sale/${img}`);
+            // }
 
             res.json(order);
         } catch (error) {
