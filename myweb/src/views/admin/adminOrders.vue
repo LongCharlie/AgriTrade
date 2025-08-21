@@ -323,10 +323,11 @@ const handleApproval = async () => {
     currentOrder.value.status = 'after_sale_resolved';
     reasonDialogVisible.value = false; // 关闭对话框
     reviewReason.value = ''; // 重置审核理由
-    alert('审核成功，已同意该售后请求');
+    fetchData();
+    ElMessage.success('审核成功，已同意该售后请求');
   } catch (error) {
     console.error('审核失败', error);
-    alert('审核失败，请重试');
+    ElMessage.error('审核失败，请重试');
   }
 };
 
@@ -361,10 +362,11 @@ const handleRejection = async () => {
     currentOrder.value.status = 'completed';
     reasonDialogVisible.value = false; // 关闭对话框
     reviewReason.value = ''; // 重置审核理由
-    alert('审核成功，已拒绝该售后请求');
+    fetchData();
+    ElMessage.success('审核成功，已拒绝该售后请求');
   } catch (error) {
     console.error('审核失败', error);
-    alert('审核失败，请重试');
+    ElMessage.error('审核失败，请重试');
   }
 };
 
