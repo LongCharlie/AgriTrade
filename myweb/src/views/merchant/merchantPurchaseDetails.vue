@@ -62,15 +62,12 @@
             </div>
 
             <div class="card-actions">
-              <button class="action-btn profile" @click="handleAction(application.farmerName, 'message')">
-                <i class="fas fa-user"></i> 发送消息
-              </button>
               <button class="action-btn message"
                       @click="handleAction(application.farmerName, 'affirm', application.record_id, application.applicationId)">
                 <i class="fas fa-comment"></i> 确认
               </button>
               <button class="action-btn record" @click="handleAction(application.farmerName, 'record', application.record_id)">
-                <i class="fas fa-seedling"></i> 详情
+                <i class="fas fa-seedling"></i> 查看详情
               </button>
             </div>
           </div>
@@ -162,9 +159,7 @@ const goBack = () => { router.back() }
 // 操作方法
 const handleAction = async (farmerName, action, recordId, applicationId) => {
   console.log('参数信息:', { farmerName, action, recordId, applicationId })
-  if (action === 'message') {
-    alert(`打开聊天窗口`)
-  } else if (action === 'affirm') {
+  if (action === 'affirm') {
     try {
       const res = await axios.post(
         `http://localhost:3000/api/applications/${applicationId}/accept`,
@@ -192,20 +187,20 @@ const fetchApplications = async () => {
     const res = await axios.get(`http://localhost:3000/api/demands/${demandId}/applications`, {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
-    console.log('返回数据：', res)
+    console.log('返回数据：', res.data)
     if (res.data.success) {
       applications.value = res.data.data.map(app => ({
-        farmerAvatar: app.farmer_avatar,
-        farmerName: app.farmer_name,
-        shippingLocation: app.province,
-        applicationTime: formatTime(app.applied_at),
-        rawTime: app.applied_at,
-        price: app.price,
-        unit: app.unit || 'kg',
-        rating: app.rating || 0,
-        record_id: app.record_id,
-        applicationId: app.application_id
-      }))
+      farmerAvatar: `http://localhost:3000${app.farmer_avatar_url}`, // 添加前缀
+      farmerName: app.farmer_name,
+      shippingLocation: `${app.farmer_province || ''}${app.farmer_city || ''}${app.farmer_district || ''}`, // 拼接地址
+      applicationTime: formatTime(app.applied_at),
+      rawTime: app.applied_at,
+      price: app.price,
+      unit: app.unit || 'kg',
+      rating: app.rating || 0,
+      record_id: app.record_id,
+      applicationId: app.application_id
+    }))
 
       totalApplications.value = applications.value.length
       const prices = applications.value.map(a => parseFloat(a.price))
@@ -228,8 +223,6 @@ const fetchApplications = async () => {
 
 onMounted(fetchApplications)
 </script>
-
-
 
 <style scoped>
 * {

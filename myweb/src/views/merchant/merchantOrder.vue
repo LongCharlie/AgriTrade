@@ -268,7 +268,7 @@
                 <div class="info-row">
                   <div class="info-label">同意售后理由：</div>
                   <div class="info-value">
-                    <span >{{ auditDetail.reason }}</span>
+                    <span >{{ auditDetail.processResult }}</span>
                   </div>
                 </div>
 <!--            <div class="info-row">-->
@@ -489,12 +489,11 @@ const openRefundReasonModal = async (order) => {
 const openAuditReasonModal = async (order) => {
   selectedOrder.value = order
   try {
-    // 替换 URL 中的 :orderId 为实际的订单 ID
     const url = `http://localhost:3000/api/merchant/reviewed-after-sale/${order.orderId}`
     const res = await axios.get(url, {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
-
+    console.log('审核测试：',res)
     const detail = Array.isArray(res.data)
       ? res.data.find(i => i.order_id === order.orderId)
       : res.data
