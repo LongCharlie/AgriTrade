@@ -62,10 +62,18 @@
       <div>
         <p><strong>售后原因:</strong></p>
         <div>{{ after_sale_reason }}</div>
-        <div v-if="afterSaleReasonImages.length > 0" style="margin-top: 10px;">
+        <p><strong>售后图片:</strong></p>
+        <div style="margin-top: 10px;">
           <div class="image-container">
-            <div v-for="(image, index) in afterSaleReasonImages" :key="index">
-              <img :src="image" alt="售后理由图片" class="responsive-image"/>
+<!--            <div v-for="(image, index) in afterSaleReasonImages" :key="index">-->
+<!--              <img :src="image" alt="售后理由图片" class="responsive-image"/>-->
+<!--            </div>-->
+            <div v-if="afterSaleReasonImages.length"
+                 v-for="(image, index) in afterSaleReasonImages"
+                 :key="index">
+              <img :src="`http://localhost:3000/uploads/activity-images/${image}`"
+                   alt="售后理由图片"
+                   class="responsive-image" />
             </div>
           </div>
         </div>
@@ -85,10 +93,15 @@
       <div>
         <p><strong>售后原因:</strong></p>
         <div>{{ after_sale_reason }}</div>
+        <p><strong>售后图片:</strong></p>
         <div v-if="afterSaleReasonImages.length > 0" style="margin-top: 10px;">
           <div class="image-container">
-            <div v-for="(image, index) in afterSaleReasonImages" :key="index">
-              <img :src="image" alt="售后理由图片" class="responsive-image"/>
+            <div
+                 v-for="(image, index) in afterSaleReasonImages"
+                 :key="index">
+              <img :src="`http://localhost:3000/uploads/activity-images/${image}`"
+                   alt="售后理由图片"
+                   class="responsive-image" />
             </div>
           </div>
         </div>
@@ -102,10 +115,15 @@
       <div>
         <p><strong>售后原因:</strong></p>
         <div>{{ after_sale_reason }}</div>
+        <p><strong>售后图片:</strong></p>
         <div v-if="afterSaleReasonImages.length > 0" style="margin-top: 10px;">
           <div class="image-container">
-            <div v-for="(image, index) in afterSaleReasonImages" :key="index">
-              <img :src="image" alt="售后理由图片" class="responsive-image"/>
+            <div
+                 v-for="(image, index) in afterSaleReasonImages"
+                 :key="index">
+              <img :src="`http://localhost:3000/uploads/activity-images/${image}`"
+                   alt="售后理由图片"
+                   class="responsive-image" />
             </div>
           </div>
         </div>
