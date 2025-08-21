@@ -46,9 +46,15 @@
 
             <div class="application-details">
               <div class="detail-row">
+                <div class="detail-label">数量:</div>
+                <div class="detail-value">
+                  <span class="price-tag">{{ application.quantity }}</span> kg
+                </div>
+              </div>
+              <div class="detail-row">
                 <div class="detail-label">报价:</div>
                 <div class="detail-value">
-                  <span class="price-tag">{{ application.price }}</span> / {{ application.unit }}
+                  <span class="price-tag">{{ application.price }}</span> 元/kg
                 </div>
               </div>
               <div class="detail-row">
@@ -196,10 +202,11 @@ const fetchApplications = async () => {
       applicationTime: formatTime(app.applied_at),
       rawTime: app.applied_at,
       price: app.price,
-      unit: app.unit || 'kg',
+      // unit: app.unit || 'kg',
       rating: app.rating || 0,
       record_id: app.record_id,
-      applicationId: app.application_id
+      applicationId: app.application_id,
+      quantity: app.quantity || 0,
     }))
 
       totalApplications.value = applications.value.length

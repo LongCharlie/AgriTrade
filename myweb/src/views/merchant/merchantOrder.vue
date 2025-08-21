@@ -493,10 +493,10 @@ const openShippingModal = async (order) => {
 const openRefundModal = (order) => {
   selectedOrder.value = order
   refundReason.value = ''
-  // 活动图片数组
-  activityImages.value = ref([]);
-  uploadAactivityImages.value = ref([]);
-  uploadFile.value = ref([]);
+  // // 活动图片数组
+  // activityImages.value = ref([]);
+  // uploadAactivityImages.value = ref([]);
+  // uploadFile.value = ref([]);
   refundModalVisible.value = true
 }
 // 活动图片数组
@@ -555,8 +555,6 @@ const handleRemove = (file) => {
   }
   ElMessage.success(`${file.name} 已被移除`); // 提示用户删除成功
 };
-
-
 
 
 //打开售后
@@ -695,6 +693,9 @@ const submitRefund = async () => {
     selectedOrder.value.status = '售后中'
       ElMessage.success('售后申请已提交')
       refundModalVisible.value = false
+    // activityImages.value = ref([]);
+    // uploadAactivityImages.value = ref([]);
+    // uploadFile.value = ref([]);
   //   const res = await fetch(`http://localhost:3000/api/${selectedOrder.value.orderId}/after-sale`, {
   //     method: 'POST',
   //     headers: {
