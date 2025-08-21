@@ -127,11 +127,11 @@ const fetchExperienceDetail = async () => {
 
     allComments.value = (data.comments || []).map(c => ({
       author: c.commenter_name,
-      avatar: c.commenter_avatar ? `http://localhost:3000${c.commenter_avatar}` : '',
+      avatar: c.commenter_avatar ? `http://localhost:3000/uploads/avatars/${c.commenter_avatar}` : '',
       content: c.content,
       time: c.created_at
     }))
-
+    console.log(res.data)
     commentPagination.value.total = allComments.value.length
     fetchComments()
   } catch (err) {
