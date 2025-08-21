@@ -880,6 +880,7 @@ export default {
         });
         this.allCertificates = res.data;
         this.pagination.total = res.data.length;
+        console.log(res.data);
       } catch (error) {
         console.error('获取证书列表失败:', error);
         this.$message.error('获取证书列表失败');

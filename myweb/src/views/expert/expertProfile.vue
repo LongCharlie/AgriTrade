@@ -52,7 +52,7 @@
 
         <!-- 专家信息 -->
         <el-form-item label="真实姓名">
-          <el-input v-model="user.real_name" placeholder="请输入真实姓名"></el-input>
+          <el-input v-model="user.real_name" placeholder="请输入真实姓名" disabled></el-input>
         </el-form-item>
 
         <el-form-item label="职称">
@@ -71,9 +71,9 @@
           <el-input v-model="user.answer_count" disabled></el-input>
         </el-form-item>
 
-        <el-form-item label="专家排名">
-          <el-input v-model="user.expert_rank" disabled></el-input>
-        </el-form-item>
+<!--        <el-form-item label="专家排名">-->
+<!--          <el-input v-model="user.expert_rank" disabled></el-input>-->
+<!--        </el-form-item>-->
 
         <el-form-item label="个人简介">
           <el-input type="textarea" v-model="user.bio" placeholder="请填写个人简介"></el-input>
