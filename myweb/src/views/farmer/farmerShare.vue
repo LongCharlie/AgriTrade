@@ -79,6 +79,7 @@
             <div class="experience-meta">
               <span>{{ experience.publisher }}</span>
               <span>{{ formatDate(experience.published_at) }}</span>
+              <span v-if="filter === 'mine'" class="status-tag">状态：{{ statusText(experience.status) }}</span>
             </div>
             <el-button
               type="primary"
@@ -87,7 +88,6 @@
             >查看详情</el-button>
           </div>
         </div>
-
       </el-card>
 
       <!-- 分页 -->
@@ -131,20 +131,19 @@ const pagination = ref({ currentPage: 1, pageSize: 10 })
 const fetchExperiences = async () => {
   try {
     const { data } = await axios.get('http://localhost:3000/api/experience')
-
-    // 显式字段映射，确保前端字段一致
+    console.log('经验分享测试：',data)
     experiences.value = data.map(item => ({
       ...item,
       publisher: item.author_name || '未知作者',
       published_at: item.created_at || null,
-      comment_count: item.comment_count ?? 0 // 防止 undefined
+      comment_count: item.comment_count ?? 0,
+      status: item.audit_status
     }))
   } catch (err) {
     ElMessage.error('获取经验列表失败')
     console.error(err)
   }
 }
-
 
 // ====== 发布经验 ======
 const submitPostExperience = async () => {
@@ -192,9 +191,13 @@ const cancelPostExperience = () => {
 // ====== 过滤 & 搜索 ======
 const filteredExperiences = computed(() => {
   let list = [...experiences.value]
+
   if (filter.value === 'mine') {
     list = list.filter(e => e.publisher === userStore.username)
+  } else {
+    list = list.filter(e => e.status === 'approved')
   }
+
   if (searchQuery.value) {
     const keyword = searchQuery.value.toLowerCase()
     list = list.filter(e =>
@@ -202,6 +205,7 @@ const filteredExperiences = computed(() => {
       e.content.toLowerCase().includes(keyword)
     )
   }
+
   return list
 })
 
@@ -242,7 +246,7 @@ const handleCurrentChange = page => {
 // ====== 工具函数 ======
 const highlightSearchText = (text) => {
   if (!searchQuery.value) return text
-  const keyword = searchQuery.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // 转义正则字符
+  const keyword = searchQuery.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const reg = new RegExp(`(${keyword})`, 'gi')
   return text.replace(reg, '<span class="highlight">$1</span>')
 }
@@ -255,6 +259,15 @@ const formatDate = (dateStr) => {
   return new Date(dateStr).toLocaleString()
 }
 
+const statusText = (status) => {
+  switch (status) {
+    case 'approved': return '已通过'
+    case 'pending': return '待审核'
+    case 'rejected': return '已驳回'
+    default: return '未知状态'
+  }
+}
+
 // ====== 详情查看 ======
 const viewExperienceDetail = (id) => {
   router.push(`/farmer/sharedetails/${id}`)
@@ -262,6 +275,7 @@ const viewExperienceDetail = (id) => {
 
 onMounted(fetchExperiences)
 </script>
+
 
 <style scoped>
 

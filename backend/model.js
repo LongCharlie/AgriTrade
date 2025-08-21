@@ -1323,7 +1323,6 @@ const getAllExperiencesWithAuthor = async () => {
       u.avatar_url AS author_avatar
      FROM experiences e
      LEFT JOIN users u ON e.user_id = u.user_id
-     WHERE e.audit_status = 'approved'
      ORDER BY e.created_at DESC`
   );
   return result.rows;
