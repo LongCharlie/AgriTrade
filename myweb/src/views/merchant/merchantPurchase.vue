@@ -46,9 +46,12 @@
           <button class="action-btn detail-btn" @click.stop="viewPurchase(purchase)">
            查看申请
           </button>
-          <button class="action-btn close-btn" @click.stop="closeDemand(purchase.id)">
-          关闭申请
-        </button>
+          <button
+            v-if="purchase.status === 'open'"
+            class="action-btn close-btn"
+            @click.stop="closeDemand(purchase.id)">
+            关闭申请
+          </button>
 
         </div>
       </div>
