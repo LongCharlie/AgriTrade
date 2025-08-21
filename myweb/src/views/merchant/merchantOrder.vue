@@ -304,10 +304,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { useUserStore } from '@/stores/user'
 import axios from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { useUserStore } from '@/stores/user'
+import { computed, onMounted, ref } from 'vue'
 
 const userStore = useUserStore()
 const orders = ref([])
@@ -489,31 +489,38 @@ const openRefundReasonModal = async (order) => {
 const openAuditReasonModal = async (order) => {
   selectedOrder.value = order
   try {
-    const res = await axios.get(`http://localhost:3000/api/merchant/reviewed-after-sale/${order.orderId}`, {
+    // 替换 URL 中的 :orderId 为实际的订单 ID
+    const url = `http://localhost:3000/api/merchant/reviewed-after-sale/${order.orderId}`
+    const res = await axios.get(url, {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
-    console.log(res.data)
-    auditDetail.value.refundReason = res.data.after_sale_reason;
-        auditDetail.value.evidenceImages= res.data.after_sale_reason_images;
-        auditDetail.value.reason= res.data.admin_reason;
-        console.log(auditDetail.value)
-    // const detail = res.data.find(i => i.order_id === order.orderId)
-    // auditDetail.value = {
-    //   refundReason: detail?.after_sale_reason || '',
-    //   evidenceImages: [],
-    //   reason:detail?.admin_reason || '',
-    //   // processResult: detail?.admin_reason || '',
-    //   // refundAmount: detail?.price || 0,
-    //   // auditRemark: '',
-    //   // auditTime: '',
-    //   // auditor: detail?.farmer_name || ''
-    // }
+
+    const detail = Array.isArray(res.data)
+      ? res.data.find(i => i.order_id === order.orderId)
+      : res.data
+
+    if (!detail) {
+      ElMessage.warning('未找到对应的审核详情')
+      return
+    }
+
+    auditDetail.value = {
+      refundReason: detail.after_sale_reason || '',
+      evidenceImages: detail.evidence_images || [], // 如果后端有这个字段
+      processResult: detail.admin_reason || '',
+      refundAmount: detail.price || 0,
+      auditRemark: detail.final_status || '',
+      auditTime: detail.reviewed_at || '',
+      auditor: detail.farmer_name || ''
+    }
+
     auditReasonModalVisible.value = true
   } catch (err) {
     console.error('获取审核详情失败:', err)
     ElMessage.error('获取审核详情失败')
   }
 }
+
 
 // 确认收货
 const confirmReceipt = async (order) => {
