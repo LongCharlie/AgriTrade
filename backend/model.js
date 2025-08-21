@@ -757,36 +757,125 @@ const getCertificatesWithExpertInfo = async () => {
   return rows;
 };
 
+// // 处理售后订单审核理由
+// const resolveAfterSaleOrder = async (orderId, decision, reason) => {
+//   // 验证decision是否有效
+//   const validDecisions = ['approve', 'reject'];
+//   if (!validDecisions.includes(decision)) {
+//     throw new Error('无效的审核决定，必须是approve或reject');
+//   }
+//
+//   // 根据decision设置订单状态
+//   const newStatus = decision === 'approve' ? 'after_sale_resolved' : 'after_sale_rejected';
+//
+//   const query = `
+//     UPDATE orders
+//     SET
+//       status = $1,
+//       admin_reason = $2,
+//       resolved_at = NOW(),
+//       updated_at = NOW()
+//     WHERE order_id = $3 AND status = 'after_sale_requested'
+//     RETURNING *
+//   `;
+//
+//   const { rows } = await pool.query(query, [newStatus, reason, orderId]);
+//
+//   if (rows.length === 0) {
+//     throw new Error('订单不存在或当前状态不允许此操作');
+//   }
+//
+//   return rows[0];
+// };
+
 // 处理售后订单审核理由
-const resolveAfterSaleOrder = async (orderId, decision, reason) => {
+// const resolveAfterSaleOrder = async (orderId, admin_id, decision, reason) => {
+//   // 验证decision是否有效
+//   const validDecisions = ['approve', 'reject'];
+//   if (!validDecisions.includes(decision)) {
+//     throw new Error('无效的审核决定，必须是approve或reject');
+//   }
+//
+//   const query = `
+//     INSERT INTO after_sale_audits
+//       (order_id, admin_id, decision, reason, audited_at)
+//     VALUES
+//       ($1, $2, $3, $4, NOW())
+//       RETURNING *
+//   `;
+//
+//   const { rows } = await pool.query(query, [orderId, admin_id, decision, reason]);
+//
+//   if (rows.length === 0) {
+//     throw new Error('创建售后审核记录失败');
+//   }
+//   console.log(rows[0])
+//   return rows[0];
+// };
+
+const resolveAfterSaleOrder = async (orderId, admin_id, decision, reason) => {
   // 验证decision是否有效
   const validDecisions = ['approve', 'reject'];
   if (!validDecisions.includes(decision)) {
     throw new Error('无效的审核决定，必须是approve或reject');
   }
 
-  // 根据decision设置订单状态
-  const newStatus = decision === 'approve' ? 'after_sale_resolved' : 'after_sale_rejected';
+  // 先检查记录是否存在
+  const checkQuery = 'SELECT * FROM after_sale_audits WHERE order_id = $1';
+  const checkResult = await pool.query(checkQuery, [orderId]);
 
-  const query = `
-    UPDATE orders
-    SET 
-      status = $1,
-      admin_reason = $2,
-      resolved_at = NOW(),
-      updated_at = NOW()
-    WHERE order_id = $3 AND status = 'after_sale_requested'
-    RETURNING *
-  `;
+  let result;
 
-  const { rows } = await pool.query(query, [newStatus, reason, orderId]);
-  
-  if (rows.length === 0) {
-    throw new Error('订单不存在或当前状态不允许此操作');
+  if (checkResult.rows.length > 0) {
+    // 记录存在，执行更新
+    const updateQuery = `
+      UPDATE after_sale_audits 
+      SET admin_id = $1, decision = $2, reason = $3, audited_at = NOW()
+      WHERE order_id = $4
+      RETURNING *
+    `;
+    result = await pool.query(updateQuery, [admin_id, decision, reason, orderId]);
+  } else {
+    // 记录不存在，执行插入
+    const insertQuery = `
+      INSERT INTO after_sale_audits
+        (order_id, admin_id, decision, reason, audited_at)
+      VALUES
+        ($1, $2, $3, $4, NOW())
+      RETURNING *
+    `;
+    result = await pool.query(insertQuery, [orderId, admin_id, decision, reason]);
   }
 
-  return rows[0];
+  if (result.rows.length === 0) {
+    throw new Error('处理售后订单失败');
+  }
+
+  console.log(result.rows[0]);
+  return result.rows[0];
 };
+
+const deleteReason = async () => {
+  try {
+    // 执行删除操作
+    const result = await pool.query('DELETE FROM after_sale_audits RETURNING *');
+
+    // 返回被删除的记录数量
+    return {
+      success: true,
+      deletedCount: result.rowCount,
+      message: `成功删除 ${result.rowCount} 条记录`
+    };
+  } catch (error) {
+    console.error('删除数据失败:', error);
+    return {
+      success: false,
+      error: error.message,
+      message: '删除数据时发生错误'
+    };
+  }
+};
+
 
 // 获取所有有售后原因的订单详情
 const getAfterSaleOrders = async () => {
@@ -802,14 +891,17 @@ const getAfterSaleOrders = async () => {
       o.buyer_id,
       buyer.username AS buyer_name,
       buyer.phone,
-      TO_CHAR(o.created_at, 'YYYY-MM-DD') AS created_at,
+      TO_CHAR(o.created_at, 'YYYY-MM-DD HH:MM:SS') AS created_at,
       o.status,
       o.after_sale_reason,
       o.after_sale_reason_images,
+      ad.decision,
+      ad.reason,
       o.admin_reason
     FROM orders o
     JOIN purchase_applications a ON o.application_id = a.application_id
     JOIN purchase_demands d ON a.demand_id = d.demand_id
+    LEFT JOIN after_sale_audits ad ON ad.order_id = o.order_id
     JOIN users farmer ON o.farmer_id = farmer.user_id
     JOIN users buyer ON o.buyer_id = buyer.user_id
     WHERE o.after_sale_reason IS NOT NULL
@@ -857,35 +949,50 @@ const deleteUser = async (userId) => {
 };
 
 // 管理员更新订单状态
+// const updateOrderStatus = async (orderId, status, adminReason = null) => {
+//   // 验证状态值是否有效
+//   const validStatuses = ['pending_shipment', 'shipped', 'completed', 'after_sale_requested', 'after_sale_resolved'];
+//   if (!validStatuses.includes(status)) {
+//     throw new Error('无效的订单状态');
+//   }
+//
+//   const query = `
+//     UPDATE orders
+//     SET
+//       status = $1,
+//       ${status === 'shipped' ? 'shipment_time = NOW(),' : ''}
+//       ${status === 'completed' ? 'buyer_confirm_time = NOW(),' : ''}
+//       ${adminReason ? 'admin_reason = $3,' : ''}
+//
+//     WHERE order_id = $2
+//     RETURNING *
+//   `;
+//
+//   const params = [status, orderId];
+//   if (adminReason) params.push(adminReason);
+//
+//   const { rows } = await pool.query(query, params);
+//
+//   if (rows.length === 0) {
+//     throw new Error('订单不存在');
+//   }
+//
+//   return rows[0];
+// };
+
+
 const updateOrderStatus = async (orderId, status, adminReason = null) => {
-  // 验证状态值是否有效
-  const validStatuses = ['pending_shipment', 'shipped', 'completed', 'after_sale_requested', 'after_sale_resolved'];
+  // 定义允许的状态值
+  const validStatuses = ['pending_shipment', 'after_sale_resolved', 'shipped', 'completed', 'after_sale_requested'];
   if (!validStatuses.includes(status)) {
-    throw new Error('无效的订单状态');
+    throw new Error('无效的状态值');
   }
-
-  const query = `
-    UPDATE orders
-    SET 
-      status = $1,
-      ${status === 'shipped' ? 'shipment_time = NOW(),' : ''}
-      ${status === 'completed' ? 'buyer_confirm_time = NOW(),' : ''}
-      ${adminReason ? 'admin_reason = $3,' : ''}
-      updated_at = NOW()
-    WHERE order_id = $2
-    RETURNING *
-  `;
-
-  const params = [status, orderId];
-  if (adminReason) params.push(adminReason);
-
-  const { rows } = await pool.query(query, params);
-  
-  if (rows.length === 0) {
-    throw new Error('订单不存在');
-  }
-
-  return rows[0];
+  const result = await pool.query(
+      'UPDATE orders SET status = $1, admin_reason = $2 WHERE order_id = $3 RETURNING *',
+      [status, adminReason, orderId]
+  );
+  console.log(result.rows[0])
+  return result.rows[0];
 };
 
 // 获取订单对应的买家数量
@@ -1245,7 +1352,7 @@ const getFarmerOrders = async (farmerId) => {
       o.after_sale_reason,
       o.after_sale_reason_images,
       o.logistics_info,
-      a.reason,
+      o.admin_reason AS reason,
       pd.product_name,
       pa.quantity,
       pa.price,
@@ -1255,7 +1362,7 @@ const getFarmerOrders = async (farmerId) => {
       o.address_detail
      FROM orders o
      LEFT JOIN users u ON o.buyer_id = u.user_id
-     LEFT JOIN after_sale_audits a ON o.order_id = a.order_id
+--      LEFT JOIN after_sale_audits a ON o.order_id = a.order_id
      LEFT JOIN purchase_applications pa ON o.application_id = pa.application_id
      LEFT JOIN purchase_demands pd ON pa.demand_id = pd.demand_id
      WHERE o.farmer_id = $1
@@ -1269,7 +1376,7 @@ const getFarmerOrders = async (farmerId) => {
 // 更新订单状态
 const updateOrderStatus_farmer = async (orderId, status) => {
   // 定义允许的状态值
-  const validStatuses = ['pending_shipment', 'pending', 'shipped', 'completed', 'canceled'];
+  const validStatuses = ['pending_shipment', 'after_sale_resolved', 'shipped', 'completed', 'after_sale_requested'];
   if (!validStatuses.includes(status)) {
     throw new Error('无效的状态值');
   }
@@ -1549,6 +1656,7 @@ const getQuestionWithUserAndImages = async (questionId) => {
 
 // 导出所有数据库操作方法
 module.exports = {
+  deleteReason,
   checkUserExists,
   getTotalBuyerCount,
   decrementExpertAnswerCount,

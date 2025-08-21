@@ -198,7 +198,7 @@
           </div>
           <div class="info-row">
             <div class="info-label">产品：</div>
-            <div class="info-value">{{ selectedOrder.productType }} ({{ selectedOrder.quantity }}kg)</div>
+            <div class="info-value">{{ selectedOrder.productName }} ({{ selectedOrder.quantity }}kg)</div>
           </div>
           
           <div class="info-row">
@@ -244,7 +244,7 @@
           </div>
           <div class="info-row">
             <div class="info-label">产品：</div>
-            <div class="info-value">{{ selectedOrder.productType }} ({{ selectedOrder.quantity }}kg)</div>
+            <div class="info-value">{{ selectedOrder.productName }} ({{ selectedOrder.quantity }}kg)</div>
           </div>
           
           <div class="info-row">
@@ -265,28 +265,34 @@
           
           <div class="audit-section">
             <h4><i class="fas fa-user-check"></i> 审核结果</h4>
-            <div class="info-row">
-              <div class="info-label">处理结果：</div>
-              <div class="info-value">
-                <span class="status status-refunded">{{ auditDetail.processResult }}</span>
-              </div>
-            </div>
-            <div class="info-row">
-              <div class="info-label">退款金额：</div>
-              <div class="info-value">¥{{ auditDetail.refundAmount.toFixed(2) }}</div>
-            </div>
-            <div class="info-row">
-              <div class="info-label">审核说明：</div>
-              <div class="info-value">
-                <p style="background: #f0f7ff; padding: 12px; border-radius: 8px;">
-                  {{ auditDetail.auditRemark }}
-                </p>
-              </div>
-            </div>
-            <div class="info-row">
-              <div class="info-label">审核时间：</div>
-              <div class="info-value">{{ auditDetail.auditTime }}</div>
-            </div>
+                <div class="info-row">
+                  <div class="info-label">同意售后理由：</div>
+                  <div class="info-value">
+                    <span >{{ auditDetail.reason }}</span>
+                  </div>
+                </div>
+<!--            <div class="info-row">-->
+<!--              <div class="info-label">处理结果：</div>-->
+<!--              <div class="info-value">-->
+<!--                <span class="status status-refunded">{{ auditDetail.processResult }}</span>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--            <div class="info-row">-->
+<!--              <div class="info-label">退款金额：</div>-->
+<!--              <div class="info-value">¥{{ auditDetail.refundAmount.toFixed(2) }}</div>-->
+<!--            </div>-->
+<!--            <div class="info-row">-->
+<!--              <div class="info-label">审核说明：</div>-->
+<!--              <div class="info-value">-->
+<!--                <p style="background: #f0f7ff; padding: 12px; border-radius: 8px;">-->
+<!--                  {{ auditDetail.auditRemark }}-->
+<!--                </p>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--            <div class="info-row">-->
+<!--              <div class="info-label">审核时间：</div>-->
+<!--              <div class="info-value">{{ auditDetail.auditTime }}</div>-->
+<!--            </div>-->
           </div>
         </div>
         <div class="modal-footer">
@@ -298,10 +304,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { useUserStore } from '@/stores/user'
 import axios from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { useUserStore } from '@/stores/user'
+import { computed, onMounted, ref } from 'vue'
 
 const userStore = useUserStore()
 const orders = ref([])
@@ -338,7 +344,8 @@ const auditDetail = ref({
   refundAmount: 0,
   auditRemark: '',
   auditTime: '',
-  auditor: ''
+  auditor: '',
+  reason:'',
 })
 
 // 售后申请数据
