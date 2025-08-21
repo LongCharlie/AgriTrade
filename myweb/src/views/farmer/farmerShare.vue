@@ -82,6 +82,7 @@
               <span v-if="filter === 'mine'" class="status-tag">状态：{{ statusText(experience.status) }}</span>
             </div>
             <el-button
+              v-if="experience.status === 'approved'"
               type="primary"
               size="small"
               @click="viewExperienceDetail(experience.experience_id)"
