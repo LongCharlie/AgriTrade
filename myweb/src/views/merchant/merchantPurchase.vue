@@ -8,10 +8,10 @@
         <button class="toggle-btn" @click="toggleShowClosed">
           {{ showClosed ? '查看打开采购' : '查看已关闭采购' }}
         </button>
-        <button class="add-btn" @click="addPurchase">
-          <i class="fas fa-plus"></i>
-          添加新采购
-        </button>
+       <button class="add-btn" @click="addPurchase">
+         <i class="fas fa-plus"></i>
+         添加新采购
+       </button>
       </div>
     </header>
 
@@ -59,10 +59,6 @@
         <div class="empty-text">
           {{ showClosed ? '您没有已关闭的采购' : '您还没有发布任何采购信息' }}
         </div>
-        <button class="add-btn" @click="addPurchase">
-          <i class="fas fa-plus"></i>
-          {{ showClosed ? '发布新采购' : '发布第一个采购' }}
-        </button>
       </div>
     </div>
 
@@ -200,12 +196,15 @@ const statusClass = (status) => {
   }
 }
 
-// 关闭采购
 const closeDemand = async (demandId) => {
   try {
-    const res = await axios.post('http://localhost:3000/api/demands/close', { id: demandId }, {
-      headers: { Authorization: `Bearer ${userStore.token}` }
-    })
+    const res = await axios.post(
+      `http://localhost:3000/api/demands/${demandId}/close`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${userStore.token}` }
+      }
+    )
     if (res.data.success) {
       ElMessage.success('采购已关闭')
       await fetchPurchases() // 刷新列表
@@ -217,6 +216,7 @@ const closeDemand = async (demandId) => {
     ElMessage.error(err.response?.data?.error || '服务器错误')
   }
 }
+
 
 watch(showClosed, () => { currentPage.value = 1 })
 </script>

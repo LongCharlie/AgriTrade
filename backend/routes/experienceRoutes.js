@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
 const { ROLES } = authMiddleware;
+const model = require('../model');
 
 // 发布经验分享（需审核）
 router.post('/experiences', authMiddleware.authenticateToken, async (req, res) => {
@@ -114,11 +115,7 @@ router.get('/experience/:id', async (req, res) => {
       `SELECT 
         e.*,
         u.username as author_name,
-        u.avatar_url as author_avatar,
-        CASE WHEN u.avatar_url IS NOT NULL 
-            THEN CONCAT('/uploads/avatars/', u.avatar_url) 
-            ELSE NULL 
-        END AS commenter_avatar
+        u.avatar_url as author_avatar
       FROM experiences e
       LEFT JOIN users u ON e.user_id = u.user_id
       WHERE e.experience_id = $1 AND e.audit_status = 'approved'`,

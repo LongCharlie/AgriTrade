@@ -221,7 +221,7 @@ CREATE TABLE `orders`  (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `logistics_info` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '物流信息',
   `admin_reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '审核理由',
-  `after_sale_reason_images` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '售后图片路径',
+  `after_sale_reason_images` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '售后图片路径',
   PRIMARY KEY (`order_id`) USING BTREE,
   UNIQUE INDEX `application_id`(`application_id`) USING BTREE,
   INDEX `farmer_id`(`farmer_id`) USING BTREE,

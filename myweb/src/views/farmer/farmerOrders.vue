@@ -2,14 +2,38 @@
   <div>
     <h1>我的订单</h1>
     <h1>总收入: ¥ {{ totalRevenue }}</h1>
-
+    <!--    <el-button type="primary" @click="huifu">待发货</el-button>-->
+    <!--    <el-button type="primary" @click="huifu2">售后中</el-button>-->
     <div class="search-bar">
       <el-input v-model="searchId" placeholder="搜索编号" style="width: 200px; margin-bottom: 20px;"></el-input>
       <el-input v-model="searchProduct" placeholder="搜索产品种类" style="width: 200px; margin-bottom: 20px;"></el-input>
       <el-input v-model="searchAddress" placeholder="搜索收货地" style="width: 200px; margin-bottom: 20px;"></el-input>
-      <el-input v-model="filterYear" placeholder="年份" style="width: 120px; margin-bottom: 20px;"></el-input>
-      <el-input v-model="filterMonth" placeholder="月份" style="width: 120px; margin-bottom: 20px;"></el-input>
-      <el-input v-model="filterDay" placeholder="日期" style="width: 120px; margin-bottom: 20px;"></el-input>
+<!--      <el-input v-model="filterYear" placeholder="年份" style="width: 120px; margin-bottom: 20px;"></el-input>-->
+<!--      <el-input v-model="filterMonth" placeholder="月份" style="width: 120px; margin-bottom: 20px;"></el-input>-->
+<!--      <el-input v-model="filterDay" placeholder="日期" style="width: 120px; margin-bottom: 20px;"></el-input>-->
+      <el-input
+          v-model.number="filterYear"
+          placeholder="年份"
+          type="number"
+          style="width: 120px; margin-bottom: 20px;"
+      ></el-input>
+      <el-input
+          v-model.number="filterMonth"
+          placeholder="月份"
+          type="number"
+          min="1"
+          max="12"
+          style="width: 120px; margin-bottom: 20px;"
+      ></el-input>
+      <el-input
+          v-model.number="filterDay"
+          placeholder="日期"
+          type="number"
+          min="1"
+          max="31"
+          style="width: 120px; margin-bottom: 20px;"
+      ></el-input>
+
       <el-select v-model="filterOption" placeholder="选择筛选" style="width: 200px; margin-bottom: 20px;">
         <el-option label="全部状态" value="all"></el-option>
         <el-option label="待发货" value="pending_shipment"></el-option>
@@ -30,9 +54,9 @@
       <el-table-column prop="province" label="收货地"></el-table-column>
       <el-table-column prop="buyer_name" label="采购方"></el-table-column>
       <el-table-column prop="buyer_phone" label="联系方式"></el-table-column>
-      <el-table-column label="沟通">
-        <el-button @click="handleMessage(scope.row)" >发消息</el-button>
-      </el-table-column>
+<!--      <el-table-column label="沟通">-->
+<!--        <el-button @click="handleMessage(scope.row)" >发消息</el-button>-->
+<!--      </el-table-column>-->
       <el-table-column prop="created_at" label="时间"></el-table-column>
       <el-table-column prop="formatted_status" label="状态"></el-table-column>
       <el-table-column label="操作">
@@ -45,9 +69,6 @@
         </template>
       </el-table-column>
     </el-table>
-
-<!--    <el-button type="primary" @click="huifu">待发货</el-button>-->
-<!--    <el-button type="primary" @click="huifu2">已完成</el-button>-->
 
     <div class="pagination-container">
       <el-pagination
@@ -168,7 +189,7 @@ const currentPage = ref(1);
 
 const huifu = async () => {
   const token = userStore.token; // 获取 token
-  const orderId = 5; // 获取订单 ID
+  const orderId = 12; // 获取订单 ID
   try {
     await axios.post(`http://localhost:3000/api/${orderId}/status`, {
       status: 'pending_shipment'
@@ -185,16 +206,16 @@ const huifu = async () => {
 };
 const huifu2 = async () => {
   const token = userStore.token; // 获取 token
-  const orderId = 5; // 获取订单 ID
+  const orderId = 12; // 获取订单 ID
   try {
     await axios.post(`http://localhost:3000/api/${orderId}/status`, {
-      status: 'completed'
+      status: 'after_sale_requested'
     }, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     // 更新本地订单状态
     fetchData();
-    console.log('恢复成功');
+    console.log('恢复成功'+ orderId);
   } catch (error) {
     console.error('恢复失败', error);
     ElMessage.error('恢复失败，请重试');
@@ -256,18 +277,28 @@ const performSearch = () => {
     // 检查属性是否存在，如果不存在则使用空字符串
     const orderId = item.order_id ? item.order_id.toString() : '';
     const productName = item.product_name || '';
-    const deliveryLocation = item.delivery_location || '';
+    const deliveryLocation = item.province || '';
 
     const matchesId = orderId.includes(searchId.value);
     const matchesProduct = productName.includes(searchProduct.value);
     const matchesAddress = deliveryLocation.includes(searchAddress.value);
 
+    // 日期比较逻辑（全部使用数字比较）
     const matchesDate = (date) => {
-      if (!date) return false; // 如果日期不存在，返回false
+      if (!date) return false;
       const [year, month, day] = date.split('-');
-      return (!filterYear.value || year === filterYear.value) &&
-          (!filterMonth.value || month === filterMonth.value) &&
-          (!filterDay.value || day === filterDay.value);
+
+      // 转换为数字进行比较
+      const yearNum = parseInt(year, 10);
+      const monthNum = parseInt(month, 10);
+      const dayNum = parseInt(day, 10);
+
+      // 用户输入的值（已经是数字，因为使用了v-model.number）
+      const yearMatch = filterYear.value ? yearNum === filterYear.value : true;
+      const monthMatch = filterMonth.value ? monthNum === filterMonth.value : true;
+      const dayMatch = filterDay.value ? dayNum === filterDay.value : true;
+
+      return yearMatch && monthMatch && dayMatch;
     };
 
     const matchesUpdateTime = matchesDate(item.created_at);
@@ -311,6 +342,7 @@ const confirmDelivery = (order) => {
   dialogVisible.value = true; // 显示对话框
 };
 
+// 确认发货
 const submitDelivery = async () => {
   const token = userStore.token; // 获取 token
   const orderId = currentOrder.value.order_id; // 获取订单 ID
@@ -331,7 +363,7 @@ const submitDelivery = async () => {
     });
 
     // 更新本地订单状态
-    currentOrder.value.status = 'shipped';
+    fetchData();
     dialogVisible.value = false; // 关闭对话框
     logisticsInfo.value = ''; // 清空物流信息输入框
     console.log('发货成功');

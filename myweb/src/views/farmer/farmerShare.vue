@@ -67,11 +67,6 @@
             class="experience-title"
             v-html="highlightSearchText(experience.title)"
           ></span>
-          <div class="tag">
-            <el-tag :type="experience.comment_count === 0 ? 'warning' : 'success'">
-              {{ experience.comment_count === 0 ? '无评论' : experience.comment_count + ' 评论' }}
-            </el-tag>
-          </div>
         </div>
         <div class="card-body">
           <p

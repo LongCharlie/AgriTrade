@@ -113,23 +113,24 @@ const routes = [
             { path: 'ques/:id', component: () => import("../views/admin/adminAnswers.vue") },
             { path: 'answer/:id', component: () => import("../views/admin/adminAnswerDetail.vue") },
             { path: 'share', component: () => import("../views/admin/adminShare.vue") },
-            { path : 'shareComment', component: () =>import('../views/admin/ShareCommentCheck.vue')},
+            { path: 'shareComment', component: () =>import('../views/admin/ShareCommentCheck.vue')},
             { path: 'test', component: () => import("../views/admin/test.vue") },
+            { path: 'experience/:id', component: () => import('@/views/admin/adminsharedetails.vue')}
         ]
     },
       {
           path: '/merchant',
-          redirect: 'merchant/main',
+          redirect: '/merchant/home',
           component: Merchant,
           // meta: { requiresAuth: true, role: ['buyer'] },
           children: [
-              {path: '', name: 'Main', component: MerchantMain},
+              {path: 'home', component: () => import("../views/merchant/merchantMain2.vue")},
               {path: 'order', name: 'Order', component: MerchantOrder},
               {path: 'purchases', name: 'Purchases', component: MerchantPurchase},
               {path: 'purchases/:id/applications', name: 'PurchaseDetail', component: merchantPurchaseDetails},
               {path: 'purchaseDetail/record', name: 'Record', component: () => import("../views/merchant/merchantSeePlanting.vue") },
               {path: 'addPurchase', name: 'AddPurchase', component: MerchantAddPurchase},
-              {path: 'home', name: 'MerchantHome', component: MerchantHome},
+              {path: 'profile', component: () => import("../views/merchant/merchantProfile.vue")},
               {path: 'message', name: 'MerchantMessage', component: MerchantMessage},
        ]
   }

@@ -5,8 +5,8 @@
     <!-- 筛选区域 -->
     <div class="filter-section">
       <el-form :inline="true">
-        <el-form-item label="评论人">
-          <el-input v-model="filter.commenter" placeholder="评论人"></el-input>
+        <el-form-item label="评论者">
+          <el-input v-model="filter.commenter" placeholder="请输入评论者的名称"></el-input>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="fetchComments">查询</el-button>
@@ -83,7 +83,8 @@ export default {
       filter: {
         commenter: ''
       },
-      comments: [],
+      rawComments: [], // 原始数据
+      comments: [],    // 筛选后的数据
       pagination: {
         current: 1,
         size: 10,
@@ -93,32 +94,19 @@ export default {
   },
   computed: {
     filteredComments() {
-      let result = this.comments;
-      const { commenter } = this.filter;
-
-      if (commenter.trim()) {
-        result = result.filter(c =>
-          c.commenter.toLowerCase().includes(commenter.trim().toLowerCase())
-        );
-      }
-
-      this.pagination.total = result.length;
       const start = (this.pagination.current - 1) * this.pagination.size;
-      return result.slice(start, start + this.pagination.size);
+      return this.comments.slice(start, start + this.pagination.size);
     }
   },
   methods: {
     formatDate(dateStr) {
-      const date = new Date(dateStr);
-      return date.toLocaleString();
+      return new Date(dateStr).toLocaleString();
     },
     getStatusTagType(status) {
-      switch (status) {
-        case 'approved': return 'success';
-        case 'rejected': return 'danger';
-        case 'pending': return 'warning';
-        default: return '';
-      }
+      return status === 'approved' ? 'success'
+           : status === 'rejected' ? 'danger'
+           : status === 'pending' ? 'warning'
+           : '';
     },
     getStatusText(status) {
       return status === 'pending' ? '待审核'
@@ -130,12 +118,9 @@ export default {
       try {
         const token = this.userStore.token;
         const res = await axios.get('http://localhost:3000/api/comments/pending', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+          headers: { Authorization: `Bearer ${token}` }
         });
-        console.log('接口返回的数据:', res.data);
-        this.comments = res.data.map(c => ({
+        this.rawComments = res.data.map(c => ({
           ...c,
           creation_date: c.created_at,
           status: c.status,
@@ -143,17 +128,27 @@ export default {
           article_title: c.experience_title,
           content: c.content
         }));
-        this.pagination.current = 1;
+        this.applyFilter(); // 初次加载后应用筛选
       } catch (error) {
         console.error('获取评论失败:', error);
         this.$message.error('评论加载失败');
       }
     },
-    async approveComment(comment) {
-      await this.updateCommentStatus(comment, 'approved');
+    applyFilter() {
+      const keyword = this.filter.commenter.trim().toLowerCase();
+      this.comments = keyword
+        ? this.rawComments.filter(c =>
+            c.commenter.toLowerCase().includes(keyword)
+          )
+        : [...this.rawComments];
+      this.pagination.current = 1;
+      this.pagination.total = this.comments.length;
     },
-    async rejectComment(comment) {
-      await this.updateCommentStatus(comment, 'rejected');
+    approveComment(comment) {
+      this.updateCommentStatus(comment, 'approved');
+    },
+    rejectComment(comment) {
+      this.updateCommentStatus(comment, 'rejected');
     },
     async updateCommentStatus(comment, newStatus) {
       try {
@@ -161,11 +156,7 @@ export default {
         await axios.patch(
           `http://localhost:3000/api/comments/${comment.comment_id}/status`,
           { status: newStatus },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         comment.status = newStatus;
         this.$message.success(`评论已${newStatus === 'approved' ? '通过' : '拒绝'}`);
@@ -180,13 +171,9 @@ export default {
     handleCurrentChange(page) {
       this.pagination.current = page;
     },
-    showDetail(row) {
-      this.$message.info(`评论内容：${row.content}`);
-    },
     resetFilter() {
       this.filter.commenter = '';
-      this.pagination.current = 1;
-      this.fetchComments();
+      this.applyFilter();
     }
   },
   mounted() {
@@ -194,6 +181,7 @@ export default {
   }
 };
 </script>
+
 
 <style scoped>
 .pagination {

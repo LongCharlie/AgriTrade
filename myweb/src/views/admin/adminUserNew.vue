@@ -41,6 +41,31 @@
           <label for="address_detail">详细地址:</label>
           <input type="text" v-model="registerStore.address_detail" required />
         </div>
+
+        <!-- 专家字段 -->
+        <div v-if="registerStore.role === 'expert'" class="expert-fields">
+          <div class="input-group">
+            <label>真实姓名:</label>
+            <input type="text" v-model="registerStore.real_name" required />
+          </div>
+          <div class="input-group">
+            <label>职称:</label>
+            <input type="text" v-model="registerStore.title" />
+          </div>
+          <div class="input-group">
+            <label>所属机构:</label>
+            <input type="text" v-model="registerStore.institution" />
+          </div>
+          <div class="input-group">
+            <label>专业领域:</label>
+            <input type="text" v-model="registerStore.expertise" />
+          </div>
+          <div class="input-group">
+            <label>个人简介:</label>
+            <textarea v-model="registerStore.bio" rows="3" placeholder="请输入个人简介"></textarea>
+          </div>
+        </div>
+
         <button type="submit" class="login-button">注册</button>
         <div v-if="error" class="error">{{ error }}</div>
       </form>
@@ -120,7 +145,6 @@ export default {
   },
   data() {
     return {
-      vantaEffect: null
     }
   },
   mounted() {
@@ -135,24 +159,23 @@ export default {
 <style>
 .vanta-container {
   position: relative;
-  width: 100%;
-  height: 80vh;
-  overflow: hidden;
+  min-height: 80vh; /* 改为最小高度 */
+  overflow-y: auto; /* 添加垂直滚动 */
+  padding-bottom: 20px; /* 底部留出空间 */
 }
 
 .form-content {
-  max-width: 400px;
-  width: 100%;
+  max-width: 450px;
   padding: 30px;
   background-color: rgba(255, 255, 255, 0.5);
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  position: relative; /* 改为相对定位 */
+  margin: 20px auto; /* 使用margin居中 */
   z-index: 2;
+
 }
+
 
 h1 {
   text-align: center;

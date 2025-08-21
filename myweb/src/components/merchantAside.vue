@@ -36,8 +36,8 @@ export default {
         { path: "", name: "首页", icon: "House" },
         { path: "/purchases", name: "采购", icon: "ShoppingCart" },
         { path: "/order", name: "订单", icon: "Tickets" },
-        { path: "/message", name: "消息", icon: "ChatDotRound" },
-        { path: "/home", name: "我的", icon: "ChatDotRound" }
+        // { path: "/message", name: "消息", icon: "ChatDotRound" },
+        // { path: "/home", name: "我的", icon: "ChatDotRound" }
       ],
       menuHeight: 0 // 初始化菜单高度
     }
@@ -54,8 +54,8 @@ export default {
         return '采购';
       } else if (currentPath.startsWith('/order')) {
         return '订单';
-      } else if (currentPath.startsWith('/message')) {
-        return '消息';
+      // } else if (currentPath.startsWith('/message')) {
+      //   return '消息';
       } else if (currentPath.startsWith('/home')) {
         return '我的';
       }

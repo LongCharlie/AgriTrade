@@ -61,7 +61,7 @@
           <tbody>
             <tr v-for="order in filteredOrders" :key="order.id">
               <td>{{ order.orderId }}</td>
-              <td>{{ order.productType }}</td>
+              <td>{{ order.productName }}</td>
               <td>{{ order.quantity }}</td>
               <td>{{ order.price }}</td>
               <td>{{ order.destination }}</td>
@@ -73,17 +73,19 @@
               </td>
               <td>
                 <template v-if="order.status === '待发货'">
-                  <button class="action-btn btn-view" @click="openShippingModal(order)">
-                    <i class="fas fa-truck"></i> 发货信息
-                  </button>
                 </template>
                 <template v-else-if="order.status === '待收货'">
+                  <button class="action-btn btn-delivery" @click="openShippingModal(order)">
+                    <i class="fas fa-check-circle"></i> 查看物流
+                  </button>
                   <button class="action-btn btn-confirm" @click="confirmReceipt(order)">
                     <i class="fas fa-check-circle"></i> 确认收货
                   </button>
                   <button class="action-btn btn-refund" @click="openRefundModal(order)">
                     <i class="fas fa-undo"></i> 请求售后
                   </button>
+                </template>
+                <template v-else-if="order.status === '已完成'">
                 </template>
                 <template v-else-if="order.status === '售后中'">
                   <button class="action-btn btn-view" @click="openRefundReasonModal(order)">
@@ -120,7 +122,7 @@
           </div>
           <div class="info-row">
             <div class="info-label">产品：</div>
-            <div class="info-value">{{ selectedOrder.productType }} ({{ selectedOrder.quantity }}kg)</div>
+            <div class="info-value">{{ selectedOrder.productName }} ({{ selectedOrder.quantity }}kg)</div>
           </div>
           
           <div class="shipping-info">
@@ -196,7 +198,7 @@
           </div>
           <div class="info-row">
             <div class="info-label">产品：</div>
-            <div class="info-value">{{ selectedOrder.productType }} ({{ selectedOrder.quantity }}kg)</div>
+            <div class="info-value">{{ selectedOrder.productName }} ({{ selectedOrder.quantity }}kg)</div>
           </div>
           
           <div class="info-row">
@@ -242,7 +244,7 @@
           </div>
           <div class="info-row">
             <div class="info-label">产品：</div>
-            <div class="info-value">{{ selectedOrder.productType }} ({{ selectedOrder.quantity }}kg)</div>
+            <div class="info-value">{{ selectedOrder.productName }} ({{ selectedOrder.quantity }}kg)</div>
           </div>
           
           <div class="info-row">
@@ -263,28 +265,34 @@
           
           <div class="audit-section">
             <h4><i class="fas fa-user-check"></i> 审核结果</h4>
-            <div class="info-row">
-              <div class="info-label">处理结果：</div>
-              <div class="info-value">
-                <span class="status status-refunded">{{ auditDetail.processResult }}</span>
-              </div>
-            </div>
-            <div class="info-row">
-              <div class="info-label">退款金额：</div>
-              <div class="info-value">¥{{ auditDetail.refundAmount.toFixed(2) }}</div>
-            </div>
-            <div class="info-row">
-              <div class="info-label">审核说明：</div>
-              <div class="info-value">
-                <p style="background: #f0f7ff; padding: 12px; border-radius: 8px;">
-                  {{ auditDetail.auditRemark }}
-                </p>
-              </div>
-            </div>
-            <div class="info-row">
-              <div class="info-label">审核时间：</div>
-              <div class="info-value">{{ auditDetail.auditTime }}</div>
-            </div>
+                <div class="info-row">
+                  <div class="info-label">同意售后理由：</div>
+                  <div class="info-value">
+                    <span >{{ auditDetail.reason }}</span>
+                  </div>
+                </div>
+<!--            <div class="info-row">-->
+<!--              <div class="info-label">处理结果：</div>-->
+<!--              <div class="info-value">-->
+<!--                <span class="status status-refunded">{{ auditDetail.processResult }}</span>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--            <div class="info-row">-->
+<!--              <div class="info-label">退款金额：</div>-->
+<!--              <div class="info-value">¥{{ auditDetail.refundAmount.toFixed(2) }}</div>-->
+<!--            </div>-->
+<!--            <div class="info-row">-->
+<!--              <div class="info-label">审核说明：</div>-->
+<!--              <div class="info-value">-->
+<!--                <p style="background: #f0f7ff; padding: 12px; border-radius: 8px;">-->
+<!--                  {{ auditDetail.auditRemark }}-->
+<!--                </p>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--            <div class="info-row">-->
+<!--              <div class="info-label">审核时间：</div>-->
+<!--              <div class="info-value">{{ auditDetail.auditTime }}</div>-->
+<!--            </div>-->
           </div>
         </div>
         <div class="modal-footer">
@@ -336,7 +344,8 @@ const auditDetail = ref({
   refundAmount: 0,
   auditRemark: '',
   auditTime: '',
-  auditor: ''
+  auditor: '',
+  reason:'',
 })
 
 // 售后申请数据
@@ -344,23 +353,31 @@ const refundReason = ref('')
 const uploadedFiles = ref([])
 const fileInput = ref(null)
 
-// 获取订单列表
 const fetchOrders = async () => {
   try {
     const res = await axios.get('http://localhost:3000/api/merchant/orders/all', {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
+    console.log('订单返回数据', res)
+
+    const statusMap = {
+      pending_shipment: '待发货',
+      shipped: '待收货',
+      completed: '已完成',
+      after_sale_requested: '售后中',
+      after_sale_resolved: '已售后'
+    }
     orders.value = res.data.map(row => ({
-    orderId: row.order_id,
-    productName: row.product_name,
-    quantity: row.quantity,
-    price: row.price,
-    destination: row.ship_address,
-    sender: row.sender,
-    contact: row.farmer_phone,
-    time: row.created_at,
-    status: row.status
-  }))
+      orderId: row.order_id,
+      productName: row.product_name,
+      quantity: row.quantity,
+      price: row.price,
+      destination: row.ship_address,
+      sender: row.sender,
+      contact: row.farmer_phone,
+      time: row.created_at,
+      status: statusMap[row.status] || row.status // 映射状态，如果没有匹配则保留原值
+    }))
   } catch (err) {
     console.error('获取订单失败:', err.message, err.response?.data)
     if (err.response?.status === 401) {
@@ -371,7 +388,6 @@ const fetchOrders = async () => {
       ElMessage.error('获取订单失败')
     }
   }
-
 }
 
 // 过滤后的订单
@@ -428,10 +444,10 @@ const getStatusClass = (status) => {
 const openShippingModal = async (order) => {
   selectedOrder.value = order
   try {
-    const res = await axios.get('/merchant/logistics', {
+    const res = await axios.get(`http://localhost:3000/api/merchant/logistics/${order.orderId}`, {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
-    const info = res.data.find(i => i.order_id === order.orderId)
+    const info = res.data
     shippingInfo.value = info?.logistics_info || '暂无物流信息'
     shippingModalVisible.value = true
   } catch (err) {
@@ -448,19 +464,20 @@ const openRefundModal = (order) => {
   refundModalVisible.value = true
 }
 
-// 打开售后详情
+//打开售后
 const openRefundReasonModal = async (order) => {
   selectedOrder.value = order
   try {
-    const res = await axios.get('/merchant/pending-after-sale', {
+    const res = await axios.get(`http://localhost:3000/api/merchant/pending-after-sale/${order.orderId}`, {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
-    const detail = res.data.find(i => i.order_id === order.orderId)
+    console.log('售后数据：',refundDetail)
     refundDetail.value = {
-      reason: detail?.after_sale_reason || '',
-      evidenceImages: detail?.after_sale_reason_images?.split(',') || [],
+      reason: res.data.after_sale_reason || '',
+      evidenceImages: res.data.after_sale_reason_images || [],
       processStatus: '待审核'
     }
+
     refundReasonModalVisible.value = true
   } catch (err) {
     console.error('获取售后详情失败:', err)
@@ -472,19 +489,25 @@ const openRefundReasonModal = async (order) => {
 const openAuditReasonModal = async (order) => {
   selectedOrder.value = order
   try {
-    const res = await axios.get('/merchant/reviewed-after-sale', {
+    const res = await axios.get(`http://localhost:3000/api/merchant/reviewed-after-sale/${order.orderId}`, {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
-    const detail = res.data.find(i => i.order_id === order.orderId)
-    auditDetail.value = {
-      refundReason: detail?.after_sale_reason || '',
-      evidenceImages: [],
-      processResult: detail?.admin_reason || '',
-      refundAmount: detail?.price || 0,
-      auditRemark: detail?.final_status || '',
-      auditTime: detail?.reviewed_at || '',
-      auditor: detail?.farmer_name || ''
-    }
+    console.log(res.data)
+    auditDetail.value.refundReason = res.data.after_sale_reason;
+        auditDetail.value.evidenceImages= res.data.after_sale_reason_images;
+        auditDetail.value.reason= res.data.admin_reason;
+        console.log(auditDetail.value)
+    // const detail = res.data.find(i => i.order_id === order.orderId)
+    // auditDetail.value = {
+    //   refundReason: detail?.after_sale_reason || '',
+    //   evidenceImages: [],
+    //   reason:detail?.admin_reason || '',
+    //   // processResult: detail?.admin_reason || '',
+    //   // refundAmount: detail?.price || 0,
+    //   // auditRemark: '',
+    //   // auditTime: '',
+    //   // auditor: detail?.farmer_name || ''
+    // }
     auditReasonModalVisible.value = true
   } catch (err) {
     console.error('获取审核详情失败:', err)
@@ -500,7 +523,7 @@ const confirmReceipt = async (order) => {
       cancelButtonText: '取消',
       type: 'warning'
     })
-    const res = await axios.post(`/merchant/orders/${order.orderId}/confirm`, {}, {
+    const res = await axios.post(`http://localhost:3000/api/${order.orderId}/confirm`, {}, {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
     order.status = '已完成'
@@ -541,29 +564,40 @@ const removeImage = (index) => {
   uploadedFiles.value.splice(index, 1)
 }
 
-// 提交售后申请
 const submitRefund = async () => {
   if (!refundReason.value.trim()) {
     ElMessage.warning('请填写售后原因')
     return
   }
 
-  const imageUrls = uploadedFiles.value.map(f => f.url)
+  if (uploadedFiles.value.length === 0) {
+    ElMessage.warning('请至少上传一张图片')
+    return
+  }
 
   try {
-    const res = await axios.post(`/${selectedOrder.value.orderId}/after-sale`, {
-      reason: refundReason.value,
-      images: imageUrls
-    }, {
-      headers: { Authorization: `Bearer ${userStore.token}` }
+    const formData = new FormData()
+    formData.append('reason', refundReason.value)
+
+    uploadedFiles.value.forEach(file => {
+      formData.append('images', file.raw) // raw 是原始 File 对象
     })
 
+    const res = await fetch(`http://localhost:3000/api/${selectedOrder.value.orderId}/after-sale`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${userStore.token}`
+      },
+      body: formData
+    })
+
+    const result = await res.json()
     selectedOrder.value.status = '售后中'
     ElMessage.success('售后申请已提交')
     refundModalVisible.value = false
   } catch (err) {
     console.error('提交售后失败:', err)
-    ElMessage.error('提交售后失败')
+    ElMessage.error('提交售后失败，请稍后重试')
   }
 }
 
@@ -572,7 +606,6 @@ onMounted(() => {
   fetchOrders()
 })
 </script>
-
 
 <style scoped>
 * {
@@ -786,6 +819,11 @@ tr:hover {
   color: #0369a1;
 }
 
+.btn-delivery {
+  background-color: #f2dcfc;
+  color: #70377f;
+}
+
 .btn-confirm {
   background-color: #dcfce7;
   color: #166534;
@@ -829,6 +867,7 @@ tr:hover {
   width: 90%;
   max-width: 500px;
   max-height: 90vh;
+  overflow-y: auto;
   position: relative;
 }
 

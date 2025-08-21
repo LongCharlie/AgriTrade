@@ -3,7 +3,7 @@ const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
 const { ROLES } = authMiddleware;
 
-// 采购商发布需求
+//采购商发布需求
 router.post('/demands', authMiddleware.authenticateToken, authMiddleware.checkRole([ROLES.BUYER]), async (req, res) => {
   const { product_name, quantity, delivery_city } = req.body;
   const buyerId = req.user.userId;
@@ -14,7 +14,30 @@ router.post('/demands', authMiddleware.authenticateToken, authMiddleware.checkRo
   res.status(201).json(result.rows[0]);
 });
 
+
 // 农户申请供货
+router.post('/demands', authMiddleware.authenticateToken, authMiddleware.checkRole([ROLES.BUYER]), async (req, res) => {
+  try {
+    const { product_name, quantity } = req.body;
+    const buyerId = req.user.userId;
+
+    if (!product_name || !quantity || !buyerId) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    const result = await require('../model').query(
+      'INSERT INTO purchase_demands (buyer_id, product_name, quantity) VALUES ($1, $2, $3) RETURNING *',
+      [buyerId, product_name, quantity]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error inserting demand:', err);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+
 router.post('/applications', authMiddleware.authenticateToken, authMiddleware.checkRole([ROLES.FARMER]), async (req, res) => {
   const { demand_id, quantity, price, record_id, province } = req.body;
   const farmerId = req.user.userId;
@@ -177,7 +200,7 @@ router.post('/applications/:applicationId/accept',
       // 5. 更新需求状态为已完成
       await require('../model').query(`
         UPDATE purchase_demands
-        SET status = 'completed'
+        SET status = 'closed'
         WHERE demand_id = $1
       `, [application.demand_id]);
 

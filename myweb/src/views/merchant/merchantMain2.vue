@@ -1,12 +1,12 @@
 <template>
-  <div class="farmer-home-container">
+  <div class="buyer-home-container">
     <!-- 头部欢迎 -->
-    <h2>您好，{{ farmer.farmerName }}！</h2>
-    <p>欢迎回到耘联农业平台，快来交易和种植吧！</p>
+    <h2>您好，{{ buyer.buyerName }}！</h2>
+    <p>欢迎回到耘联农业平台，快来交易吧！</p>
 
     <!-- 卡片信息 -->
     <el-row :gutter="20" class="info-cards">
-      <el-col :span="6">
+      <el-col :span="8">
         <el-card class="info-card home-card" @click="goToHome">
           <div slot="header">
             <strong>我的主页</strong>
@@ -17,39 +17,28 @@
         </el-card>
       </el-col>
 
-      <el-col :span="6">
+      <el-col :span="8">
         <el-card class="info-card order-card" @click="goToOrders">
           <div slot="header">
             <strong>查看订单</strong>
           </div>
           <div class="card-content">
-            <p>管理您的采购订单</p>
+            <p>管理您的订单</p>
           </div>
         </el-card>
       </el-col>
 
-      <el-col :span="6">
-        <el-card class="info-card recommendation-card" @click="goToRecommendations">
+      <el-col :span="8">
+        <el-card class="info-card recommendation-card" @click="goToPurchases">
           <div slot="header">
-            <strong>种植推荐</strong>
+            <strong>发布采购</strong>
           </div>
           <div class="card-content">
-            <p>获取最新的种植建议和推荐</p>
+            <p>管理您的采购</p>
           </div>
         </el-card>
       </el-col>
 
-
-      <el-col :span="6">
-        <el-card class="info-card question-card" @click="goToQuestionForm">
-          <div slot="header">
-            <strong>发布提问</strong>
-          </div>
-          <div class="card-content">
-            <p>向专家咨询关于种植的问题</p>
-          </div>
-        </el-card>
-      </el-col>
     </el-row>
   </div>
 </template>
@@ -62,26 +51,22 @@ import { useUserStore } from '../../stores/user'; // 导入用户状态 Store
 const router = useRouter();
 const userStore = useUserStore(); // 使用用户 Store
 
-// 从用户状态中获取农户信息
-const farmer = ref({
-  farmerName: userStore.username || '默认农户' // 默认为 '农户' 如果未登录
+// 从用户状态中获取信息
+const buyer = ref({
+  buyerName: userStore.username || '默认'
 });
 
 // 页面导航函数
 const goToHome = () => {
-  router.push('/farmer/profile'); // 跳转到我的主页
+  router.push('/merchant/profile');
 };
 
 const goToOrders = () => {
-  router.push('/farmer/orders'); // 跳转到订单页面
+  router.push('/merchant/order');
 };
 
-const goToRecommendations = () => {
-  router.push('/farmer/planting/advice'); // 跳转到种植推荐页面
-};
-
-const goToQuestionForm = () => {
-  router.push('/farmer/post-question'); // 跳转到发布提问页面
+const goToPurchases = () => {
+  router.push('/merchant/purchases');
 };
 </script>
 
