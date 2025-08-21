@@ -174,19 +174,26 @@ const loadPriceData = async () => {
   drawChart()
 }
 
+import dayjs from 'dayjs'
+
 const drawChart = () => {
   const el = document.querySelector('.trend-chart')
   if (!el) return
 
   const chart = echarts.init(el)
+
+  // 格式化时间戳为日期字符串
+  const formattedDates = trendData.value.map(t => dayjs(t.update_date).format('YYYY-MM-DD'))
+
   chart.setOption({
     title: { text: '价格趋势', left: 'center' },
     tooltip: { trigger: 'axis' },
-    xAxis: { type: 'category', data: trendData.value.map(t => t.update_date) },
+    xAxis: { type: 'category', data: formattedDates },
     yAxis: { type: 'value' },
     series: [{ data: trendData.value.map(t => t.avg), type: 'line', smooth: true }]
   })
 }
+
 
 const submitForm = async () => {
   if (!formData.value.crop || !formData.value.quantity) {
@@ -221,8 +228,6 @@ onMounted(() => {
   loadPriceData()
 })
 </script>
-
-
 
 <style scoped>
 
