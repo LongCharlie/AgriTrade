@@ -116,7 +116,7 @@ const fetchExperienceDetail = async () => {
   try {
     const res = await axios.get(`http://localhost:3000/api/experience/${experienceId}`)
     const data = res.data
-
+    console.log('返回：',data)
     post.value.title       = data.title
     post.value.content     = data.content ? data.content.split('\n') : []
     post.value.tips        = data.tips || []
@@ -127,11 +127,11 @@ const fetchExperienceDetail = async () => {
 
     allComments.value = (data.comments || []).map(c => ({
       author: c.commenter_name,
-      avatar: c.commenter_avatar ? `http://localhost:3000${c.commenter_avatar}` : '',
+      avatar: c.commenter_avatar ||'',
       content: c.content,
       time: c.created_at
     }))
-
+    console.log('测试：',allComments)
     commentPagination.value.total = allComments.value.length
     fetchComments()
   } catch (err) {

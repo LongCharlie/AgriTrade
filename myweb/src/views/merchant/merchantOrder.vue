@@ -482,25 +482,38 @@ const openRefundReasonModal = async (order) => {
 const openAuditReasonModal = async (order) => {
   selectedOrder.value = order
   try {
-    const res = await axios.get('http://localhost:3000/api//merchant/reviewed-after-sale/:orderId', {
+    // 替换 URL 中的 :orderId 为实际的订单 ID
+    const url = `http://localhost:3000/api/merchant/reviewed-after-sale/${order.orderId}`
+    const res = await axios.get(url, {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
-    const detail = res.data.find(i => i.order_id === order.orderId)
-    auditDetail.value = {
-      refundReason: detail?.after_sale_reason || '',
-      evidenceImages: [],
-      processResult: detail?.admin_reason || '',
-      refundAmount: detail?.price || 0,
-      auditRemark: detail?.final_status || '',
-      auditTime: detail?.reviewed_at || '',
-      auditor: detail?.farmer_name || ''
+
+    const detail = Array.isArray(res.data)
+      ? res.data.find(i => i.order_id === order.orderId)
+      : res.data
+
+    if (!detail) {
+      ElMessage.warning('未找到对应的审核详情')
+      return
     }
+
+    auditDetail.value = {
+      refundReason: detail.after_sale_reason || '',
+      evidenceImages: detail.evidence_images || [], // 如果后端有这个字段
+      processResult: detail.admin_reason || '',
+      refundAmount: detail.price || 0,
+      auditRemark: detail.final_status || '',
+      auditTime: detail.reviewed_at || '',
+      auditor: detail.farmer_name || ''
+    }
+
     auditReasonModalVisible.value = true
   } catch (err) {
     console.error('获取审核详情失败:', err)
     ElMessage.error('获取审核详情失败')
   }
 }
+
 
 // 确认收货
 const confirmReceipt = async (order) => {
