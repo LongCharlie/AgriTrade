@@ -2,8 +2,8 @@
   <div>
     <h1>我的订单</h1>
     <h1>总收入: ¥ {{ totalRevenue }}</h1>
-        <el-button type="primary" @click="huifu">待发货</el-button>
-        <el-button type="primary" @click="huifu2">售后中</el-button>
+<!--        <el-button type="primary" @click="huifu">待发货</el-button>-->
+<!--        <el-button type="primary" @click="huifu2">售后中</el-button>-->
     <div class="search-bar">
       <el-input v-model="searchId" placeholder="搜索编号" style="width: 200px; margin-bottom: 20px;"></el-input>
       <el-input v-model="searchProduct" placeholder="搜索产品种类" style="width: 200px; margin-bottom: 20px;"></el-input>
