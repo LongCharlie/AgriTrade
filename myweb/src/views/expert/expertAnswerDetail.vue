@@ -292,16 +292,16 @@
               </div>
 
               <!-- 添加删除按钮 -->
-              <div class="answer-actions" v-if="answer.expert_id === userStore.userId">
-                <el-button
-                    type="danger"
-                    icon="el-icon-delete"
-                    @click="deleteAnswer"
-                    class="delete-button"
+<!--              <div class="answer-actions" v-if="answer.expert_id === userStore.userId">-->
+<!--                <el-button-->
+<!--                    type="danger"-->
+<!--                    icon="el-icon-delete"-->
+<!--                    @click="deleteAnswer"-->
+<!--                    class="delete-button"-->
 
-                >删除回答
-                </el-button>
-              </div>
+<!--                >删除回答-->
+<!--                </el-button>-->
+<!--              </div>-->
             </el-card>
           </div>
         </el-main>

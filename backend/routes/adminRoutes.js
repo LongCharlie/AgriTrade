@@ -302,8 +302,24 @@ router.delete('/answers/:id',
   checkAdmin,
   async (req, res) => {
     try {
-      await model.deleteAnswer(req.params.id);
+        // 先获取回答信息以获取问题ID
+        const answer = await require('../model').getAnswerById(req.params.id);
+        if (!answer) {
+            return res.status(404).json({ error: '回答不存在' });
+        }
+
+        console.log('111', answer.expert_id);
+        await model.deleteAnswer(req.params.id, answer.expert_id);
+      //   const isDeleted = await require('../model').deleteAnswer(answerId, expertId);
+      //
+      //   if (!isDeleted) {
+      //       return res.status(404).json({ error: '回答不存在或无权删除' });
+      //   }
+      //
+        // 减少问题的回答计数
+        await require('../model').decrementQuestionAnswerCount(answer.question_id);
       res.sendStatus(204);
+      console.log('删除回答成功!!');
     } catch (error) {
       res.status(500).json({ error: error.message });
     }

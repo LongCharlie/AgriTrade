@@ -464,24 +464,24 @@
                 </div>
 
                 <!-- 问题操作按钮 -->
-                <div v-if="question.farmer_id === userStore.userId" class="question-actions">
-                  <!-- 添加打开/关闭提问按钮 -->
-                  <el-button
-                      :type="question.status === 'open' ? 'warning' : 'success'"
-                      @click="toggleQuestionStatus"
-                      :loading="statusUpdating"
-                  >
-                    {{ question.status === 'open' ? '关闭提问' : '打开提问' }}
-                  </el-button>
-                  <el-button
-                      type="danger"
-                      icon="el-icon-delete"
-                      @click="deleteQuestion"
-                      :loading="deleting"
-                  >
-                    删除提问
-                  </el-button>
-                </div>
+<!--                <div v-if="question.farmer_id === userStore.userId" class="question-actions">-->
+<!--                  &lt;!&ndash; 添加打开/关闭提问按钮 &ndash;&gt;-->
+<!--                  <el-button-->
+<!--                      :type="question.status === 'open' ? 'warning' : 'success'"-->
+<!--                      @click="toggleQuestionStatus"-->
+<!--                      :loading="statusUpdating"-->
+<!--                  >-->
+<!--                    {{ question.status === 'open' ? '关闭提问' : '打开提问' }}-->
+<!--                  </el-button>-->
+<!--                  <el-button-->
+<!--                      type="danger"-->
+<!--                      icon="el-icon-delete"-->
+<!--                      @click="deleteQuestion"-->
+<!--                      :loading="deleting"-->
+<!--                  >-->
+<!--                    删除提问-->
+<!--                  </el-button>-->
+<!--                </div>-->
               </div>
             </el-card>
             <!-- 回答列表 -->

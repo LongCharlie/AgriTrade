@@ -273,12 +273,16 @@ export default {
         try {
           const token = userStore.token;
 
-          await axios.delete(`http://localhost:3000/api/answers/${answerId}`, {
+          const res = await axios.delete(`http://localhost:3000/api/answers/${answerId}`, {
             headers: {
               Authorization: `Bearer ${token}`
             }
           });
 
+          console.log('状态码:', res.status); // 204
+          console.log('状态文本:', res.statusText); // "No Content"
+
+          console.log('shanchuxinxi',res.data)
           // 从本地列表中移除
           const index = answers.value.findIndex(a => a.answer_id === answerId);
           if (index !== -1) {

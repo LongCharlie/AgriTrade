@@ -208,7 +208,7 @@
             <!-- 回答主体内容 -->
             <el-card class="main-answer">
               <div class="answer-header">
-                <el-avatar @click="$router.push(`/expert/detail/${answer.expert_id}`)" :size="60" :src="`http://localhost:3000/uploads/avatars/${answer.expert_avatar}`"></el-avatar>
+                <el-avatar @click="$router.push(`/farmer/detail/${answer.expert_id}`)" :size="60" :src="`http://localhost:3000/uploads/avatars/${answer.expert_avatar}`"></el-avatar>
                 <div class="user-info">
                   <h3>{{ answer.expert_name }}</h3>
                   <span class="expert-title">{{ answer.expert_title }}</span>
