@@ -335,12 +335,12 @@
           clearable
           style="width: 120px"
       />
-      <el-input
-          v-model="searchAnswerCount"
-          placeholder="回答数"
-          clearable
-          style="width: 120px"
-      />
+<!--      <el-input-->
+<!--          v-model="searchAnswerCount"-->
+<!--          placeholder="回答数"-->
+<!--          clearable-->
+<!--          style="width: 120px"-->
+<!--      />-->
       <el-date-picker
           v-model="searchCreateDate"
           type="date"
@@ -380,7 +380,7 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="answer_count" label="回答数" width="100" />
+<!--      <el-table-column prop="answer_count" label="回答数" width="100" />-->
       <el-table-column prop="created_at" label="提问时间" width="180">
         <template #default="{ row }">
           {{ formatDate(row.created_at) }}
