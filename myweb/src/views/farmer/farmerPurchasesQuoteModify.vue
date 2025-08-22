@@ -7,6 +7,7 @@
       <el-table-column property="quantity" label="采购量" />
       <el-table-column property="buyername" label="采购方" />
       <el-table-column property="address" label="收货地" />
+      <el-table-column prop="phone" label="联系方式" />
       <el-table-column property="updated_at" label="更新时间" />
     </el-table>
     <div v-else>

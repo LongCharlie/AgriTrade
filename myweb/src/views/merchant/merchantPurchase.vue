@@ -46,9 +46,12 @@
           <button class="action-btn detail-btn" @click.stop="viewPurchase(purchase)">
            查看申请
           </button>
-          <button class="action-btn close-btn" @click.stop="closeDemand(purchase.id)">
-          关闭申请
-        </button>
+          <button
+            v-if="purchase.status === 'open'"
+            class="action-btn close-btn"
+            @click.stop="closeDemand(purchase.id)">
+            关闭申请
+          </button>
 
         </div>
       </div>
@@ -197,6 +200,7 @@ const statusClass = (status) => {
 }
 
 const closeDemand = async (demandId) => {
+  console.log("demandId" + demandId);
   try {
     const res = await axios.post(
       `http://localhost:3000/api/demands/${demandId}/close`,

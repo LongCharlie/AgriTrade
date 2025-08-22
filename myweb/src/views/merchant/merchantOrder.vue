@@ -150,32 +150,49 @@
           </div>
           <div class="info-row">
             <div class="info-label">产品：</div>
-            <div class="info-value">{{ selectedOrder.productType }} ({{ selectedOrder.quantity }}kg)</div>
+            <div class="info-value">{{ selectedOrder.productName }} ({{ selectedOrder.quantity }}kg)</div>
           </div>
           
           <h4 style="margin: 20px 0 10px;">售后原因：</h4>
           <textarea v-model="refundReason" placeholder="请详细描述您需要售后的原因..."></textarea>
           
-          <h4 style="margin: 20px 0 10px;">上传凭证：</h4>
-          <div class="upload-area" @click="triggerFileInput">
-            <div class="upload-icon">
-              <i class="fas fa-cloud-upload-alt"></i>
-            </div>
-            <div class="upload-text">点击或拖拽文件到此处上传</div>
-            <div class="upload-btn">
-              <i class="fas fa-plus"></i> 选择图片
-            </div>
-            <input type="file" ref="fileInput" style="display: none" multiple @change="handleFileUpload">
+          <h4 style="margin: 20px 0 10px;">上传凭证(最多5张图片)：</h4>
+          <el-upload
+              id="activityImages"
+              class="upload-image"
+              multiple
+              :limit="5"
+              :show-file-list="true"
+              :http-request="uploadImage"
+              :before-upload="beforeImageUpload"
+              :on-change="handleImageChange"
+              :on-remove="handleRemove"
+              :file-list="uploadFile"
+          >
+            <el-button>点击上传</el-button>
+          </el-upload>
+          <div class="uploaded-images">
+            <img v-for="(image, index) in activityImages" :key="index" :src="image" class="uploaded-image" />
           </div>
-          
-          <div class="preview-container" v-if="uploadedFiles.length > 0">
-            <div class="preview-item" v-for="(file, index) in uploadedFiles" :key="index">
-              <img :src="file.url" class="preview-image" alt="凭证图片">
-              <button class="remove-btn" @click="removeImage(index)">
-                <i class="fas fa-times"></i>
-              </button>
-            </div>
-          </div>
+<!--          <div class="upload-area" @click="triggerFileInput">-->
+<!--            <div class="upload-icon">-->
+<!--              <i class="fas fa-cloud-upload-alt"></i>-->
+<!--            </div>-->
+<!--            <div class="upload-text">点击或拖拽文件到此处上传</div>-->
+<!--            <div class="upload-btn">-->
+<!--              <i class="fas fa-plus"></i> 选择图片-->
+<!--            </div>-->
+<!--            <input type="file" ref="fileInput" style="display: none" multiple @change="handleFileUpload">-->
+<!--          </div>-->
+<!--          -->
+<!--          <div class="preview-container" v-if="uploadedFiles.length > 0">-->
+<!--            <div class="preview-item" v-for="(file, index) in uploadedFiles" :key="index">-->
+<!--              <img :src="file.url" class="preview-image" alt="凭证图片">-->
+<!--              <button class="remove-btn" @click="removeImage(index)">-->
+<!--                <i class="fas fa-times"></i>-->
+<!--              </button>-->
+<!--            </div>-->
+<!--          </div>-->
         </div>
         <div class="modal-footer">
           <button class="btn btn-cancel" @click="refundModalVisible = false">取消</button>
@@ -212,8 +229,16 @@
           
           <h4 style="margin: 20px 0 10px;">凭证图片：</h4>
           <div class="preview-container">
-            <div class="preview-item" v-for="(img, index) in refundDetail.evidenceImages" :key="index">
-              <img :src="img" class="preview-image" alt="凭证图片">
+<!--            <div class="preview-item" v-for="(img, index) in refundDetail.evidenceImages" :key="index">-->
+<!--              <img :src="img" class="preview-image" alt="凭证图片">-->
+
+            <div v-if="refundDetail.evidenceImages && refundDetail.evidenceImages.split(',').length" class="history-image-wrapper"
+                 v-for="(image, index) in refundDetail.evidenceImages.split(',')"
+                 :key="index">
+              <img :src="`http://localhost:3000/uploads/activity-images/${image}`"
+                   alt="售后图像"
+                   class="history-image"
+                    />
             </div>
           </div>
           
@@ -258,8 +283,16 @@
           
           <h4 style="margin: 20px 0 10px;">凭证图片：</h4>
           <div class="preview-container">
-            <div class="preview-item" v-for="(img, index) in auditDetail.evidenceImages" :key="index">
-              <img :src="img" class="preview-image" alt="凭证图片">
+<!--            <div class="preview-item" v-for="(img, index) in auditDetail.evidenceImages" :key="index">-->
+<!--              <img :src="img" class="preview-image" alt="凭证图片">-->
+<!--            </div>-->
+            <div v-if="auditDetail.evidenceImages && auditDetail.evidenceImages.split(',').length" class="history-image-wrapper"
+                 v-for="(image, index) in auditDetail.evidenceImages.split(',')"
+                 :key="index">
+              <img :src="`http://localhost:3000/uploads/activity-images/${image}`"
+                   alt="历史记录图像"
+                   class="history-image"
+              />
             </div>
           </div>
           
@@ -304,10 +337,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { useUserStore } from '@/stores/user'
 import axios from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { useUserStore } from '@/stores/user'
+import { computed, onMounted, ref } from 'vue'
 
 const userStore = useUserStore()
 const orders = ref([])
@@ -332,14 +365,14 @@ const shippingInfo = ref('')
 // 售后详情
 const refundDetail = ref({
   reason: '',
-  evidenceImages: [],
+  evidenceImages:'',
   processStatus: ''
 })
 
 // 审核详情
 const auditDetail = ref({
   refundReason: '',
-  evidenceImages: [],
+  evidenceImages:'',
   processResult: '',
   refundAmount: 0,
   auditRemark: '',
@@ -460,9 +493,69 @@ const openShippingModal = async (order) => {
 const openRefundModal = (order) => {
   selectedOrder.value = order
   refundReason.value = ''
-  uploadedFiles.value = []
+  // // 活动图片数组
+  // activityImages.value = ref([]);
+  // uploadAactivityImages.value = ref([]);
+  // uploadFile.value = ref([]);
   refundModalVisible.value = true
 }
+// 活动图片数组
+const activityImages = ref([]);
+// 上传用-活动图片数组
+const uploadAactivityImages = ref([]);
+const uploadFile = ref([]);
+// 上传图片方法
+const uploadImage = async ({ file, onSuccess, onError }) => {
+  const formData = new FormData();
+  formData.append('images', file);
+
+  try {
+    const response = await axios.post('http://localhost:3000/api/uploads/activity-images', formData, {
+      headers: {
+        'Authorization': `Bearer ${userStore.token}`,
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    const imageUrlArray = response.data.images; // 后端返回的图片 URL 数组
+    const fullImageUrls = imageUrlArray.map(image => `http://localhost:3000/uploads/activity-images/${image}`);
+    activityImages.value.push(...fullImageUrls); // 将返回的 URL 添加到活动图片数组
+    uploadAactivityImages.value.push(...imageUrlArray);
+    uploadFile.value.push(file.name);
+    console.log(uploadFile);
+    onSuccess();
+    ElMessage.success('图片上传成功');
+  } catch (error) {
+    console.error('图片上传失败:', error);
+    onError();
+    ElMessage.error('图片上传失败');
+  }
+};
+
+// 图片上传前的验证
+const beforeImageUpload = (file) => {
+  const isImage = file.type.startsWith('image/');
+  if (!isImage) {
+    ElMessage.error('只能上传图片格式的文件!');
+    return false;
+  }
+  return true; // 允许上传
+};
+
+// 图片变化处理
+const handleImageChange = (file) => {
+
+};
+
+const handleRemove = (file) => {
+  const index = uploadFile.value.indexOf(file.name); // 获取文件名
+  if (index > -1) {
+    activityImages.value.splice(index, 1); // 删除已上传的 URLs
+    uploadAactivityImages.value.splice(index, 1); // 删除文件列表
+  }
+  ElMessage.success(`${file.name} 已被移除`); // 提示用户删除成功
+};
+
 
 //打开售后
 const openRefundReasonModal = async (order) => {
@@ -474,7 +567,7 @@ const openRefundReasonModal = async (order) => {
     console.log('售后数据：',refundDetail)
     refundDetail.value = {
       reason: res.data.after_sale_reason || '',
-      evidenceImages: res.data.after_sale_reason_images || [],
+      evidenceImages: res.data.after_sale_reason_images,
       processStatus: '待审核'
     }
 
@@ -489,31 +582,37 @@ const openRefundReasonModal = async (order) => {
 const openAuditReasonModal = async (order) => {
   selectedOrder.value = order
   try {
-    const res = await axios.get(`http://localhost:3000/api/merchant/reviewed-after-sale/${order.orderId}`, {
+    // 替换 URL 中的 :orderId 为实际的订单 ID
+    const url = `http://localhost:3000/api/merchant/reviewed-after-sale/${order.orderId}`
+    const res = await axios.get(url, {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
-    console.log(res.data)
-    auditDetail.value.refundReason = res.data.after_sale_reason;
-        auditDetail.value.evidenceImages= res.data.after_sale_reason_images;
-        auditDetail.value.reason= res.data.admin_reason;
-        console.log(auditDetail.value)
-    // const detail = res.data.find(i => i.order_id === order.orderId)
-    // auditDetail.value = {
-    //   refundReason: detail?.after_sale_reason || '',
-    //   evidenceImages: [],
-    //   reason:detail?.admin_reason || '',
-    //   // processResult: detail?.admin_reason || '',
-    //   // refundAmount: detail?.price || 0,
-    //   // auditRemark: '',
-    //   // auditTime: '',
-    //   // auditor: detail?.farmer_name || ''
-    // }
+    const detail = Array.isArray(res.data)
+      ? res.data.find(i => i.order_id === order.orderId)
+      : res.data
+
+    if (!detail) {
+      ElMessage.warning('未找到对应的审核详情')
+      return
+    }
+
+    auditDetail.value = {
+      refundReason: detail.after_sale_reason,
+      evidenceImages: detail.after_sale_reason_images,
+      reason: detail.admin_reason,
+      // refundAmount: detail.price || 0,
+      // auditRemark: detail.final_status || '',
+      // auditTime: detail.reviewed_at || '',
+      // auditor: detail.farmer_name || ''
+    }
+console.log("AAA" + auditDetail.value.evidenceImages)
     auditReasonModalVisible.value = true
   } catch (err) {
     console.error('获取审核详情失败:', err)
     ElMessage.error('获取审核详情失败')
   }
 }
+
 
 // 确认收货
 const confirmReceipt = async (order) => {
@@ -536,33 +635,33 @@ const confirmReceipt = async (order) => {
   }
 }
 
-// 文件上传
-const triggerFileInput = () => {
-  fileInput.value?.click()
-}
-
-const handleFileUpload = (event) => {
-  const files = event.target.files
-  for (let i = 0; i < files.length; i++) {
-    const file = files[i]
-    if (file.type.match('image.*')) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        uploadedFiles.value.push({
-          name: file.name,
-          url: e.target.result,
-          file
-        })
-      }
-      reader.readAsDataURL(file)
-    }
-  }
-  event.target.value = ''
-}
-
-const removeImage = (index) => {
-  uploadedFiles.value.splice(index, 1)
-}
+// // 文件上传
+// const triggerFileInput = () => {
+//   fileInput.value?.click()
+// }
+//
+// const handleFileUpload = (event) => {
+//   const files = event.target.files
+//   for (let i = 0; i < files.length; i++) {
+//     const file = files[i]
+//     if (file.type.match('image.*')) {
+//       const reader = new FileReader()
+//       reader.onload = (e) => {
+//         uploadedFiles.value.push({
+//           name: file.name,
+//           url: e.target.result,
+//           file
+//         })
+//       }
+//       reader.readAsDataURL(file)
+//     }
+//   }
+//   event.target.value = ''
+// }
+//
+// const removeImage = (index) => {
+//   uploadedFiles.value.splice(index, 1)
+// }
 
 const submitRefund = async () => {
   if (!refundReason.value.trim()) {
@@ -570,31 +669,45 @@ const submitRefund = async () => {
     return
   }
 
-  if (uploadedFiles.value.length === 0) {
-    ElMessage.warning('请至少上传一张图片')
-    return
-  }
+  // if (uploadAactivityImages.value.length === 0) {
+  //   ElMessage.warning('请至少上传一张图片')
+  //   return
+  // }
 
   try {
-    const formData = new FormData()
-    formData.append('reason', refundReason.value)
-
-    uploadedFiles.value.forEach(file => {
-      formData.append('images', file.raw) // raw 是原始 File 对象
-    })
-
-    const res = await fetch(`http://localhost:3000/api/${selectedOrder.value.orderId}/after-sale`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${userStore.token}`
-      },
-      body: formData
-    })
-
-    const result = await res.json()
+    // const formData = new FormData()
+    // formData.append('reason', refundReason.value)
+    //
+    // uploadedFiles.value.forEach(file => {
+    //   formData.append('images', file.raw) // raw 是原始 File 对象
+    // })
+    console.log(refundReason.value)
+    console.log(uploadAactivityImages.value)
+    const response = await axios.post(`http://localhost:3000/api/${selectedOrder.value.orderId}/after-sale`, {
+      reason: refundReason.value,
+      images: uploadAactivityImages.value
+    }, {
+      headers: { 'Authorization': `Bearer ${userStore.token}` }
+    });
+      console.log(response)
     selectedOrder.value.status = '售后中'
-    ElMessage.success('售后申请已提交')
-    refundModalVisible.value = false
+      ElMessage.success('售后申请已提交')
+      refundModalVisible.value = false
+    // activityImages.value = ref([]);
+    // uploadAactivityImages.value = ref([]);
+    // uploadFile.value = ref([]);
+  //   const res = await fetch(`http://localhost:3000/api/${selectedOrder.value.orderId}/after-sale`, {
+  //     method: 'POST',
+  //     headers: {
+  //       Authorization: `Bearer ${userStore.token}`
+  //     },
+  //     body: formData
+  //   })
+  //
+  //   const result = await res.json()
+  //   selectedOrder.value.status = '售后中'
+  //   ElMessage.success('售后申请已提交')
+  //   refundModalVisible.value = false
   } catch (err) {
     console.error('提交售后失败:', err)
     ElMessage.error('提交售后失败，请稍后重试')

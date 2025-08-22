@@ -18,18 +18,11 @@
     <!-- 评论列表 -->
     <el-table :data="filteredComments" style="width: 100%">
       <el-table-column prop="commenter" label="发布评论者" width="100"></el-table-column>
-      <el-table-column prop="article_title" label="经验分享标题" width="100"></el-table-column>
+      <el-table-column prop="article_title" label="经验分享标题" width="120"></el-table-column>
       <el-table-column prop="content" label="内容" width="200"></el-table-column>
       <el-table-column prop="creation_date" label="发布时间" width="150">
         <template #default="{ row }">
           {{ formatDate(row.creation_date) }}
-        </template>
-      </el-table-column>
-      <el-table-column prop="status" label="审核状态" width="120">
-        <template #default="{ row }">
-          <el-tag :type="getStatusTagType(row.status)">
-            {{ getStatusText(row.status) }}
-          </el-tag>
         </template>
       </el-table-column>
       <el-table-column label="操作" width="180" fixed="right">
@@ -160,6 +153,7 @@ export default {
         );
         comment.status = newStatus;
         this.$message.success(`评论已${newStatus === 'approved' ? '通过' : '拒绝'}`);
+        await this.fetchComments();
       } catch (error) {
         console.error('更新状态失败:', error);
         this.$message.error('操作失败');
@@ -181,7 +175,6 @@ export default {
   }
 };
 </script>
-
 
 <style scoped>
 .pagination {

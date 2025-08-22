@@ -2,8 +2,8 @@
   <div>
     <h1>我的订单</h1>
     <h1>总收入: ¥ {{ totalRevenue }}</h1>
-    <!--    <el-button type="primary" @click="huifu">待发货</el-button>-->
-    <!--    <el-button type="primary" @click="huifu2">售后中</el-button>-->
+<!--        <el-button type="primary" @click="huifu">待发货</el-button>-->
+<!--        <el-button type="primary" @click="huifu2">售后中</el-button>-->
     <div class="search-bar">
       <el-input v-model="searchId" placeholder="搜索编号" style="width: 200px; margin-bottom: 20px;"></el-input>
       <el-input v-model="searchProduct" placeholder="搜索产品种类" style="width: 200px; margin-bottom: 20px;"></el-input>
@@ -120,10 +120,12 @@
     <el-dialog v-model="reasonDialogVisible" title="售后原因">
       <p><strong>售后原因:</strong></p>
       <div>{{ after_sale_reason }}</div>
+      <p><strong>售后图片:</strong></p>
       <div v-if="afterSaleReasonImages.length > 0" style="margin-top: 10px;">
         <div class="image-container">
           <div v-for="(image, index) in afterSaleReasonImages" :key="index">
-            <img :src="image" alt="售后理由图片" class="responsive-image"/>
+            <img :src="`http://localhost:3000/uploads/activity-images/${image}`"
+                 alt="售后理由图片" class="responsive-image"/>
           </div>
         </div>
       </div>
@@ -134,10 +136,12 @@
       <div>
         <p><strong>售后原因:</strong></p>
         <div>{{ after_sale_reason }}</div>
+        <p><strong>售后图片:</strong></p>
         <div v-if="afterSaleReasonImages.length > 0" style="margin-top: 10px;">
           <div class="image-container">
             <div v-for="(image, index) in afterSaleReasonImages" :key="index">
-              <img :src="image" alt="售后理由图片" class="responsive-image"/>
+              <img :src="`http://localhost:3000/uploads/activity-images/${image}`"
+                   alt="售后理由图片" class="responsive-image"/>
             </div>
           </div>
         </div>
@@ -206,10 +210,10 @@ const huifu = async () => {
 };
 const huifu2 = async () => {
   const token = userStore.token; // 获取 token
-  const orderId = 12; // 获取订单 ID
+  const orderId = 25; // 获取订单 ID
   try {
     await axios.post(`http://localhost:3000/api/${orderId}/status`, {
-      status: 'after_sale_requested'
+      status: 'shipped'  //after_sale_requested
     }, {
       headers: { 'Authorization': `Bearer ${token}` }
     });

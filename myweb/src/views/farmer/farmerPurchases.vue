@@ -33,6 +33,7 @@
 <!--        <el-table-column prop="buyer_id" label="采购方" />-->
         <el-table-column prop="buyername" label="采购方名称" />
         <el-table-column prop="address" label="收货地" />
+        <el-table-column prop="phone" label="联系方式" />
         <el-table-column prop="updated_at" label="更新时间" />
 <!--        <el-table-column label="沟通">-->
 <!--            <el-button @click="handleMessage(scope.row)" >发消息</el-button>-->

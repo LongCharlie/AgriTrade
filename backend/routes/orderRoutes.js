@@ -191,6 +191,7 @@ router.get('/merchant/reviewed-after-sale',
         SELECT 
           o.order_id,
           o.after_sale_reason,
+          o.after_sale_reason_images,
           o.admin_reason,
           o.status AS final_status,
           d.product_name,
@@ -303,11 +304,11 @@ router.get('/merchant/reviewed-after-sale/:id',
 
             // 处理图片URL
             const order = rows[0];
-            if (order.after_sale_reason_images) {
-                order.after_sale_reason_images = order.after_sale_reason_images
-                    .split(',')
-                    .map(img => `/uploads/after_sale/${img}`);
-            }
+            // if (order.after_sale_reason_images) {
+            //     order.after_sale_reason_images = order.after_sale_reason_images
+            //         .split(',')
+            //         .map(img => `/uploads/after_sale/${img}`);
+            // }
 
             res.json(order);
         } catch (error) {
@@ -352,11 +353,11 @@ router.get('/merchant/pending-after-sale/:orderId',
       
       // 处理图片URL
       const order = rows[0];
-      if (order.after_sale_reason_images) {
-        order.after_sale_reason_images = order.after_sale_reason_images
-          .split(',')
-          .map(img => `/uploads/after_sale/${img}`);
-      }
+      // if (order.after_sale_reason_images) {
+      //   order.after_sale_reason_images = order.after_sale_reason_images
+      //     .split(',')
+      //     .map(img => `/uploads/after_sale/${img}`);
+      // }
       
       res.json(order);
     } catch (error) {
@@ -415,7 +416,6 @@ router.post('/:id/after-sale',
       const orderId = parseInt(req.params.id);
       const { reason, images } = req.body;
       const buyerId = req.user.userId;
-
       // 验证必填字段
       if (!reason) {
         return res.status(400).json({ error: '售后原因不能为空' });
@@ -430,7 +430,7 @@ router.post('/:id/after-sale',
       if (orderCheck.rows.length === 0) {
         return res.status(404).json({ error: '订单不存在或无权操作' });
       }
-
+        // console.log('售后图片字符串:', images ? images.join(',') : '无图片');
       // 更新订单状态和售后信息
       const result = await require('../model').query(
         `UPDATE orders 

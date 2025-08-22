@@ -560,6 +560,7 @@ const getPurchaseDemands = async () => {
       d.buyer_id,
       u.username AS buyername,
       u.province AS address,
+      u.phone,
       TO_CHAR(d.updated_at, 'YYYY-MM-DD HH24:MI:SS') AS updated_at,
       d.status
     FROM 
@@ -1323,7 +1324,6 @@ const getAllExperiencesWithAuthor = async () => {
       u.avatar_url AS author_avatar
      FROM experiences e
      LEFT JOIN users u ON e.user_id = u.user_id
-     WHERE e.audit_status = 'approved'
      ORDER BY e.created_at DESC`
   );
   return result.rows;

@@ -42,7 +42,7 @@ const routes = [
         path: '/expert',
         redirect: '/expert/home', //removal
         component: expertMain,
-        // meta: { requiresAuth: true, role: ['expert'] },
+        meta: { requiresAuth: true, role: ['expert'] },
         //subrouter
         children: [
             { path: '/expert/home', component: expertHome },
@@ -59,7 +59,7 @@ const routes = [
     {
         path: '/expert/detail/:id',
         component: expertDetail,
-        // meta: { requiresAuth: true, role: ['expert'] },
+        meta: { requiresAuth: true, role: ['expert'] },
     },
     {
         path: '/expert/ques/:id/answer',
@@ -70,7 +70,7 @@ const routes = [
         path: "/farmer",
         redirect: '/farmer/home',
         component: () => import("../views/farmer.vue"),
-        // meta: { requiresAuth: true, role: ['farmer'] },
+        meta: { requiresAuth: true, role: ['farmer'] },
         children: [ // 子路由
             { path: 'home', component: () => import("../views/farmer/farmerMain.vue") },  // 默认子路由
             { path: 'purchases', component: () => import("../views/farmer/farmerPurchases.vue") },
@@ -99,7 +99,7 @@ const routes = [
         path: "/admin",
         redirect: '/admin/home',
         component: () => import("../views/admin/admin.vue"),
-        // meta: { requiresAuth: true, role: ['admin'] },
+        meta: { requiresAuth: true, role: ['admin'] },
         children: [ // 子路由
             { path: 'home',  component: () => import("../views/admin/adminHome.vue") },
             { path: 'user', component: () => import("../views/admin/adminUser.vue") },
@@ -122,14 +122,14 @@ const routes = [
           path: '/merchant',
           redirect: '/merchant/home',
           component: Merchant,
-          // meta: { requiresAuth: true, role: ['buyer'] },
+          meta: { requiresAuth: true, role: ['buyer'] },
           children: [
               {path: 'home', component: () => import("../views/merchant/merchantMain2.vue")},
               {path: 'order', name: 'Order', component: MerchantOrder},
               {path: 'purchases', name: 'Purchases', component: MerchantPurchase},
               {path: 'purchases/:id/applications', name: 'PurchaseDetail', component: merchantPurchaseDetails},
               {path: 'purchaseDetail/record', name: 'Record', component: () => import("../views/merchant/merchantSeePlanting.vue") },
-              {path: 'addPurchase', name: 'AddPurchase', component: MerchantAddPurchase},
+              {path: 'addpurchase', name: 'AddPurchase', component: MerchantAddPurchase},
               {path: 'profile', component: () => import("../views/merchant/merchantProfile.vue")},
               {path: 'message', name: 'MerchantMessage', component: MerchantMessage},
        ]

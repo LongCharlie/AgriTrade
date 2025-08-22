@@ -1,7 +1,7 @@
 <template>
   <div class="experience-list-container">
-    <h2 class="page-title">经验分享贴审核</h2>
-
+<!--    <h2 class="page-title">经验分享贴审核</h2>-->
+    <h1>经验分享贴审核</h1>
     <!-- 筛选 -->
     <div class="filter-section">
       <el-select
