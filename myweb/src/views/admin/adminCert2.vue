@@ -4,48 +4,27 @@
 
     <!-- 筛选区域 -->
     <div class="filter-section">
-      <el-form :inline="true" class="filter-form">
+      <el-form :inline="true">
         <el-form-item>
-          <el-select v-model="filter.status" clearable placeholder="审核状态" style="width: 100px;">
+          <el-select v-model="filter.status" clearable placeholder="审核状态">
             <el-option label="待审核" value="pending"></el-option>
             <el-option label="已通过" value="approved"></el-option>
             <el-option label="已拒绝" value="rejected"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-input v-model="filter.certificateId" placeholder="证书ID" style="width: 80px;"></el-input>
+          <el-input v-model="filter.expertId" placeholder="专家ID"></el-input>
         </el-form-item>
         <el-form-item>
-          <el-input v-model="filter.certificateName" placeholder="证书名称" style="width: 120px;"></el-input>
-        </el-form-item>
-        <el-form-item>
-          <el-input v-model="filter.expertId" placeholder="专家ID" style="width: 80px;"></el-input>
-        </el-form-item>
-        <el-form-item>
-          <el-input v-model="filter.authorizingUnit" placeholder="授权单位" style="width: 100px;"></el-input>
-        </el-form-item>
-        <el-form-item>
-          <el-select v-model="filter.level" clearable placeholder="等级" style="width: 80px;">
-            <el-option label="初级(1)" value="1"></el-option>
-            <el-option label="中级(2)" value="2"></el-option>
-            <el-option label="高级(3)" value="3"></el-option>
-            <el-option label="专家级(4)" value="4"></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-input v-model="filter.validPeriod" placeholder="有效期" style="width: 70px;"></el-input>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="applyFilter" size="medium">确认搜索</el-button>
-          <el-button @click="resetFilter" size="medium">重置</el-button>
+          <el-button type="primary" @click="fetchCertificates">查询</el-button>
+          <el-button @click="resetFilter">重置</el-button>
         </el-form-item>
       </el-form>
     </div>
 
     <!-- 证书列表 -->
-    <el-table :data="paginatedCertificates" style="width: 100%">
+    <el-table :data="filteredCertificates" style="width: 100%">
       <el-table-column prop="certificate_id" label="证书ID" width="100"></el-table-column>
-      <el-table-column prop="certificate_name" label="证书名称"></el-table-column>
       <el-table-column prop="expert_id" label="专家ID" width="100"></el-table-column>
       <el-table-column prop="authorizing_unit" label="授权单位"></el-table-column>
       <el-table-column prop="obtain_time" label="获得时间" width="120">
@@ -86,7 +65,7 @@
           :page-sizes="[10, 20, 50, 100]"
           :page-size="pagination.size"
           layout="total, sizes, prev, pager, next, jumper"
-          :total="filteredCertificates.length"
+          :total="pagination.total"
       ></el-pagination>
     </div>
 
@@ -128,39 +107,52 @@
     </el-dialog>
 
     <!-- 详情对话框 -->
+    <!--    <el-dialog title="证书详情" v-model="detailDialogVisible" width="60%">-->
+    <!--      <el-descriptions :column="2" border>-->
+    <!--        <el-descriptions-item label="证书ID">{{ detailData.certificate_id }}</el-descriptions-item>-->
+    <!--        <el-descriptions-item label="专家ID">{{ detailData.expert_id }}</el-descriptions-item>-->
+    <!--        <el-descriptions-item label="授权单位">{{ detailData.authorizing_unit }}</el-descriptions-item>-->
+    <!--        <el-descriptions-item label="获得时间">{{ formatDate(detailData.obtain_time) }}</el-descriptions-item>-->
+    <!--        <el-descriptions-item label="等级">{{ detailData.level }}</el-descriptions-item>-->
+    <!--        <el-descriptions-item label="有效期">{{ detailData.valid_period }}年</el-descriptions-item>-->
+    <!--        <el-descriptions-item label="描述" :span="2">{{ detailData.description }}</el-descriptions-item>-->
+    <!--        <el-descriptions-item label="审核状态">-->
+    <!--          <el-tag :type="getStatusTagType(detailData.is_audited)">-->
+    <!--            {{ getStatusText(detailData.is_audited) }}-->
+    <!--          </el-tag>-->
+    <!--        </el-descriptions-item>-->
+    <!--        <el-descriptions-item label="审核人" v-if="detailData.reviewed_by">{{ detailData.reviewed_by }}</el-descriptions-item>-->
+    <!--        <el-descriptions-item label="审核时间" v-if="detailData.reviewed_at">{{ formatDate(detailData.reviewed_at) }}</el-descriptions-item>-->
+    <!--        <el-descriptions-item label="拒绝原因" :span="2" v-if="detailData.reject_reason">{{ detailData.reject_reason }}</el-descriptions-item>-->
+    <!--      </el-descriptions>-->
+    <!--    </el-dialog>-->
+    <!-- 修改后的详情对话框 -->
     <el-dialog title="证书详情" v-model="detailDialogVisible" width="70%" top="5vh">
       <el-scrollbar max-height="70vh">
         <el-row :gutter="20">
           <el-col :span="16">
             <el-descriptions :column="2" border>
+              <!-- 添加缺失的字段 -->
+              <!--              <el-descriptions-item label="证书名称">{{ detailData.certificate_name }}</el-descriptions-item>-->
+              <!--              <el-descriptions-item label="专家姓名" :span="2">{{ detailData.expert_name }}</el-descriptions-item>-->
+              <!--              <el-descriptions-item label="证书状态">{{ detailData.status }}</el-descriptions-item>-->
+              <!-- ... 其他原有字段 ... -->
               <el-descriptions-item label="证书ID">{{ detailData.certificate_id }}</el-descriptions-item>
               <el-descriptions-item label="证书名称">{{ detailData.certificate_name }}</el-descriptions-item>
               <el-descriptions-item label="专家姓名" :span="2">{{ detailData.real_name }}</el-descriptions-item>
               <el-descriptions-item label="专家ID">{{ detailData.expert_id }}</el-descriptions-item>
               <el-descriptions-item label="授权单位">{{ detailData.authorizing_unit }}</el-descriptions-item>
               <el-descriptions-item label="获得时间">{{ formatDate(detailData.obtain_time) }}</el-descriptions-item>
-              <el-descriptions-item label="等级">{{ getLevelText(detailData.level) }} ({{
-                  detailData.level
-                }})
-              </el-descriptions-item>
-              <el-descriptions-item label="有效期">{{ detailData.valid_period }}年</el-descriptions-item>
+              <el-descriptions-item label="等级">{{ getLevelText(detailData.level) }} ({{ detailData.level }})</el-descriptions-item>              <el-descriptions-item label="有效期">{{ detailData.valid_period }}年</el-descriptions-item>
               <el-descriptions-item label="描述" :span="2">{{ detailData.description }}</el-descriptions-item>
               <el-descriptions-item label="审核状态">
                 <el-tag :type="getStatusTagType(detailData.is_audited)">
                   {{ getStatusText(detailData.is_audited) }}
                 </el-tag>
               </el-descriptions-item>
-              <el-descriptions-item label="审核人" v-if="detailData.audited_by">{{
-                  detailData.audited_by
-                }}
-              </el-descriptions-item>
-              <el-descriptions-item label="审核时间" v-if="detailData.audited_at">{{
-                  formatDate(detailData.audited_at)
-                }}
-              </el-descriptions-item>
-              <el-descriptions-item label="拒绝原因" :span="2" v-if="detailData.audited_reason">
-                {{ detailData.audited_reason }}
-              </el-descriptions-item>
+              <el-descriptions-item label="审核人" v-if="detailData.audited_by">{{ detailData.audited_by }}</el-descriptions-item>
+              <el-descriptions-item label="审核时间" v-if="detailData.audited_at">{{ formatDate(detailData.audited_at) }}</el-descriptions-item>
+              <el-descriptions-item label="拒绝原因" :span="2" v-if="detailData.audited_reason">{{ detailData.audited_reason }}</el-descriptions-item>
             </el-descriptions>
           </el-col>
           <el-col :span="8">
@@ -214,24 +206,7 @@ export default {
       certificates: [],
       filter: {
         status: '',
-        certificateId: '',
-        certificateName: '',
-        expertId: '',
-        authorizingUnit: '',
-        level: '',
-        validPeriod: '',
-        obtainTime: ''
-      },
-      // 添加用于实际过滤的变量
-      appliedFilter: {
-        status: '',
-        certificateId: '',
-        certificateName: '',
-        expertId: '',
-        authorizingUnit: '',
-        level: '',
-        validPeriod: '',
-        obtainTime: ''
+        expertId: ''
       },
       pagination: {
         current: 1,
@@ -253,80 +228,23 @@ export default {
     this.fetchCertificates();
   },
   computed: {
-    // 计算筛选后的证书列表
     filteredCertificates() {
       let filtered = [...this.allCertificates];
 
-      // 审核状态筛选
-      if (this.appliedFilter.status) {
-        filtered = filtered.filter(cert => cert.is_audited === this.appliedFilter.status);
+      if (this.filter.status) {
+        filtered = filtered.filter(cert => cert.is_audited === this.filter.status);
       }
 
-      // 证书ID筛选
-      if (this.appliedFilter.certificateId) {
+      if (this.filter.expertId) {
         filtered = filtered.filter(cert =>
-            cert.certificate_id && cert.certificate_id.toString().includes(this.appliedFilter.certificateId)
+            cert.expert_id && cert.expert_id.toString().includes(this.filter.expertId)
         );
       }
 
-      // 证书名称筛选
-      if (this.appliedFilter.certificateName) {
-        filtered = filtered.filter(cert =>
-            cert.certificate_name && cert.certificate_name.toLowerCase().includes(this.appliedFilter.certificateName.toLowerCase())
-        );
-      }
-
-      // 专家ID筛选
-      if (this.appliedFilter.expertId) {
-        filtered = filtered.filter(cert =>
-            cert.expert_id && cert.expert_id.toString().includes(this.appliedFilter.expertId)
-        );
-      }
-
-      // 授权单位筛选
-      if (this.appliedFilter.authorizingUnit) {
-        filtered = filtered.filter(cert =>
-            cert.authorizing_unit && cert.authorizing_unit.toLowerCase().includes(this.appliedFilter.authorizingUnit.toLowerCase())
-        );
-      }
-
-      // 等级筛选
-      if (this.appliedFilter.level) {
-        filtered = filtered.filter(cert => cert.level == this.appliedFilter.level);
-      }
-
-      // 有效期筛选
-      if (this.appliedFilter.validPeriod) {
-        filtered = filtered.filter(cert =>
-            cert.valid_period && cert.valid_period.toString().includes(this.appliedFilter.validPeriod)
-        );
-      }
-
-      // 获得时间筛选 - 修复日期比较逻辑
-      if (this.appliedFilter.obtainTime) {
-        const selectedDate = new Date(this.appliedFilter.obtainTime);
-        // 标准化日期，设置时间为00:00:00以便比较
-        selectedDate.setHours(0, 0, 0, 0);
-
-        filtered = filtered.filter(cert => {
-          if (!cert.obtain_time) return false;
-          const certDate = new Date(cert.obtain_time);
-          // 同样标准化证书日期时间
-          certDate.setHours(0, 0, 0, 0);
-
-          // 比较两个日期是否相等
-          return certDate.getTime() === selectedDate.getTime();
-        });
-      }
-
-      return filtered;
-    },
-
-    // 计算分页后的证书列表
-    paginatedCertificates() {
+      this.pagination.total = filtered.length;
       const start = (this.pagination.current - 1) * this.pagination.size;
       const end = start + this.pagination.size;
-      return this.filteredCertificates.slice(start, end);
+      return filtered.slice(start, end);
     }
   },
   methods: {
@@ -339,6 +257,7 @@ export default {
           }
         });
         this.allCertificates = res.data;
+        this.pagination.total = res.data.length;
         console.log(res.data);
       } catch (error) {
         console.error('获取证书列表失败:', error);
@@ -346,12 +265,15 @@ export default {
       }
     },
     getPreviewList(imagePath) {
+      // 处理单个图片路径
       if (typeof imagePath === 'string' && imagePath) {
+        // 构建完整URL
         if (imagePath.startsWith('http')) {
           return [imagePath];
         } else if (imagePath.startsWith('/')) {
           return [`http://localhost:3000${imagePath}`];
         } else {
+          // 假设证书图片存储在 /uploads/certificates/ 目录下
           return [`http://localhost:3000/uploads/certificates/${imagePath}`];
         }
       }
@@ -381,8 +303,13 @@ export default {
       };
       this.auditDialogVisible = true;
     },
+    // showDetail(cert) {
+    //   this.detailData = cert;
+    //   this.detailDialogVisible = true;
+    // },
     async showDetail(cert) {
       try {
+        // 获取完整的证书详情
         const token = this.userStore.token;
         const res = await axios.get(`http://localhost:3000/api/certificates/${cert.certificate_id}`, {
           headers: {
@@ -391,7 +318,9 @@ export default {
         });
         this.detailData = res.data;
         this.detailDialogVisible = true;
+        // this.$message.info('获取证书详情成功' + res.data);
         console.log('获取证书详情成功:', JSON.stringify(this.detailData, null, 2));
+        // console.log('获取证书详情成功' + this.detailData);
       } catch (error) {
         console.error('获取证书详情失败:', error);
         this.$message.error('获取证书详情失败: ' + (error.response?.data?.error || '未知错误'));
@@ -440,42 +369,13 @@ export default {
     handleCurrentChange(current) {
       this.pagination.current = current;
     },
-    // 应用筛选条件
-    applyFilter() {
-      this.appliedFilter = {
-        status: this.filter.status,
-        certificateId: this.filter.certificateId,
-        certificateName: this.filter.certificateName,
-        expertId: this.filter.expertId,
-        authorizingUnit: this.filter.authorizingUnit,
-        level: this.filter.level,
-        validPeriod: this.filter.validPeriod,
-        obtainTime: this.filter.obtainTime
-      };
-      this.pagination.current = 1; // 重置到第一页
-    },
     resetFilter() {
       this.filter = {
         status: '',
-        certificateId: '',
-        certificateName: '',
-        expertId: '',
-        authorizingUnit: '',
-        level: '',
-        validPeriod: '',
-        obtainTime: ''
-      };
-      this.appliedFilter = {
-        status: '',
-        certificateId: '',
-        certificateName: '',
-        expertId: '',
-        authorizingUnit: '',
-        level: '',
-        validPeriod: '',
-        obtainTime: ''
+        expertId: ''
       };
       this.pagination.current = 1;
+      this.fetchCertificates();
     },
     formatDate(dateString) {
       if (!dateString) return '';
@@ -483,9 +383,11 @@ export default {
       return date.toLocaleDateString();
     },
     getImageUrl(imageUrl) {
+      // 如果已经是完整URL，直接返回
       if (imageUrl.startsWith('http')) {
         return imageUrl;
       }
+      // 否则添加基础URL
       return `http://localhost:3000${imageUrl}`;
     },
     getLevelText(level) {
@@ -514,34 +416,12 @@ export default {
 
 .filter-section {
   margin-bottom: 20px;
-  white-space: nowrap;
-}
-
-.filter-form {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-}
-
-.filter-form .el-form-item {
-  margin-right: 10px;
-  margin-bottom: 0;
-}
-
-.date-range-item {
-  display: flex;
-  align-items: center;
-}
-
-.date-range-item .el-form-item__label {
-  margin-right: 3px;
-  font-size: 12px;
 }
 
 .el-pagination {
   margin-top: 20px;
 }
-
+/* 在 <style scoped> 中添加 */
 .certificate-image-section {
   text-align: center;
 }

@@ -1,6 +1,6 @@
 <template>
   <div class="question-detail-container">
-    <el-page-header @back="goBack" content="问题详情" />
+<!--    <el-page-header @back="goBack" content="问题详情" />-->
 
     <!-- 问题基本信息 -->
     <div class="question-header">

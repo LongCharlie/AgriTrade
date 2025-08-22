@@ -1,3 +1,421 @@
+<!--<template>-->
+<!--  <div>-->
+<!--    <el-container>-->
+<!--      <el-container>-->
+<!--        <el-main>-->
+<!--          <div class="expert-answer-detail">-->
+<!--            <h2>问题详情</h2>-->
+
+<!--            <el-card shadow="hover" style="margin-bottom: 20px;">-->
+<!--              <div class="card-header" slot="header">-->
+<!--                <strong>{{ question.title }}</strong>-->
+<!--                <div class="tag">-->
+<!--                  <el-tag-->
+<!--                      v-if="question.farmer_id === userStore.userId"-->
+<!--                      :type="question.status === 'open' ? 'success' : 'info'"-->
+<!--                  >-->
+<!--                    {{ question.status === 'open' ? '开启' : '关闭' }}-->
+<!--                  </el-tag>-->
+<!--                </div>-->
+<!--              </div>-->
+
+<!--              <div>-->
+<!--                <p><strong>提问者：</strong>{{ question.farmer_name || '匿名' }}</p>-->
+<!--                <p><strong>时间：</strong>{{ formatDate(question.created_at) }}</p>-->
+<!--                <p><strong>内容：</strong>{{ question.content }}</p>-->
+
+<!--                &lt;!&ndash; 问题图片展示 &ndash;&gt;-->
+<!--                <div v-if="question.images && question.images.length > 0" class="question-images">-->
+<!--                  <p><strong>问题图片：</strong></p>-->
+<!--                  <div class="image-gallery">-->
+<!--                    <el-image-->
+<!--                        v-for="(image, index) in question.images"-->
+<!--                        :key="image.id"-->
+<!--                        :src="`http://localhost:3000${image.url}`"-->
+<!--                        :preview-src-list="getPreviewList(question.images)"-->
+<!--                        :initial-index="index"-->
+<!--                        class="question-image"-->
+<!--                        fit="scale-down"-->
+<!--                        lazy-->
+<!--                    >-->
+<!--                      <div slot="error" class="image-slot">-->
+<!--                        <i class="el-icon-picture-outline"></i>-->
+<!--                      </div>-->
+<!--                    </el-image>-->
+<!--                  </div>-->
+<!--                </div>-->
+
+<!--                &lt;!&ndash; 删除提问按钮 &ndash;&gt;-->
+<!--                <div v-if="question.farmer_id === userStore.userId" class="question-actions">-->
+<!--                  <el-button-->
+<!--                      type="danger"-->
+<!--                      icon="el-icon-delete"-->
+<!--                      @click="deleteQuestion"-->
+<!--                      :loading="deleting"-->
+<!--                  >-->
+<!--                    删除提问-->
+<!--                  </el-button>-->
+<!--                </div>-->
+<!--              </div>-->
+<!--            </el-card>-->
+<!--            &lt;!&ndash; 回答列表 &ndash;&gt;-->
+<!--            <div class="answers-container">-->
+<!--              <el-card-->
+<!--                  v-for="answer in answers"-->
+<!--                  :key="answer.answer_id"-->
+<!--                  class="answer-card"-->
+<!--                  shadow="hover"-->
+<!--                  @click.native="viewAnswerDetail(answer.answer_id)"-->
+<!--              >-->
+<!--                <div class="answer-header">-->
+<!--                  <span class="expert-info">-->
+<!--                    <el-avatar-->
+<!--                        @click.stop="$router.push(`/farmer/detail/${answer.expert_id}`)"-->
+<!--                        :size="40"-->
+<!--                        :src="`http://localhost:3000${answer.expert_avatar_url}`"-->
+<!--                    ></el-avatar>-->
+<!--                    <div>-->
+<!--                      <strong>{{ answer.real_name }}</strong>-->
+<!--                      <span v-if="answer.title" class="expert-title">{{ answer.title }}</span>-->
+<!--                    </div>-->
+<!--                  </span>-->
+<!--                  <span class="answer-time">{{ formatDate(answer.answered_at) }}</span>-->
+<!--                </div>-->
+<!--                <div class="answer-content">{{ answer.content }}</div>-->
+<!--              </el-card>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </el-main>-->
+<!--      </el-container>-->
+<!--    </el-container>-->
+<!--  </div>-->
+<!--</template>-->
+
+<!--<script>-->
+<!--import {useUserStore} from '@/stores/user'-->
+<!--import axios from "axios";-->
+<!--import { ElMessage, ElMessageBox } from 'element-plus';-->
+
+<!--export default {-->
+<!--  setup() {-->
+<!--    const userStore = useUserStore();-->
+<!--    return {-->
+<!--      userStore-->
+<!--    };-->
+<!--  },-->
+<!--  data() {-->
+<!--    return {-->
+<!--      question: {},-->
+<!--      answers: [],-->
+<!--      answerContent: '',-->
+<!--      defaultAvatar: require('@/assets/profile.jpg'),-->
+<!--      deleting: false // 添加删除状态-->
+<!--    };-->
+<!--  },-->
+<!--  created() {-->
+<!--    this.fetchQuestion();-->
+<!--    this.fetchAnswers();-->
+<!--  },-->
+<!--  methods: {-->
+<!--    viewAnswerDetail(answerId) {-->
+<!--      this.$router.push(`/farmer/answer/${answerId}`);-->
+<!--    },-->
+<!--    async fetchQuestion() {-->
+<!--      try {-->
+<!--        const id = this.$route.params.id;-->
+<!--        const token = this.userStore.token;-->
+<!--        const response = await axios.get(`http://localhost:3000/api/question/${id}`, {-->
+<!--          headers: {-->
+<!--            Authorization: `Bearer ${token}`-->
+<!--          }-->
+<!--        })-->
+<!--        this.question = response.data;-->
+<!--        console.log(this.question);-->
+<!--      } catch (error) {-->
+<!--        console.error('获取问题失败:', error);-->
+<!--      }-->
+<!--    },-->
+<!--    async fetchAnswers() {-->
+<!--      try {-->
+<!--        const id = this.$route.params.id;-->
+<!--        const token = this.userStore.token;-->
+<!--        const response = await axios.get(`http://localhost:3000/api/question/${id}/answers`, {-->
+<!--          headers: {-->
+<!--            Authorization: `Bearer ${token}`-->
+<!--          }-->
+<!--        })-->
+<!--        this.answers = response.data.answers;-->
+<!--      } catch (error) {-->
+<!--        console.error('获取回答失败:', error);-->
+<!--      }-->
+<!--    },-->
+<!--    formatDate(dateString) {-->
+<!--      return new Date(dateString).toLocaleString();-->
+<!--    },-->
+<!--    async submitAnswer() {-->
+<!--      if (!this.answerContent.trim()) {-->
+<!--        this.$message.warning('请输入回答内容');-->
+<!--        return;-->
+<!--      }-->
+
+<!--      try {-->
+<!--        const token = this.userStore.token;-->
+<!--        const userId = this.userStore.userId;-->
+
+<!--        const payload = {-->
+<!--          question_id: this.question.question_id,-->
+<!--          expert_id: userId,-->
+<!--          content: this.answerContent-->
+<!--        };-->
+
+<!--        await axios.post('http://localhost:3000/api/answers', payload, {-->
+<!--          headers: {-->
+<!--            Authorization: `Bearer ${token}`-->
+<!--          }-->
+<!--        });-->
+
+<!--        this.$message.success('回答成功');-->
+<!--        this.answerContent = '';-->
+<!--        this.fetchAnswers();-->
+<!--        this.fetchQuestion();-->
+<!--      } catch (error) {-->
+<!--        this.$message.error('回答失败，请重试');-->
+<!--        console.error('提交回答失败:', error);-->
+<!--      }-->
+<!--    },-->
+<!--    async deleteAnswer(answerId) {-->
+<!--      try {-->
+<!--        await ElMessageBox.confirm('确定要删除这条回答吗？此操作不可恢复', '删除确认', {-->
+<!--          confirmButtonText: '确定',-->
+<!--          cancelButtonText: '取消',-->
+<!--          type: 'warning'-->
+<!--        });-->
+<!--      } catch {-->
+<!--        return;-->
+<!--      }-->
+
+<!--      try {-->
+<!--        const token = this.userStore.token;-->
+
+<!--        await axios.delete(`http://localhost:3000/api/answers/${answerId}`, {-->
+<!--          headers: {-->
+<!--            Authorization: `Bearer ${token}`-->
+<!--          }-->
+<!--        });-->
+
+<!--        const index = this.answers.findIndex(a => a.answer_id === answerId);-->
+<!--        if (index !== -1) {-->
+<!--          this.answers.splice(index, 1);-->
+<!--        }-->
+
+<!--        this.question.answer_count -= 1;-->
+
+<!--        ElMessage.success('删除回答成功');-->
+<!--      } catch (error) {-->
+<!--        ElMessage.error('删除回答失败');-->
+<!--        console.error('删除回答失败:', error);-->
+<!--      }-->
+<!--    },-->
+<!--    // 获取图片预览列表-->
+<!--    getPreviewList(images) {-->
+<!--      return images.map(image => `http://localhost:3000${image.url}`);-->
+<!--    },-->
+<!--    // 删除问题-->
+<!--    async deleteQuestion() {-->
+<!--      try {-->
+<!--        // 确认删除-->
+<!--        await ElMessageBox.confirm(-->
+<!--            '确定要删除这个问题吗？此操作不可恢复，同时会删除所有相关回答。',-->
+<!--            '删除确认',-->
+<!--            {-->
+<!--              confirmButtonText: '确定',-->
+<!--              cancelButtonText: '取消',-->
+<!--              type: 'warning'-->
+<!--            }-->
+<!--        );-->
+<!--      } catch {-->
+<!--        // 用户取消删除-->
+<!--        return;-->
+<!--      }-->
+
+<!--      this.deleting = true;-->
+<!--      try {-->
+<!--        const token = this.userStore.token;-->
+<!--        const questionId = this.question.question_id;-->
+
+<!--        // 使用正确的API端点删除问题-->
+<!--        await axios.delete(`http://localhost:3000/api/question/${questionId}`, {-->
+<!--          headers: {-->
+<!--            Authorization: `Bearer ${token}`-->
+<!--          }-->
+<!--        });-->
+
+<!--        ElMessage.success('删除提问成功');-->
+<!--        // 删除成功后返回上一页或跳转到问题列表页-->
+<!--        this.$router.back();-->
+<!--      } catch (error) {-->
+<!--        ElMessage.error('删除提问失败: ' + (error.response?.data?.error || error.message));-->
+<!--        console.error('删除问题失败:', error);-->
+<!--      } finally {-->
+<!--        this.deleting = false;-->
+<!--      }-->
+<!--    }-->
+<!--  }-->
+<!--};-->
+<!--</script>-->
+
+<!--<style scoped>-->
+<!--.expert-answer-detail {-->
+<!--  padding: 20px;-->
+<!--}-->
+
+<!--.answer-item {-->
+<!--  padding: 15px 0;-->
+<!--  border-bottom: 1px solid #eee;-->
+<!--}-->
+
+<!--.answer-header {-->
+<!--  display: flex;-->
+<!--  justify-content: space-between;-->
+<!--  align-items: center;-->
+<!--  margin-bottom: 10px;-->
+<!--}-->
+
+<!--.expert-info {-->
+<!--  display: flex;-->
+<!--  align-items: center;-->
+<!--}-->
+
+<!--.expert-info > div {-->
+<!--  margin-left: 10px;-->
+<!--}-->
+
+<!--.expert-title {-->
+<!--  display: block;-->
+<!--  color: #888;-->
+<!--  font-size: 12px;-->
+<!--}-->
+
+<!--.answer-time {-->
+<!--  color: #999;-->
+<!--  font-size: 13px;-->
+<!--}-->
+
+<!--.answer-content {-->
+<!--  line-height: 1.6;-->
+<!--  margin-bottom: 10px;-->
+<!--}-->
+
+<!--.answer-footer {-->
+<!--  text-align: right;-->
+<!--}-->
+
+<!--.tag {-->
+<!--  display: flex;-->
+<!--  gap: 8px;-->
+<!--}-->
+
+<!--.card-header {-->
+<!--  display: flex;-->
+<!--  justify-content: space-between;-->
+<!--  align-items: center;-->
+<!--  margin-bottom: 15px;-->
+<!--  padding-bottom: 10px;-->
+<!--  border-bottom: 1px solid #eee;-->
+<!--}-->
+
+<!--.answers-container {-->
+<!--  display: flex;-->
+<!--  flex-direction: column;-->
+<!--  gap: 20px;-->
+<!--}-->
+
+<!--.answer-card {-->
+<!--  transition: all 0.3s ease;-->
+<!--  margin-bottom: 15px;-->
+<!--}-->
+
+<!--.answer-card:hover {-->
+<!--  transform: scale(1.02);-->
+<!--  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);-->
+<!--  z-index: 1;-->
+<!--}-->
+
+<!--.answer-header {-->
+<!--  display: flex;-->
+<!--  justify-content: space-between;-->
+<!--  align-items: center;-->
+<!--  margin-bottom: 15px;-->
+<!--  padding-bottom: 10px;-->
+<!--  border-bottom: 1px solid #f0f0f0;-->
+<!--}-->
+
+<!--.expert-info {-->
+<!--  display: flex;-->
+<!--  align-items: center;-->
+<!--}-->
+
+<!--.expert-info > div {-->
+<!--  margin-left: 10px;-->
+<!--}-->
+
+<!--.expert-title {-->
+<!--  display: block;-->
+<!--  color: #888;-->
+<!--  font-size: 12px;-->
+<!--}-->
+
+<!--.answer-content {-->
+<!--  line-height: 1.6;-->
+<!--  margin-bottom: 15px;-->
+<!--  padding: 0 10px;-->
+<!--}-->
+
+<!--.answer-footer {-->
+<!--  text-align: right;-->
+<!--  padding-top: 10px;-->
+<!--  border-top: 1px solid #f0f0f0;-->
+<!--}-->
+
+<!--/* 问题图片样式 */-->
+<!--.question-images {-->
+<!--  margin-top: 20px;-->
+<!--}-->
+
+<!--.image-gallery {-->
+<!--  display: flex;-->
+<!--  flex-wrap: wrap;-->
+<!--  gap: 10px;-->
+<!--  margin-top: 10px;-->
+<!--}-->
+
+<!--.question-image {-->
+<!--  width: 150px;-->
+<!--  height: 150px;-->
+<!--  border-radius: 4px;-->
+<!--  overflow: hidden;-->
+<!--  cursor: pointer;-->
+<!--}-->
+
+<!--.image-slot {-->
+<!--  display: flex;-->
+<!--  justify-content: center;-->
+<!--  align-items: center;-->
+<!--  width: 100%;-->
+<!--  height: 100%;-->
+<!--  background: #f5f5f5;-->
+<!--  color: #999;-->
+<!--  font-size: 24px;-->
+<!--}-->
+
+<!--/* 问题操作按钮样式 */-->
+<!--.question-actions {-->
+<!--  margin-top: 20px;-->
+<!--  padding-top: 15px;-->
+<!--  border-top: 1px solid #eee;-->
+<!--  text-align: right;-->
+<!--}-->
+<!--</style>-->
 <template>
   <div>
     <el-container>
@@ -45,8 +463,16 @@
                   </div>
                 </div>
 
-                <!-- 删除提问按钮 -->
+                <!-- 问题操作按钮 -->
                 <div v-if="question.farmer_id === userStore.userId" class="question-actions">
+                  <!-- 添加打开/关闭提问按钮 -->
+                  <el-button
+                      :type="question.status === 'open' ? 'warning' : 'success'"
+                      @click="toggleQuestionStatus"
+                      :loading="statusUpdating"
+                  >
+                    {{ question.status === 'open' ? '关闭提问' : '打开提问' }}
+                  </el-button>
                   <el-button
                       type="danger"
                       icon="el-icon-delete"
@@ -109,7 +535,8 @@ export default {
       answers: [],
       answerContent: '',
       defaultAvatar: require('@/assets/profile.jpg'),
-      deleting: false // 添加删除状态
+      deleting: false,
+      statusUpdating: false // 添加状态更新标志
     };
   },
   created() {
@@ -258,6 +685,31 @@ export default {
         console.error('删除问题失败:', error);
       } finally {
         this.deleting = false;
+      }
+    },
+    // 添加切换问题状态的方法
+    async toggleQuestionStatus() {
+      this.statusUpdating = true;
+      try {
+        const token = this.userStore.token;
+        const newStatus = this.question.status === 'open' ? 'closed' : 'open';
+
+        await axios.patch(`http://localhost:3000/api/questions/${this.question.question_id}/status`, {
+          status: newStatus
+        }, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        // 更新本地数据
+        this.question.status = newStatus;
+        ElMessage.success(`${newStatus === 'open' ? '打开' : '关闭'}提问成功`);
+      } catch (error) {
+        ElMessage.error(`${this.question.status === 'open' ? '关闭' : '打开'}提问失败`);
+        console.error('更新问题状态失败:', error);
+      } finally {
+        this.statusUpdating = false;
       }
     }
   }
@@ -414,5 +866,8 @@ export default {
   padding-top: 15px;
   border-top: 1px solid #eee;
   text-align: right;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 </style>
