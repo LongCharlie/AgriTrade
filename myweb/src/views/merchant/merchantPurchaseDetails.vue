@@ -65,6 +65,10 @@
                 <div class="detail-label">申请时间:</div>
                 <div class="detail-value">{{ application.applicationTime }}</div>
               </div>
+              <div class="detail-row">
+                <div class="detail-label">联系方式:</div>
+                <div class="detail-value">{{ application.phone }}</div>
+              </div>
             </div>
 
             <div class="card-actions">
@@ -198,6 +202,7 @@ const fetchApplications = async () => {
       applications.value = res.data.data.map(app => ({
       farmerAvatar: `http://localhost:3000${app.farmer_avatar_url}`, // 添加前缀
       farmerName: app.farmer_name,
+        phone: app.farmer_phone,
       shippingLocation: `${app.farmer_province || ''}${app.farmer_city || ''}${app.farmer_district || ''}`, // 拼接地址
       applicationTime: formatTime(app.applied_at),
       rawTime: app.applied_at,

@@ -5,15 +5,17 @@
         <header class="header">
           <img v-if="!isCollapse" src="../assets/platform_logo2.png" alt="Logo" class="logo"/>
         </header>
+<!--        default-active="首页"-->
+<!--        active-text-color="#EFCA00">-->
         <el-menu
-            default-active="首页"
+            :default-active="activeMenuItem"
             class="el-menu-vertical-demo full-height"
             @open="handleOpen"
             @close="handleClose"
             :collapse="isCollapse"
             background-color="#D9EEDD"
             text-color="#47543F"
-            active-text-color="#EFCA00">
+            :active-text-color="activeTextColor">
           <el-menu-item @click="clickMenu(item)" v-for="item in menuData" :key="item.name" :index="item.name">
             <component :is="item.icon" style="width: 20px; height: 20px; margin-right: 8px" />
             <span slot="title">{{ item.name }}</span>
@@ -73,6 +75,24 @@ export default {
   computed: {
     isCollapse() {
       return this.$store.state.tab.isCollapse; //gain the collapse state in store
+    },
+    activeMenuItem() {
+      const currentPath = this.$route.path.split('/expert')[1];
+      if (currentPath === '' || currentPath === '/home') {
+        return '首页';
+      } else if (currentPath.startsWith('/rank')) {
+        return '排行榜';
+      } else if (currentPath.startsWith('/cert') || currentPath.startsWith('/answer')) {
+        return '知识认证';
+      } else if (currentPath.startsWith('/ques')) {
+        return '解答问题';
+      } else if (currentPath.startsWith('/profile') || currentPath.startsWith('/datail')) {
+        return '';
+      }
+      return '首页';
+    },
+    activeTextColor() {
+      return this.activeMenuItem === '' ? '#000000' : '#EFCA00';
     }
   },
 }
