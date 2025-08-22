@@ -298,6 +298,7 @@
                     icon="el-icon-delete"
                     @click="deleteAnswer"
                     class="delete-button"
+
                 >删除回答
                 </el-button>
               </div>

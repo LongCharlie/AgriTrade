@@ -236,8 +236,8 @@
 <!--</style>-->
 <template>
   <div class="question-detail-container">
-    <el-page-header @back="goBack" content="回答详情" />
-
+<!--    <el-page-header @back="goBack" content="回答详情" />-->
+<!---->
     <!-- 专家信息行 -->
     <div class="admin-expert-info">
       <div class="admin-user-details">
