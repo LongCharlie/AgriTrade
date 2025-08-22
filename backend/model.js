@@ -277,6 +277,9 @@ const deleteAnswer = async (answerId, expertId) => {
   return rowCount > 0;
 };
 
+
+
+
 // 点赞回答
 const upvoteAnswer = async (answerId) => {
   const result = await pool.query(

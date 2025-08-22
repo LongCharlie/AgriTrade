@@ -272,13 +272,20 @@ export default {
       }).then(async () => {
         try {
           const token = userStore.token;
-
+          const res = await axios.get(`http://localhost:3000/api/aa/answers/${answerId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          console.log("aa" + res.data.expert_id)
           await axios.delete(`http://localhost:3000/api/answers/${answerId}`, {
             headers: {
               Authorization: `Bearer ${token}`
             }
           });
 
+console.log('DDDD')
+          console.log("AAA", answerId)
           // 从本地列表中移除
           const index = answers.value.findIndex(a => a.answer_id === answerId);
           if (index !== -1) {
