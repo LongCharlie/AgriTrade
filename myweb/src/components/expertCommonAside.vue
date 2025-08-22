@@ -82,11 +82,11 @@ export default {
         return '首页';
       } else if (currentPath.startsWith('/rank')) {
         return '排行榜';
-      } else if (currentPath.startsWith('/cert') || currentPath.startsWith('/answer')) {
+      } else if (currentPath.startsWith('/cert')) {
         return '知识认证';
-      } else if (currentPath.startsWith('/ques')) {
+      } else if (currentPath.startsWith('/ques') || currentPath.startsWith('/answer')) {
         return '解答问题';
-      } else if (currentPath.startsWith('/profile') || currentPath.startsWith('/datail')) {
+      } else if (currentPath.startsWith('/profile') || currentPath.startsWith('/detail')) {
         return '';
       }
       return '首页';

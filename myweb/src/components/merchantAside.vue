@@ -48,16 +48,18 @@ export default {
       const currentPath = this.$route.path.split('/merchant')[1]; // 获取当前路径
 
       // 进行匹配
-      if (currentPath === '' || currentPath === '/') {
+      if (currentPath === '' || currentPath === '/home') {
         return '首页';
-      } else if (currentPath.startsWith('/purchases')) {
+      } else if (currentPath.startsWith('/purchases') || currentPath.startsWith('/purchaseDetail')) {
         return '采购';
+      }else if (currentPath.startsWith('/addpurchase')) {
+          return '采购';
       } else if (currentPath.startsWith('/order')) {
         return '订单';
       // } else if (currentPath.startsWith('/message')) {
       //   return '消息';
-      } else if (currentPath.startsWith('/home')) {
-        return '我的';
+      } else if (currentPath.startsWith('/profile')) {
+        return '';
       }
       return '首页'; // 默认值
     },

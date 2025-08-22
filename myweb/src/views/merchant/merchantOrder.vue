@@ -236,7 +236,7 @@
                  v-for="(image, index) in refundDetail.evidenceImages.split(',')"
                  :key="index">
               <img :src="`http://localhost:3000/uploads/activity-images/${image}`"
-                   alt="历史记录图像"
+                   alt="售后图像"
                    class="history-image"
                     />
             </div>
