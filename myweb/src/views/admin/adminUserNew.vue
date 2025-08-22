@@ -171,9 +171,9 @@ export default {
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   position: relative; /* 改为相对定位 */
-  margin: 20px auto; /* 使用margin居中 */
+  margin-left: 250px;
+  margin-top: 20px;
   z-index: 2;
-
 }
 
 

@@ -152,23 +152,26 @@ export default {
 
       chatLog.value.push({ role: 'user', content: userMessage.value });
       loading.value = true;
-      userMessage.value = ''; // 清空输入框
-      selectedOption.value = null;
-      selectedQuestion.value = null;
+      // userMessage.value = ''; // 清空输入框
+      // selectedOption.value = null;
+      // selectedQuestion.value = null;
       try {
         const response = await axios.post('https://api.chatanywhere.tech/v1/chat/completions', {
-          model: 'gpt-3.5-turbo',
+          model: 'gpt-5-mini',//gpt-3.5-turbo
           messages: [{ role: 'user', content: userMessage.value }],
           temperature: 0.7,
         }, {
           headers: {
-            'Authorization': `Bearer KEY`,//
+            'Authorization': `Bearer sk-6RncHVDCDlooUuciKYdu0LBStd3c74tjRpd1pDRf5aPkmPkf`,//
             'Content-Type': 'application/json',
           },
         });
         console.log(response.data.choices[0].message.content);
         const assistantMessage = response.data.choices[0].message.content;
         chatLog.value.push({ role: 'assistant', content: assistantMessage });
+        userMessage.value = ''; // 清空输入框
+        selectedOption.value = null;
+        selectedQuestion.value = null;
       } catch (error) {
         console.error('Error sending message:', error);
         chatLog.value.push({ role: 'error', content: 'Error communicating with API.' });

@@ -38,24 +38,24 @@ const uploadAnswerImages = multer({
 // 管理员删除回答
 router.delete('/answers/:id', 
   authMiddleware.authenticateToken, 
-  authMiddleware.checkRole([ROLES.ADMIN]), 
+  authMiddleware.checkRole([ROLES.ADMIN]),
   async (req, res) => {
     try {
       const answerId = req.params.id;
-      
+
       // 先获取回答信息以获取问题ID和专家ID
       const answer = await require('../model').getAnswerById(answerId);
       if (!answer) {
         return res.status(404).json({ error: '回答未找到' });
       }
-      
+
       // 删除回答
       const isDeleted = await require('../model').adminDeleteAnswer(answerId);
-      
+
       if (!isDeleted) {
         return res.status(404).json({ error: '回答删除失败' });
       }
-      
+
       // 减少问题的回答计数
       await require('../model').decrementQuestionAnswerCount(answer.question_id);
       
@@ -65,6 +65,24 @@ router.delete('/answers/:id',
       res.status(500).json({ error: '删除回答失败' });
     }
   }
+);
+
+// 测试
+router.get('/aa/answers/:id',
+    authMiddleware.authenticateToken,
+    authMiddleware.checkRole([ROLES.ADMIN]),
+    async (req, res) => {
+      try {
+        const answerId = req.params.id;
+
+        // 先获取回答信息以获取问题ID和专家ID
+        const answer = await require('../model').getAnswerById(answerId);
+        res.json(answer);
+      } catch (error) {
+        console.error('删除回答错误:', error);
+        res.status(500).json({ error: '删除回答失败' });
+      }
+    }
 );
 
 module.exports = router;
