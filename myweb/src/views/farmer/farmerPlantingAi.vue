@@ -157,7 +157,7 @@ export default {
       // selectedQuestion.value = null;
       try {
         const response = await axios.post('https://api.chatanywhere.tech/v1/chat/completions', {
-          model: 'gpt-5-mini',//gpt-3.5-turbo
+          model: 'gpt-5-mini',//gpt-3.5-turbo  //gpt-5-mini
           messages: [{ role: 'user', content: userMessage.value }],
           temperature: 0.7,
         }, {
@@ -200,9 +200,11 @@ export default {
       const selectedRecord = growthRecords.value.find(record => record.record_id === record_id);
       if (selectedRecord && historicalRecords.value.length) {
         const description = historicalRecords.value.map(record => {
-          return `日期: ${record.activity_date}, 活动类型: ${getChineseActivityType(record.activity_type)}, 描述: ${record.description}`;
+          return `日期: ${record.created_at}, 活动类型: ${getChineseActivityType(record.activity_type)}, 描述: ${record.description}`;
         }).join('\n'); // 将历史记录信息合并为字符串
         userMessage.value = `种植作物种类: ${selectedRecord.product_name}, 位置: ${selectedRecord.province}\n种植历史记录:\n${description}`;
+      }else{
+        userMessage.value = `种植作物种类: ${selectedRecord.product_name}, 位置: ${selectedRecord.province}, 创建时间：${selectedRecord.created_at}`
       }
     };
 
